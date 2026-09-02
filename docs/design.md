@@ -167,16 +167,16 @@ await table.createIndex("text", {
 
 ### 5.2 매니페스트 · 증분
 
-`db/<slug>.manifest.json`: `{ lastRun, files: { "<file>": { hash, chunks, indexedAt } } }`.
+`db/<slug>.manifest.json`: `{ lastRun, files: { "<file>": { hash, chunks, indexedAt } }, embeddings }`. `embeddings` 는 임베딩 모델명 또는 `"none"`(벡터 없이 인덱싱됨). 필드가 없는 구버전 매니페스트는 임베딩 있음으로 간주한다. 쓰기는 임시 파일 + `renameSync` 로 원자적으로 한다(검색이 매니페스트를 읽으므로 잡 도중 부분 쓰기를 막는다).
 
 1. roots(+uploads) 스캔, SHA256 → 매니페스트와 비교해 `added / changed / deleted`. `force` 면 전부 changed.
 2. `deleted ∪ changed` 행 삭제: `table.delete("file IN ('a','b',…)")`, 작은따옴표 `''` 이스케이프, 500개 단위.
 3. `added ∪ changed` 만 `--files` 로 Extractor 호출 → JSONL 스트리밍 파싱.
-4. 임베딩: 16건 배치, 동시 2배치, `POST {OLLAMA_URL}/api/embed { model, input: string[] }`. 실패 시 1s→2s→4s 재시도 3회, 그래도 실패면 잡 실패. 부분 반영 파일은 매니페스트에 안 남겨 다음 실행에 재시도된다.
-5. 200행 단위 `table.add` → 매니페스트 갱신(성공 파일만) → FTS 인덱스 재생성 → `optimize`.
+4. 임베딩: Ollama 가 준비돼 있으면 16건 배치, 동시 2배치, `POST {OLLAMA_URL}/api/embed { model, input: string[] }`. 실패 시 1s→2s→4s 재시도 3회, 그래도 실패면 잡 실패. 부분 반영 파일은 매니페스트에 안 남겨 다음 실행에 재시도된다. Ollama 가 준비돼 있지 않으면 이 단계를 건너뛰고 각 청크의 벡터를 영벡터(`zeroVector()`, `db.ts`)로 채운다.
+5. 200행 단위 `table.add` → 매니페스트 갱신(성공 파일만, `embeddings` 필드에 임베딩 여부 기록) → FTS 인덱스 재생성 → `optimize`.
 6. 잡 로그: 메모리 링버퍼(잡당 2000줄) + `logs/<slug>-<jobId>.log`.
 
-전역 큐로 **한 번에 잡 1개**. 같은 slug 가 대기 중이면 중복 등록하지 않는다. Ollama 미가동·모델 없음은 잡 시작 전 `GET /api/tags` 로 확인해 즉시 실패.
+전역 큐로 **한 번에 잡 1개**. 같은 slug 가 대기 중이면 중복 등록하지 않는다. Ollama 준비 상태는 매니페스트 로드 직후 `GET /api/tags` 로 확인하되, 미가동·모델 없음이어도 잡을 실패시키지 않고 경고 로그 후 벡터 없이(영벡터) 계속 진행한다 — 매니페스트가 `"none"` 이었는데 Ollama 가 준비된 경우에만 전체 재인덱스로 승격한다.
 
 ### 5.3 검색
 
@@ -189,7 +189,8 @@ const rows = await q.select(cols).limit(poolSize).toArray();   // 융합 후 top
 
 - `hybrid`(기본) · `vector`(nearestTo 만) · `fts`(fullTextSearch 만, 임베딩 호출 없음).
 - 점수는 `score` 하나로 정규화(hybrid `_relevance_score`, vector `1-_distance`, fts `_score`), 응답에 `mode` 동봉.
-- FTS 구문 오류(특수문자 질의) → `vector` 로 자동 폴백, `warnings` 기록.
+- FTS 구문 오류(특수문자 질의) → `vector` 로 자동 폴백, `warnings` 기록. vector 경로 자체가 실패해도(예: Ollama 가 잡 도중 죽음) `fts` 로 폴백한다.
+- 임베딩 없는 워크스페이스(매니페스트 `embeddings === "none"`) 는 `hybrid`/`vector` 요청이 와도 검색 시작 시 `fts` 로 강등한다. 영벡터에 cosine 을 적용하면 결과가 전부 NaN 이 되므로 이 강등이 유일한 보호막이다. `warnings` 에 강등 사실을 남긴다.
 - 다중 워크스페이스는 병렬 조회 후 점수 내림차순 병합. RRF 점수는 `1/(k+rank)` 합이라 테이블 간 비교 가능.
 - **후보 풀**: LanceDB 의 `limit` 은 벡터·FTS 하위 질의 각각에 걸린다. topN 만 주면 두 목록이 거의 겹치지 않아 RRF 점수가 전부 동점이 되고 순위가 사실상 무작위가 된다. 하위 질의마다 최소 50건(`HYBRID_MIN_POOL`)을 뽑아 융합한 뒤 topN 만 남긴다.
 
@@ -215,7 +216,7 @@ await t.delete("file IN ('a')"); await t.countRows();
 |---|---|---|
 | `GET /healthz` | | `ok` |
 | `GET /api/status` | | `{ ollama: {ok, model, hasModel}, dbDir, extractor: {ok, path}, queue: [slug…] }` |
-| `GET /api/workspaces` | | `[{ slug, label, kind, roots, files, chunks, lastRun, indexing }]` |
+| `GET /api/workspaces` | | `[{ slug, label, kind, roots, files, chunks, lastRun, indexing, embeddings }]` |
 | `POST /api/search` | `{ query, workspaces: string[] \| "all", topN=6, mode="hybrid" }` | `{ hits: [{ workspace, file, symbol, kind, startLine, endLine, score, text }], mode, warnings }` (topN 상한 20) |
 | `POST /api/index/:slug` | `{ force?: boolean }` | `202 { jobId }` · 이미 큐에 있으면 `200 { jobId, queued: true }` |
 | `GET /api/jobs` | | 최근 잡 20개 |

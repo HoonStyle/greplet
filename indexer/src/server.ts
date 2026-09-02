@@ -72,6 +72,7 @@ app.get("/api/workspaces", async (_req, res) => {
       chunks,
       lastRun: manifest.lastRun || null,
       indexing: jobManager.isIndexing(ws.slug),
+      embeddings: manifest.embeddings ?? cfg.ollamaModel,
     });
   }
   res.json(out);

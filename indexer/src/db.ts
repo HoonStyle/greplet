@@ -9,6 +9,11 @@ import type { AppConfig, WorkspaceConfig } from "./config.js";
 
 export const VECTOR_DIM = 1024;
 
+/** Ollama 없이 인덱싱할 때 채우는 영벡터. null 은 LanceDB 가 non-nullable 컬럼에서 거부하므로 쓰지 않는다(§8 프로브로 확인). */
+export function zeroVector(): number[] {
+  return new Array(VECTOR_DIM).fill(0);
+}
+
 export function tableNameFor(slug: string): string {
   return "ws_" + slug.replace(/-/g, "_");
 }

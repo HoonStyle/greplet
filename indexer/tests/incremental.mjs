@@ -42,6 +42,7 @@ process.env.GREPLET_DATA_DIR = dataDir;
 const { loadConfig, loadWorkspaces, findWorkspace } = await import("../dist/config.js");
 const { JobManager } = await import("../dist/indexJob.js");
 const { openOrCreateTable } = await import("../dist/db.js");
+const { search } = await import("../dist/search.js");
 
 const cfg = loadConfig();
 let workspaces = loadWorkspaces(cfg);
@@ -120,6 +121,18 @@ async function main() {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   assert.ok(!("b.txt" in manifest.files), "매니페스트에서 b.txt 가 제거되어야 함");
   assert.ok("a.txt" in manifest.files, "매니페스트에 a.txt 는 남아있어야 함");
+
+  // ---------- 4) Ollama 없는 환경에서는 매니페스트가 embeddings="none" 이고, hybrid 검색이 fts 로 강등되어 히트를 반환해야 함 ----------
+  const manifestAfterAll = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert.equal(manifestAfterAll.embeddings, "none", `embeddings 는 "none" 이어야 함 (실제 ${manifestAfterAll.embeddings})`);
+
+  const searchResult = await search(cfg, [ws], "hello", 6, "hybrid");
+  assert.ok(
+    searchResult.warnings.some((w) => w.includes("fts")),
+    `hybrid 검색 경고에 fts 강등 문구가 있어야 함 (실제 ${JSON.stringify(searchResult.warnings)})`,
+  );
+  assert.ok(searchResult.hits.length > 0, "fts 로 강등된 hybrid 검색도 히트를 반환해야 함");
+  console.log(`[incremental] 4) embeddings=none 확인, hybrid→fts 강등 검색 히트=${searchResult.hits.length}건`);
 
   console.log("[incremental] 전체 통과");
 }

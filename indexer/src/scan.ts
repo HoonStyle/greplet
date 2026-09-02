@@ -17,6 +17,8 @@ export interface ManifestFileEntry {
 export interface Manifest {
   lastRun: string;
   files: Record<string, ManifestFileEntry>;
+  /** 이 워크스페이스의 임베딩 모델명, 또는 벡터 없음("none"). 미정(구버전 매니페스트)이면 임베딩 있음("bge-m3")으로 간주한다. */
+  embeddings?: string;
 }
 
 export function emptyManifest(): Manifest {
@@ -32,9 +34,12 @@ export function loadManifest(manifestPath: string): Manifest {
   }
 }
 
+/** 임시 파일에 쓴 뒤 rename 으로 원자적으로 반영한다. 검색이 매니페스트를 읽으므로 잡 도중 부분 쓰기를 읽지 않게 한다. */
 export function saveManifest(manifestPath: string, manifest: Manifest): void {
   fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+  const tmpPath = `${manifestPath}.tmp-${process.pid}-${Date.now()}`;
+  fs.writeFileSync(tmpPath, JSON.stringify(manifest, null, 2), "utf8");
+  fs.renameSync(tmpPath, manifestPath);
 }
 
 function matchesGlob(name: string, glob: string): boolean {

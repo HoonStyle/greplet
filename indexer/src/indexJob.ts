@@ -12,7 +12,7 @@ import { uploadsDirFor } from "./config.js";
 import { enumerateWorkspaceFiles, diffAgainstManifest, loadManifest, saveManifest, relativeFileKey, type Manifest } from "./scan.js";
 import { runExtractor, rowId } from "./extract.js";
 import { embedAll, checkOllama } from "./embed.js";
-import { openOrCreateTable, deleteByFiles, rebuildFtsIndex, manifestPathFor } from "./db.js";
+import { openOrCreateTable, deleteByFiles, rebuildFtsIndex, manifestPathFor, zeroVector } from "./db.js";
 
 export type JobState = "queued" | "running" | "done" | "failed";
 
@@ -196,9 +196,26 @@ export class JobManager {
     const manifestPath = manifestPathFor(this.cfg, ws.slug);
     const manifest: Manifest = loadManifest(manifestPath);
 
+    // Ollama 준비 상태를 매니페스트 로드 직후, diff 계산 전에 확인한다 — not-ready 여도 예외 없이 fts 전용으로 진행한다.
+    const ollamaStatus = await checkOllama(this.cfg);
+    const embedReady = ollamaStatus.ok && ollamaStatus.hasModel;
+    if (!embedReady) {
+      this.log(
+        jobId,
+        "warn",
+        `[${ws.slug}] Ollama 준비 안 됨(${this.cfg.ollamaUrl}, model=${this.cfg.ollamaModel}) — ${ollamaStatus.error ?? "모델 미설치"} — 벡터 없이 fts 전용으로 인덱싱합니다`,
+      );
+    }
+
+    // 이전엔 임베딩 없이("none") 인덱싱했는데 지금은 Ollama 가 준비돼 있으면, 증분이 아니라 전체 재인덱스로 승격한다(혼합 방지).
+    const promoteFullReindex = embedReady && manifest.embeddings === "none";
+    if (promoteFullReindex) {
+      this.log(jobId, "info", `[${ws.slug}] 이전에는 임베딩 없이 인덱싱됨 — Ollama 준비됨, 전체 재인덱스로 승격합니다`);
+    }
+
     this.log(jobId, "info", `[${ws.slug}] 파일 스캔 중...`);
     const files = enumerateWorkspaceFiles(ws, uploadsDir);
-    const diff = diffAgainstManifest(files, roots, manifest, item.force);
+    const diff = diffAgainstManifest(files, roots, manifest, item.force || promoteFullReindex);
     rec.added = diff.added.length;
     rec.changed = diff.changed.length;
     rec.deleted = diff.deleted.length;
@@ -227,13 +244,6 @@ export class JobManager {
       return;
     }
 
-    const ollamaStatus = await checkOllama(this.cfg);
-    if (!ollamaStatus.ok || !ollamaStatus.hasModel) {
-      throw new Error(
-        `Ollama 준비 안 됨(${this.cfg.ollamaUrl}, model=${this.cfg.ollamaModel}) — ${ollamaStatus.error ?? "모델 미설치"}`,
-      );
-    }
-
     this.log(jobId, "info", `[${ws.slug}] Extractor 호출 중 (${targetAbs.length}개 파일)...`);
     const result = await runExtractor(this.cfg, ws, roots, targetAbs, (line) => this.log(jobId, "info", `  ${line}`));
 
@@ -249,12 +259,17 @@ export class JobManager {
       chunksByFileKey.set(c.file, (chunksByFileKey.get(c.file) ?? 0) + 1);
     }
 
-    this.log(jobId, "info", `[${ws.slug}] 청크 ${result.chunks.length}개 추출됨. 임베딩 시작...`);
-
-    const texts = result.chunks.map((c) => c.text);
-    const vectors = await embedAll(this.cfg, texts, (done, total) => {
-      if (done % 320 === 0 || done === total) this.log(jobId, "info", `  임베딩 진행 ${done}/${total}`);
-    });
+    let vectors: number[][];
+    if (embedReady) {
+      this.log(jobId, "info", `[${ws.slug}] 청크 ${result.chunks.length}개 추출됨. 임베딩 시작...`);
+      const texts = result.chunks.map((c) => c.text);
+      vectors = await embedAll(this.cfg, texts, (done, total) => {
+        if (done % 320 === 0 || done === total) this.log(jobId, "info", `  임베딩 진행 ${done}/${total}`);
+      });
+    } else {
+      this.log(jobId, "info", `[${ws.slug}] 청크 ${result.chunks.length}개 추출됨. Ollama 없음 — 영벡터로 채웁니다`);
+      vectors = result.chunks.map(() => zeroVector());
+    }
 
     const now = new Date().toISOString();
     const rows = result.chunks.map((c, i) => ({
@@ -288,6 +303,7 @@ export class JobManager {
       };
     }
     manifest.lastRun = now;
+    manifest.embeddings = embedReady ? this.cfg.ollamaModel : "none";
     saveManifest(manifestPath, manifest);
 
     this.log(jobId, "info", `[${ws.slug}] FTS 인덱스 재생성 중...`);
@@ -299,6 +315,10 @@ export class JobManager {
       this.log(jobId, "warn", `optimize 스킵: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    this.log(jobId, "info", `[${ws.slug}] 완료 — 청크 ${rows.length}개 반영`);
+    this.log(
+      jobId,
+      "info",
+      `[${ws.slug}] 완료 — 청크 ${rows.length}개 반영 (임베딩: ${embedReady ? this.cfg.ollamaModel : "없음 → fts 전용"})`,
+    );
   }
 }

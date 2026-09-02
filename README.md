@@ -34,7 +34,7 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
 | 상황 | 기존 도구의 한계 | greplet |
 |---|---|---|
 | 레거시가 여러 벌이고 현재 코드와 사양서 PDF 가 따로 있다 | IDE·에이전트 내장 검색은 열려 있는 리포 하나만 본다. Serena 도 활성 프로젝트 하나만 본다 | 리포 밖 어디든 여러 루트를 워크스페이스로 묶고, `-All` 로 벌 간 비교까지 한 번에 |
-| 상수·에러 코드·메서드명으로 찾는다 | 순수 벡터 검색은 정확 토큰에 약하다 | 벡터 + BM25 하이브리드. `fts` 단독 모드는 Ollama 없이도 동작 |
+| 상수·에러 코드·메서드명으로 찾는다 | 순수 벡터 검색은 정확 토큰에 약하다 | 벡터 + BM25 하이브리드. Ollama 가 없으면 인덱싱도 검색도 `fts` 로 자동 강등돼 동작 |
 | 결과를 받아 바로 그 자리를 열어야 한다 | 고정 길이 청킹은 메서드 중간에서 끊기고 위치를 못 준다 | Roslyn 멤버 단위·PDF 페이지 단위. 모든 결과에 파일·심볼·줄 범위 |
 | 코드가 계속 바뀐다 | 업로드형 RAG 는 삭제가 반영되지 않아 stale 청크가 쌓인다 | 파일 해시 매니페스트로 추가·변경·삭제 증분 반영. 커밋 훅 연동 |
 | 소스를 외부로 보낼 수 없다 | 클라우드 검색은 업로드가 전제 | 완전 로컬. 인덱서는 `127.0.0.1` 에만 바인딩, 외부 노출은 Bearer MCP 서버 경유만 |
@@ -43,7 +43,7 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
 
 ## 주요 기능
 
-- **하이브리드 검색** — `hybrid`(기본) · `vector` · `fts` 세 모드. `fts` 는 Ollama 없이도 동작.
+- **하이브리드 검색** — `hybrid`(기본) · `vector` · `fts` 세 모드. Ollama 가 없으면 인덱싱도 검색(`hybrid`/`vector` 요청 포함)도 Ollama 없이 `fts` 전용으로 자동 강등돼 동작.
 - **구문 단위 청킹** — C# 멤버 단위, PDF 페이지 단위, 그 외 텍스트는 줄 윈도우. 암호 PDF 지원.
 - **증분 인덱싱** — 커밋 훅이나 API 호출로 변경분만 재인덱스.
 - **다중 워크스페이스** — 코드·레거시·문서를 분리해 두고 개별 또는 통합 검색.
@@ -83,7 +83,7 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
 | Node | 22+ |
 | .NET SDK | 8.0+ |
 | PowerShell | 7+ (Windows 의 greplet.ps1 용. 다른 OS 는 greplet.mjs 사용) |
-| Ollama | `bge-m3` 모델 (`ollama pull bge-m3`) |
+| Ollama | 선택(벡터·hybrid 검색용). `bge-m3` 모델 (`ollama pull bge-m3`). 없으면 인덱싱·검색 모두 `fts` 전용으로 자동 강등 |
 | OS | Windows · macOS · Linux (Intel Mac 은 LanceDB 0.22.3 필요, 아래 참고) |
 
 ## 설치와 실행
@@ -344,7 +344,7 @@ cd ../greplet-mcpb && npm install && npm run smoke
 - 벡터 인덱스를 만들지 않는다(flat 스캔). 워크스페이스당 수십만 청크를 넘기면 검색이 느려진다.
 - 인덱서 HTTP API 는 무인증이라 `127.0.0.1` 에만 바인딩한다.
 - Intel Mac(darwin-x64)은 `@lancedb/lancedb` 0.23 이상에 darwin-x64 네이티브 바이너리가 없다(0.23.0 은 목록에만 있고 실제 패키지가 배포되지 않음). `cd indexer && npm i @lancedb/lancedb@0.22.3` 을 `npm install` 뒤에 한 번 더 실행해야 한다(Apple Silicon 은 해당 없음).
-- macOS 에서는 `fts` 모드만 검증됨(`hybrid`/`vector` 는 Ollama 필요).
+- Ollama 가 없는 환경(예: 이 저장소 검증에 쓴 Intel Mac)에서는 인덱싱이 벡터 없이(영벡터) 진행되고, 그 워크스페이스의 `hybrid`/`vector` 검색 요청도 서버가 `fts` 로 자동 강등한다. Ollama 가 생기면 다음 인덱스 잡이 자동으로 전체 재인덱스로 승격돼 벡터를 채운다.
 
 ## 라이선스
 

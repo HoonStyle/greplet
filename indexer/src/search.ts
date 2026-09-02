@@ -3,8 +3,9 @@
 */
 import { rerankers } from "@lancedb/lancedb";
 import type { AppConfig, WorkspaceConfig } from "./config.js";
-import { openOrCreateTable, tableExists } from "./db.js";
+import { openOrCreateTable, tableExists, manifestPathFor } from "./db.js";
 import { embedQuery } from "./embed.js";
+import { loadManifest } from "./scan.js";
 
 export type SearchMode = "hybrid" | "vector" | "fts";
 
@@ -44,16 +45,34 @@ async function searchOneWorkspace(
   const table = await openOrCreateTable(cfg, ws);
   let effectiveMode = mode;
 
+  // 임베딩 없는(구버전 매니페스트는 있음으로 간주) 워크스페이스는 hybrid/vector 를 fts 로 강등한다.
+  // 영벡터에 cosine 을 적용하면 NaN 이 나오므로 이 강등이 유일한 보호막이다.
+  if (effectiveMode !== "fts") {
+    const manifest = loadManifest(manifestPathFor(cfg, ws.slug));
+    if (manifest.embeddings === "none") {
+      warnings.push(`[${ws.slug}] 임베딩 없음 → fts 로 강등`);
+      effectiveMode = "fts";
+    }
+  }
+
   try {
-    if (mode === "fts") {
+    if (effectiveMode === "fts") {
       const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(topN).toArray();
       return rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)));
     }
 
-    const qvec = await embedQuery(cfg, query);
+    let qvec: number[];
+    try {
+      qvec = await embedQuery(cfg, query);
+    } catch (embedErr) {
+      // 질의 임베딩 실패(Ollama 미가동 등) 시 fts 로 폴백해 결과가 비지 않게 한다.
+      warnings.push(`[${ws.slug}] 질의 임베딩 실패 → fts 로 폴백: ${errMsg(embedErr)}`);
+      const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(topN).toArray();
+      return rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)));
+    }
     let q = table.query().nearestTo(qvec).distanceType("cosine");
 
-    if (mode === "hybrid") {
+    if (effectiveMode === "hybrid") {
       try {
         // limit 은 벡터·FTS 하위 질의 각각에 걸린다. topN 만 주면 두 목록이 거의 겹치지 않아 RRF 점수가
         // 전부 1/(60+rank) 동점이 되고 순위가 사실상 무작위가 된다 → 후보를 넉넉히 뽑아 융합한 뒤 topN 만 남긴다.
@@ -68,8 +87,15 @@ async function searchOneWorkspace(
       }
     }
 
-    const rows = await table.query().nearestTo(qvec).distanceType("cosine").select(SELECT_COLS).limit(topN).toArray();
-    return rows.map((r: any) => toHit(ws.slug, r, 1 - Number(r._distance ?? 0)));
+    try {
+      const rows = await table.query().nearestTo(qvec).distanceType("cosine").select(SELECT_COLS).limit(topN).toArray();
+      return rows.map((r: any) => toHit(ws.slug, r, 1 - Number(r._distance ?? 0)));
+    } catch (vecErr) {
+      // Ollama 가 잡 중간에 죽는 등 vector 경로 실패 시 fts 로 폴백해 결과가 비지 않게 한다.
+      warnings.push(`[${ws.slug}] vector 검색 실패 → fts 로 폴백: ${errMsg(vecErr)}`);
+      const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(topN).toArray();
+      return rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)));
+    }
   } catch (err) {
     warnings.push(`[${ws.slug}] 검색 실패(mode=${effectiveMode}): ${errMsg(err)}`);
     return [];

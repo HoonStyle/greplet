@@ -244,6 +244,7 @@ async function refreshWorkspaces() {
       <div class="info">
         <div class="slug">${ws.slug} <span style="color:var(--muted); font-weight:400;">${ws.label}</span></div>
         <div class="meta">${ws.kind} · 파일 ${ws.files}개 · 청크 ${ws.chunks}개 · 마지막 인덱스: ${fmtDate(ws.lastRun)}</div>
+        <div class="meta">임베딩: ${ws.embeddings === "none" ? "없음 (fts 전용)" : ws.embeddings}</div>
         <div class="meta">${ws.roots.join(" , ")}</div>
       </div>
       ${ws.indexing ? '<span class="spinner"></span> <span style="color:var(--muted);font-size:12px;">인덱싱 중</span>' : ""}
