@@ -224,7 +224,7 @@ node greplet.mjs "에러 코드" --all --full
 |---|---|---|
 | `GREPLET_PORT` | `7802` | 인덱서 포트 |
 | `GREPLET_DATA_DIR` | OS 별 기본값(위 표 참고) | DB·매니페스트·업로드·로그 저장 위치 |
-| `GREPLET_WORKSPACES` | `indexer/workspaces.json` | 워크스페이스 정의 파일 |
+| `GREPLET_WORKSPACES` | `indexer/workspaces.json` | 워크스페이스 정의 파일. 인덱서뿐 아니라 `greplet.ps1`·`greplet.mjs` 도 기본 워크스페이스를 이 파일에서 읽으므로, 서버에 다른 경로를 줬다면 CLI 에도 같은 값을 넘긴다 |
 | `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe`(Windows) / `Extractor/bin/Release/net8.0/Extractor`(macOS·Linux) | Extractor 실행 파일 |
 | `GREPLET_DEFAULT_WORKSPACE` | 첫 워크스페이스 | 워크스페이스 미지정 시 기본값 (CLI·MCP) |
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama 주소 |
