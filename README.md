@@ -281,7 +281,7 @@ greplet 는 "어디에 무슨 내용이 있나"를 찾는 도구다. 다른 도�
 | 도구 | 준비 | 담당 |
 |---|---|---|
 | greplet | 레거시 각 벌·현재 프로젝트·문서를 워크스페이스로 분리해 인덱싱 (`code`, `code-legacy`, `docs`) | 내용 검색. "이 값 어디서 정의되나", "사양서에서 이 프로토콜 설명" |
-| Serena | 레거시 각 벌과 현재 프로젝트를 모두 Serena 프로젝트로 등록해 두되 고정하지 않는다. 요청이 가리키는 프로젝트를 그때그때 활성화해 오간다 | 구조 질의. 참조·호출 체인·상속, 심볼 단위 읽기와 편집 |
+| Serena | 레거시 각 벌과 현재 프로젝트를 모두 Serena 프로젝트로 등록해 두되 고정하지 않는다. 요청이 가리키는 프로젝트를 `activate_project` 로 그때그때 활성화해 오간다. 주의: Serena 를 `--project` 로 프로젝트를 지정해 띄우면 `claude-code`·`ide` 컨텍스트에서는 이 툴이 꺼지므로, 프로젝트 없이 기동해야 전환이 된다 ([Serena 문서](https://oraios.github.io/serena/02-usage/040_workflow.html)) | 구조 질의. 참조·호출 체인·상속, 심볼 단위 읽기와 편집 |
 | legacy-spec-agent | Claude Code / Codex 플러그인 설치 | 레거시 코드에서 `path:line` 인용이 붙은 SPEC/ARCHITECTURE 문서 역생성, 코드 변경 후 drift 검사 |
 
 전형적인 흐름 ("레거시 기능을 현재 프로젝트로 옮기기"):
