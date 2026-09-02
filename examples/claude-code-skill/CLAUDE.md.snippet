@@ -4,7 +4,7 @@
 
 - **내용 검색은 greplet 먼저.** "어디에 구현돼 있나", "사양서에 어떻게 정의됐나"는 폴더를 grep/read 하기 전에 `greplet` 스킬(또는 MCP 툴)로 조회한다. 정확 토큰(상수·에러코드·메서드명)은 `-Mode fts`.
   - 워크스페이스: `code`(현재 프로젝트) · `code-legacy`(레거시, 여러 벌) · `docs`(사양서 PDF). 대상이 분명하면 하나만 지정, 벌 간 비교는 `-All`.
-- **구조 질의는 Serena.** 참조·호출 체인·상속·심볼 단위 편집은 Serena 의 find_symbol / find_referencing_symbols 를 쓴다. 레거시와 현재 프로젝트는 별도 Serena 프로젝트로 등록돼 있으니 대상 프로젝트를 먼저 활성화한다.
+- **구조 질의는 Serena.** 참조·호출 체인·상속·심볼 단위 편집은 Serena 의 find_symbol / find_referencing_symbols 를 쓴다. 레거시 각 벌과 현재 프로젝트가 별도 Serena 프로젝트로 등록돼 있다. 프로젝트를 고정하지 말고, 요청이 가리키는 쪽을 그때 활성화해서 쓰고 다음 요청이 다른 프로젝트면 다시 전환한다.
 - **레거시 사양 문서화는 legacy-spec-agent.** 레거시 코드의 동작을 문서로 남겨야 하면 legacy-spec-agent 를 실행한다. greplet 검색 결과를 그대로 사양으로 쓰지 않는다.
 - **경로·파일명·방금 편집한 파일은 Glob/Grep/Read.** greplet 인덱스는 커밋 훅 이후에 갱신되므로 작업 중 파일은 직접 읽는다.
 - **폴백.** greplet 서버가 꺼져 있거나 결과가 비면 그때만 폴더 스캔으로 내려간다. 서버 기동: `pwsh <GREPLET>/indexer/start-indexer.ps1` (Windows) / `bash <GREPLET>/indexer/start-indexer.sh`.

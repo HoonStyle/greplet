@@ -281,7 +281,7 @@ greplet 는 "어디에 무슨 내용이 있나"를 찾는 도구다. 다른 도�
 | 도구 | 준비 | 담당 |
 |---|---|---|
 | greplet | 레거시 각 벌·현재 프로젝트·문서를 워크스페이스로 분리해 인덱싱 (`code`, `code-legacy`, `docs`) | 내용 검색. "이 값 어디서 정의되나", "사양서에서 이 프로토콜 설명" |
-| Serena | 레거시 프로젝트별, 현재 프로젝트별로 각각 프로젝트 등록·심볼 인덱싱 | 구조 질의. 참조·호출 체인·상속, 심볼 단위 읽기와 편집 |
+| Serena | 레거시 각 벌과 현재 프로젝트를 모두 Serena 프로젝트로 등록해 두되 고정하지 않는다. 요청이 가리키는 프로젝트를 그때그때 활성화해 오간다 | 구조 질의. 참조·호출 체인·상속, 심볼 단위 읽기와 편집 |
 | legacy-spec-agent | Claude Code / Codex 플러그인 설치 | 레거시 코드에서 `path:line` 인용이 붙은 SPEC/ARCHITECTURE 문서 역생성, 코드 변경 후 drift 검사 |
 
 전형적인 흐름 ("레거시 기능을 현재 프로젝트로 옮기기"):
@@ -296,7 +296,7 @@ greplet 는 "어디에 무슨 내용이 있나"를 찾는 도구다. 다른 도�
 역할이 겹치는 지점에서의 선택 기준:
 
 - 파일 위치를 모른다 → greplet. 심볼 이름을 안다 → Serena 의 find_symbol.
-- 여러 레거시 벌에서 같은 기능이 어떻게 다른지 → greplet `-All` 로 한 번에 비교. Serena 는 한 프로젝트씩만 본다.
+- 여러 레거시 벌에서 같은 기능이 어떻게 다른지 → greplet `-All` 로 한 번에 비교. Serena 는 활성 프로젝트 하나만 보므로 벌마다 전환해야 한다.
 - 결과를 문서로 남겨야 한다 → legacy-spec-agent. greplet 출력은 근거 위치 찾기용이지 산출물이 아니다.
 
 규칙 파일 예시는 [`examples/claude-code-skill/CLAUDE.md.snippet`](examples/claude-code-skill/CLAUDE.md.snippet).
