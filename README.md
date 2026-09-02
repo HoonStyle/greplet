@@ -267,11 +267,39 @@ greplet 는 "어디에 무슨 내용이 있나"를 찾는 도구다. 다른 도�
 | 질문 | 도구 | 이유 |
 |---|---|---|
 | 이 기능이 어디 구현돼 있나, 문서에 어떻게 정의돼 있나 | **greplet** | 폴더째 grep/read 보다 빠르고 토큰을 훨씬 덜 쓴다 |
-| 이 메서드를 누가 호출하나, 상속·참조 체인 | **LSP 심볼 도구** | greplet 는 청크 텍스트만 알고 참조 관계는 모른다 |
+| 이 메서드를 누가 호출하나, 상속·참조 체인 | **LSP 심볼 도구** ([Serena](https://github.com/oraios/serena) 등) | greplet 는 청크 텍스트만 알고 참조 관계는 모른다 |
+| 문서 없는 레거시 코드의 사양을 인용 근거와 함께 문서화 | **[legacy-spec-agent](https://github.com/HoonStyle/legacy-spec-agent)** | greplet 는 찾기만 하고 해석·요약·검증은 하지 않는다 |
 | 파일명·경로 찾기, 방금 편집한 파일 확인 | **Glob / Grep / Read** | 인덱스가 아직 안 따라왔을 수 있다 |
 | 정확 문자열의 완전한 출현 목록 | **Grep** | 하이브리드는 topN 만 돌려준다. `fts` 로 후보를 좁힌 뒤 Grep 으로 확인 |
 
 에이전트 규칙 파일(CLAUDE.md 등)에 넣어 둘 원칙: 내용 검색은 greplet 먼저, 구조는 LSP, 경로는 Glob/Grep. greplet 결과가 비거나 서버가 꺼져 있을 때만 폴더 스캔으로 폴백.
+
+### greplet + Serena + legacy-spec-agent 조합
+
+레거시 코드 여러 벌과 현재 프로젝트, 사양서 PDF 가 뒤섞인 환경에서 검증된 조합이다. 세 도구는 서로를 호출하지 않는다. 에이전트가 각 도구의 결과를 받아 조합한다.
+
+| 도구 | 준비 | 담당 |
+|---|---|---|
+| greplet | 레거시 각 벌·현재 프로젝트·문서를 워크스페이스로 분리해 인덱싱 (`code`, `code-legacy`, `docs`) | 내용 검색. "이 값 어디서 정의되나", "사양서에서 이 프로토콜 설명" |
+| Serena | 레거시 프로젝트별, 현재 프로젝트별로 각각 프로젝트 등록·심볼 인덱싱 | 구조 질의. 참조·호출 체인·상속, 심볼 단위 읽기와 편집 |
+| legacy-spec-agent | Claude Code / Codex 플러그인 설치 | 레거시 코드에서 `path:line` 인용이 붙은 SPEC/ARCHITECTURE 문서 역생성, 코드 변경 후 drift 검사 |
+
+전형적인 흐름 ("레거시 기능을 현재 프로젝트로 옮기기"):
+
+1. **greplet** `-Workspace code-legacy` 로 기능·상수·에러코드가 있는 파일과 위치를 찾는다 (`-Mode fts` 로 정확 토큰).
+2. **Serena** 로 그 심볼의 참조·호출 체인을 따라가 실제 범위를 확정한다.
+3. **legacy-spec-agent** 로 그 범위의 사양 문서를 뽑는다. 인용이 없는 주장은 Unverified 로 남는다.
+4. **greplet** `-Workspace docs` 로 사양서 PDF 의 해당 정의를 대조한다.
+5. **greplet** `-Workspace code` 와 **Serena** 로 현재 프로젝트의 대응 위치를 찾아 반영한다.
+6. 커밋 훅이 greplet 증분 인덱스를 돌리므로 다음 검색부터 바뀐 코드가 반영된다.
+
+역할이 겹치는 지점에서의 선택 기준:
+
+- 파일 위치를 모른다 → greplet. 심볼 이름을 안다 → Serena 의 find_symbol.
+- 여러 레거시 벌에서 같은 기능이 어떻게 다른지 → greplet `-All` 로 한 번에 비교. Serena 는 한 프로젝트씩만 본다.
+- 결과를 문서로 남겨야 한다 → legacy-spec-agent. greplet 출력은 근거 위치 찾기용이지 산출물이 아니다.
+
+규칙 파일 예시는 [`examples/claude-code-skill/CLAUDE.md.snippet`](examples/claude-code-skill/CLAUDE.md.snippet).
 
 ## 청킹 규칙
 
