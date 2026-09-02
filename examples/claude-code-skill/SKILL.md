@@ -38,7 +38,25 @@ pwsh <GREPLET>/greplet.ps1 -Query "검색어" -Workspace docs -TopN 10
 pwsh <GREPLET>/greplet.ps1 -Query "0x0A03" -Mode fts
 ```
 
-`-Mode`: `hybrid`(기본, 벡터+FTS RRF 병합) · `vector`(의미 기반만) · `fts`(정확 토큰만, 임베딩 호출 없음).
+macOS/Linux 또는 pwsh 없는 환경에서는 동일한 CLI 를 `greplet.mjs` (Node, 크로스플랫폼)로 대신 쓴다:
+```bash
+# 기본 워크스페이스 검색
+node <GREPLET>/greplet.mjs "검색어"
+
+# 모든 워크스페이스 통합(코드+문서 동시), 점수순
+node <GREPLET>/greplet.mjs "검색어" --all
+
+# 청크 전문(스니펫 대신 전체)
+node <GREPLET>/greplet.mjs "검색어" --all --full
+
+# 결과 개수 조절
+node <GREPLET>/greplet.mjs "검색어" --workspace docs --top-n 10
+
+# 정확 토큰 검색(상수·에러 코드·메서드명 등 의미 검색이 약한 대상)
+node <GREPLET>/greplet.mjs "0x0A03" --mode fts
+```
+
+`-Mode` / `--mode`: `hybrid`(기본, 벡터+FTS RRF 병합) · `vector`(의미 기반만) · `fts`(정확 토큰만, 임베딩 호출 없음).
 
 워크스페이스 slug (`<GREPLET>/indexer/workspaces.json` 이 단일 소스):
 - `code` — 이 리포 소스 (기본값)
@@ -53,7 +71,7 @@ pwsh <GREPLET>/greplet.ps1 -Query "0x0A03" -Mode fts
 3. 더 필요하면 **그 파일만** Read/Grep 으로 열어 확인한다(전체 폴더 스캔 금지).
 
 ## 전제 / 폴백
-- 인덱서 서버가 `http://localhost:7802` 에 떠 있어야 한다(무인증, 로컬 전용). 안 떠 있으면 `pwsh <GREPLET>/indexer/start-indexer.ps1` 로 기동.
+- 인덱서 서버가 `http://localhost:7802` 에 떠 있어야 한다(무인증, 로컬 전용). 안 떠 있으면 `bash <GREPLET>/indexer/start-indexer.sh` (macOS/Linux) 또는 `pwsh <GREPLET>/indexer/start-indexer.ps1` (Windows) 로 기동.
 - 인덱서는 Ollama(`http://localhost:11434`, 모델 `bge-m3`)가 떠 있어야 임베딩할 수 있다(`-Mode fts` 는 Ollama 없이도 동작).
 - 서버가 없거나 결과가 비면(신규 파일이 아직 인덱싱 안 됐을 수 있음) → 그때만 Glob/Grep 으로 폴백한다.
 - 벡터 검색은 **의미 기반**이라 정확 일치를 보장하지 않는다. 완전성이 중요한 작업은 Grep 으로 교차 확인.

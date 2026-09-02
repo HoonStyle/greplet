@@ -20,7 +20,7 @@
 | Node | 22+ (개발 24.x) · `@lancedb/lancedb` 0.38 (win32-x64 네이티브) |
 | Ollama | `http://localhost:11434`, 모델 `bge-m3` (1024차원). `POST /api/embed` 배열 입력. 16건 × 1200자 배치 ≈ 340 ms |
 | .NET SDK | 8.0+ (Extractor 는 `net8.0`) |
-| PowerShell | 7+ (`greplet.ps1`, `start-indexer.ps1`) |
+| PowerShell | 7+ (`greplet.ps1`, `start-indexer.ps1`, Windows 전용). macOS/Linux 는 `greplet.mjs`, `indexer/start-indexer.sh` 사용 |
 | 문서 | PDF(암호 PDF 포함) · HTML · Markdown |
 
 ## 2. 구성 요소와 폴더
@@ -39,8 +39,10 @@ indexer/                   Node/TS 서비스 — 인덱싱·검색 API·정적 U
   public/index.html        관리 UI (단일 파일, vanilla JS)
   tests/incremental.mjs    증분 시나리오 검증
   workspaces.json          워크스페이스 정의 (§3) — 리포에는 workspaces.example.json 만
-  start-indexer.ps1        백그라운드 기동
-greplet.ps1 · greplet-shared.ps1        CLI 클라이언트 (§7)
+  start-indexer.ps1        백그라운드 기동(Windows)
+  start-indexer.sh          백그라운드 기동(macOS/Linux, start-indexer.ps1 동치)
+greplet.ps1 · greplet-shared.ps1        CLI 클라이언트, Windows (§7)
+greplet.mjs                             CLI 클라이언트, 모든 OS(Node) (§7)
 mcp-server/                             원격 MCP 서버, Bearer 인증 (§7)
 greplet-mcpb/                           로컬 stdio MCP 번들 (§7)
 git-hooks/post-commit                   커밋 후 증분 인덱스 트리거 (§7)
@@ -228,6 +230,7 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 
 - `npm run build` → `npm start`(`node dist/server.js`). 개발 시 `npm run dev`(tsx).
 - `start-indexer.ps1`: `GET /healthz` 200 이면 종료, 아니면 `Start-Process node dist/server.js -WindowStyle Hidden`, 로그 `logs/server.log`. healthz 를 최대 10초 폴링. 폴링 주소는 `127.0.0.1` 을 명시한다(`localhost` 는 .NET HttpClient 가 IPv6 를 먼저 시도해 수 초 지연될 수 있음).
+- `start-indexer.sh`: 동치 동작을 bash 로 구현(macOS/Linux). `GET /healthz` 200 이면 종료, 아니면 `nohup node dist/server.js` 백그라운드 기동 후 `127.0.0.1` healthz 를 최대 10초 폴링, 로그 `logs/server.log`.
 - 서버 기동 시 `GREPLET_EXTRACTOR` 경로 확인, 없으면 `dotnet build ../Extractor -c Release` 1회 시도.
 
 ## 6. 관리 UI (`public/index.html`)
@@ -239,6 +242,7 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 모두 인덱서 `/api/search` 1회 호출 + 동일한 포맷팅(점수순, `파일|선두 80자` 중복 제거, 300자 스니펫, `#rank  score x.xxxx  |  [ws] file :: symbol (Lstart-end)`, PDF 는 `:: p.N`).
 
 - `greplet.ps1`: `-Query -Workspace -All -TopN -Full -Mode -BaseUrl`. `-Workspace` 미지정 시 `GREPLET_DEFAULT_WORKSPACE` → `workspaces.json` 첫 항목.
+- `greplet.mjs`: Windows 를 포함한 모든 OS 에서 동작하는 Node CLI 동치물. `<query> -q -w --all --top-n --full --mode --base-url`. `-w` 미지정 시 `GREPLET_DEFAULT_WORKSPACE` → `workspaces.json` 첫 항목.
 - `mcp-server`: Streamable HTTP, stateless, Bearer 필수, `127.0.0.1:7801` 바인딩(외부 노출은 터널 경유). 툴 `greplet` · `greplet_workspaces`.
 - `greplet-mcpb`: stdio, 인증 없음(로컬). 같은 툴 2개. 워크스페이스 목록은 `GET /api/workspaces` 로 받아 온다(60초 캐시).
 - `git-hooks/post-commit`: `git config greplet.slug` 가 가리키는 워크스페이스에 `POST /api/index/:slug`. 서버 꺼져 있으면 조용히 스킵.

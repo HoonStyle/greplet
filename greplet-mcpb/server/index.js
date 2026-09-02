@@ -21,7 +21,7 @@ const WS_CACHE_TTL_MS = 60_000;
 let wsCache = null;
 
 function backendDownMessage(e) {
-  return `인덱서 서버(${BASE_URL}) 미가동 또는 요청 실패 — indexer/start-indexer.ps1 로 기동할 것. 상세: ${e instanceof Error ? e.message : String(e)}`;
+  return `인덱서 서버(${BASE_URL}) 미가동 또는 요청 실패 — indexer/start-indexer.sh(macOS/Linux) 또는 start-indexer.ps1(Windows) 로 기동할 것. 상세: ${e instanceof Error ? e.message : String(e)}`;
 }
 
 /** GET /api/workspaces — 60초 캐시 */

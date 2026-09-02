@@ -70,7 +70,7 @@ export async function fetchWorkspaces(cfg: BackendConfig): Promise<WorkspaceInfo
 
 function backendDownMessage(cfg: BackendConfig, e: unknown): string {
   return (
-    `인덱서 서버(${cfg.baseUrl}) 미가동 또는 요청 실패 — indexer/start-indexer.ps1 로 기동할 것. ` +
+    `인덱서 서버(${cfg.baseUrl}) 미가동 또는 요청 실패 — indexer/start-indexer.sh(macOS/Linux) 또는 start-indexer.ps1(Windows) 로 기동할 것. ` +
     `상세: ${e instanceof Error ? e.message : String(e)}`
   );
 }

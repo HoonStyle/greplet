@@ -33,6 +33,20 @@ npm run build
 npm start                             # → http://127.0.0.1:7801/mcp
 ```
 
+macOS / Linux 동치:
+
+```bash
+export MCP_AUTH_TOKEN=<클라이언트 Bearer 토큰>   # 필수 (미설정 시 기동 거부)
+# export GREPLET_BASE_URL=http://localhost:7802
+# export GREPLET_DEFAULT_WORKSPACE=<slug>
+# export PORT=7801
+
+bash ../indexer/start-indexer.sh      # 인덱서가 먼저 떠 있어야 한다
+npm install
+npm run build
+npm start                             # → http://127.0.0.1:7801/mcp
+```
+
 ## 검증
 
 ```powershell
@@ -41,6 +55,9 @@ node scripts/smoke.mjs http://127.0.0.1:7801/mcp $env:MCP_AUTH_TOKEN "재시도 
 
 # 같은 질의를 ps1 로 대조
 pwsh ../greplet.ps1 -Query "재시도 백오프 로직" -All
+
+# 같은 질의를 Node CLI(모든 OS) 로 대조
+node ../greplet.mjs "재시도 백오프 로직" --all
 ```
 
 ## 엔드포인트

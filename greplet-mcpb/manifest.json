@@ -34,7 +34,7 @@
     "base_url": {
       "type": "string",
       "title": "greplet 인덱서 Base URL",
-      "description": "greplet 인덱서 서버 주소. 같은 PC 에서 실행 시 기본값 유지(indexer/start-indexer.ps1 로 기동)",
+      "description": "greplet 인덱서 서버 주소. 같은 PC 에서 실행 시 기본값 유지(indexer/start-indexer.sh 또는 .ps1 로 기동)",
       "required": false,
       "default": "http://localhost:7802"
     },

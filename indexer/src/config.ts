@@ -3,10 +3,14 @@
 
   환경변수:
     GREPLET_PORT        기본 7802
-    GREPLET_DATA_DIR     기본 %LOCALAPPDATA%\greplet (리포 밖, 머신 로컬)
+    GREPLET_DATA_DIR     기본값 (리포 밖, 머신 로컬), OS별로 다름:
+                           Windows: %LOCALAPPDATA%\greplet
+                           macOS:   ~/Library/Application Support/greplet
+                           Linux:   $XDG_DATA_HOME/greplet (기본 ~/.local/share/greplet)
     OLLAMA_URL           기본 http://localhost:11434
     GREPLET_WORKSPACES   workspaces.json 경로, 기본 이 폴더의 workspaces.json
-    GREPLET_EXTRACTOR    Extractor 실행 파일 경로, 기본 ../Extractor/bin/Release/net8.0/Extractor.exe
+    GREPLET_EXTRACTOR    Extractor 실행 파일 경로, 기본 ../Extractor/bin/Release/net8.0/Extractor(.exe)
+                           (Windows: Extractor.exe, 그 외: Extractor)
 */
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -48,13 +52,23 @@ const DEFAULT_EXCLUDE_DIRS = ["bin", "obj", ".vs", ".vscode", ".git", "packages"
 const DEFAULT_EXCLUDE_FILES = ["*.Designer.cs", "AssemblyInfo.cs", "*.g.cs", "*.g.i.cs"];
 const DEFAULT_DOCS_EXT = [".pdf"];
 
+/** OS별 기본 데이터 디렉터리(§2)를 구한다. */
+export function defaultDataDir(): string {
+  if (process.platform === "win32") {
+    return path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local"), "greplet");
+  }
+  if (process.platform === "darwin") {
+    return path.join(os.homedir(), "Library", "Application Support", "greplet");
+  }
+  return path.join(process.env.XDG_DATA_HOME ?? path.join(os.homedir(), ".local", "share"), "greplet");
+}
+
 export function loadConfig(): AppConfig {
-  const dataDir =
-    process.env.GREPLET_DATA_DIR ??
-    path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), "AppData", "Local"), "greplet");
+  const dataDir = process.env.GREPLET_DATA_DIR ?? defaultDataDir();
 
   const extractorProjectDir = path.join(INDEXER_ROOT, "..", "Extractor");
-  const defaultExtractorPath = path.join(extractorProjectDir, "bin", "Release", "net8.0", "Extractor.exe");
+  const extractorExeName = process.platform === "win32" ? "Extractor.exe" : "Extractor";
+  const defaultExtractorPath = path.join(extractorProjectDir, "bin", "Release", "net8.0", extractorExeName);
 
   return {
     port: Number(process.env.GREPLET_PORT ?? 7802),
