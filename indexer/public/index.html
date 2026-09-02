@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>greplet 인덱서 관리</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --panel: #ffffff;
+    --border: #e2e2e6;
+    --text: #202124;
+    --muted: #6b6f76;
+    --accent: #2f5fd6;
+    --accent-bg: #eaf0ff;
+    --ok: #1a7f37;
+    --warn: #b26a00;
+    --err: #c22b2b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    font-size: 14px;
+  }
+  header {
+    padding: 12px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 16px; margin: 0; margin-right: 12px; }
+  .status-item { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; display: inline-block; }
+  .dot.ok { background: var(--ok); }
+  .dot.err { background: var(--err); }
+  main {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 16px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  section > h2 { font-size: 14px; margin: 0 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .ws-list { display: flex; flex-direction: column; gap: 8px; }
+  .ws-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .ws-card .info { flex: 1; min-width: 220px; }
+  .ws-card .slug { font-weight: 600; }
+  .ws-card .meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  button {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  button:hover { background: var(--accent-bg); }
+  button:disabled { opacity: .5; cursor: default; }
+  .spinner {
+    width: 12px; height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  input[type="text"], select, input[type="number"] {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .row label { color: var(--muted); font-size: 12px; }
+  #searchQuery { flex: 1; min-width: 240px; }
+  .hit {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .hit .hit-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+  .hit .hit-head .ws-tag { color: var(--accent); }
+  .hit .hit-body { margin-top: 6px; white-space: pre-wrap; font-family: Consolas, monospace; font-size: 12px; }
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .dropzone.drag { border-color: var(--accent); background: var(--accent-bg); }
+  .job-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .job-item {
+    display: flex; gap: 8px; align-items: center;
+    padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;
+  }
+  .job-item:hover { background: var(--accent-bg); }
+  .job-item.selected { background: var(--accent-bg); font-weight: 600; }
+  .job-item .state-done { color: var(--ok); }
+  .job-item .state-failed { color: var(--err); }
+  .job-item .state-running { color: var(--accent); }
+  #logPanel {
+    background: #0f1117;
+    color: #d7dae0;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 10px;
+    height: 240px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .checkbox-group label { display: flex; align-items: center; gap: 4px; color: var(--text); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>greplet 인덱서</h1>
+  <div class="status-item"><span class="dot" id="dotOllama"></span> Ollama <span id="ollamaLabel">확인 중</span></div>
+  <div class="status-item"><span class="dot" id="dotExtractor"></span> Extractor <span id="extractorLabel">확인 중</span></div>
+  <div class="status-item">DB: <span id="dbDirLabel" style="color:var(--text)">-</span></div>
+  <div class="status-item">큐: <span id="queueLabel" style="color:var(--text)">0</span></div>
+</header>
+
+<main>
+
+  <section id="section-workspaces">
+    <h2>워크스페이스</h2>
+    <div class="ws-list" id="wsList"></div>
+  </section>
+
+  <section id="section-upload">
+    <h2>업로드</h2>
+    <div class="row">
+      <label>워크스페이스</label>
+      <select id="uploadWs"></select>
+    </div>
+    <div class="dropzone" id="dropzone">
+      파일을 여기로 드래그하거나 클릭해 선택
+      <input type="file" id="fileInput" multiple style="display:none" />
+    </div>
+    <div id="uploadResult" style="margin-top:8px; color:var(--muted); font-size:12px;"></div>
+  </section>
+
+  <section id="section-search">
+    <h2>검색 테스트</h2>
+    <div class="row">
+      <input type="text" id="searchQuery" placeholder="검색어 입력..." />
+      <select id="searchMode">
+        <option value="hybrid">hybrid</option>
+        <option value="vector">vector</option>
+        <option value="fts">fts</option>
+      </select>
+      <label>topN</label>
+      <input type="number" id="searchTopN" value="6" min="1" max="20" style="width:60px" />
+      <button id="searchBtn">검색</button>
+    </div>
+    <div class="row">
+      <label>대상:</label>
+      <label><input type="checkbox" id="wsAll" checked /> 전체</label>
+      <div class="checkbox-group" id="wsCheckboxes"></div>
+    </div>
+    <div id="searchWarnings" style="color:var(--warn); font-size:12px; margin-bottom:8px;"></div>
+    <div id="searchResults"></div>
+  </section>
+
+  <section id="section-jobs">
+    <h2>진행 로그</h2>
+    <div class="job-list" id="jobList"></div>
+    <div id="logPanel"></div>
+  </section>
+
+</main>
+
+<script>
+"use strict";
+
+const $ = (sel) => document.querySelector(sel);
+
+// ---------- 상태 바 ----------
+async function refreshStatus() {
+  try {
+    const r = await fetch("/api/status");
+    const s = await r.json();
+    $("#dotOllama").className = "dot " + (s.ollama.ok && s.ollama.hasModel ? "ok" : "err");
+    $("#ollamaLabel").textContent = s.ollama.ok
+      ? (s.ollama.hasModel ? `연결됨 (${s.ollama.model})` : `모델 없음 (${s.ollama.model})`)
+      : "미가동";
+    $("#dotExtractor").className = "dot " + (s.extractor.ok ? "ok" : "err");
+    $("#extractorLabel").textContent = s.extractor.ok ? "준비됨" : "없음(dotnet run 폴백)";
+    $("#dbDirLabel").textContent = s.dbDir;
+    $("#queueLabel").textContent = s.queue.length;
+  } catch (e) {
+    $("#dotOllama").className = "dot err";
+    $("#dotExtractor").className = "dot err";
+    $("#ollamaLabel").textContent = "서버 연결 실패";
+  }
+}
+
+// ---------- 워크스페이스 카드 ----------
+let workspacesCache = [];
+
+function fmtDate(iso) {
+  if (!iso) return "인덱스 안 됨";
+  return new Date(iso).toLocaleString("ko-KR");
+}
+
+async function refreshWorkspaces() {
+  const r = await fetch("/api/workspaces");
+  const list = await r.json();
+  workspacesCache = list;
+
+  const wsList = $("#wsList");
+  wsList.innerHTML = "";
+  for (const ws of list) {
+    const card = document.createElement("div");
+    card.className = "ws-card";
+    card.innerHTML = `
+      <div class="info">
+        <div class="slug">${ws.slug} <span style="color:var(--muted); font-weight:400;">${ws.label}</span></div>
+        <div class="meta">${ws.kind} · 파일 ${ws.files}개 · 청크 ${ws.chunks}개 · 마지막 인덱스: ${fmtDate(ws.lastRun)}</div>
+        <div class="meta">${ws.roots.join(" , ")}</div>
+      </div>
+      ${ws.indexing ? '<span class="spinner"></span> <span style="color:var(--muted);font-size:12px;">인덱싱 중</span>' : ""}
+      <button data-slug="${ws.slug}" data-force="false" ${ws.indexing ? "disabled" : ""}>증분 인덱스</button>
+      <button data-slug="${ws.slug}" data-force="true" ${ws.indexing ? "disabled" : ""}>전체 재인덱스</button>
+    `;
+    wsList.appendChild(card);
+  }
+  wsList.querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const slug = btn.dataset.slug;
+      const force = btn.dataset.force === "true";
+      const r = await fetch(`/api/index/${encodeURIComponent(slug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ force }),
+      });
+      const data = await r.json();
+      await refreshWorkspaces();
+      await refreshJobs();
+      if (data.jobId) selectJob(data.jobId);
+    });
+  });
+
+  // 업로드/검색 선택 목록도 갱신
+  const uploadWs = $("#uploadWs");
+  const prevUpload = uploadWs.value;
+  uploadWs.innerHTML = list.map((w) => `<option value="${w.slug}">${w.slug}</option>`).join("");
+  if (prevUpload) uploadWs.value = prevUpload;
+
+  const wsCheckboxes = $("#wsCheckboxes");
+  wsCheckboxes.innerHTML = list
+    .map((w) => `<label><input type="checkbox" class="ws-cb" value="${w.slug}" /> ${w.slug}</label>`)
+    .join("");
+}
+
+// ---------- 업로드 ----------
+async function doUpload(files) {
+  if (!files || files.length === 0) return;
+  const slug = $("#uploadWs").value;
+  const form = new FormData();
+  for (const f of files) form.append("files", f);
+  $("#uploadResult").textContent = "업로드 중...";
+  try {
+    const r = await fetch(`/api/upload/${encodeURIComponent(slug)}`, { method: "POST", body: form });
+    const data = await r.json();
+    $("#uploadResult").textContent = `저장됨: ${data.saved.join(", ") || "(없음 — 허용 확장자 확인)"}  / jobId=${data.jobId}`;
+    await refreshWorkspaces();
+    await refreshJobs();
+    if (data.jobId) selectJob(data.jobId);
+  } catch (e) {
+    $("#uploadResult").textContent = "업로드 실패: " + e;
+  }
+}
+
+const dropzone = $("#dropzone");
+dropzone.addEventListener("click", () => $("#fileInput").click());
+$("#fileInput").addEventListener("change", (e) => doUpload(e.target.files));
+dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("drag"); });
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("drag"));
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("drag");
+  doUpload(e.dataTransfer.files);
+});
+
+// ---------- 검색 테스트 ----------
+function renderHit(h) {
+  const div = document.createElement("div");
+  div.className = "hit";
+  const loc = h.kind === "page" ? `p.${h.startLine}` : `L${h.startLine}-${h.endLine}`;
+  const snippet = h.text.replace(/\s+/g, " ").slice(0, 300);
+  div.innerHTML = `
+    <div class="hit-head">
+      <span><span class="ws-tag">[${h.workspace}]</span> ${h.file} :: ${h.symbol} (${loc})</span>
+      <span>score ${h.score.toFixed(4)}</span>
+    </div>
+    <div class="hit-body hit-snippet">${escapeHtml(snippet)}${h.text.length > 300 ? " ..." : ""}</div>
+  `;
+  let expanded = false;
+  div.addEventListener("click", () => {
+    expanded = !expanded;
+    div.querySelector(".hit-body").textContent = expanded ? h.text : snippet + (h.text.length > 300 ? " ..." : "");
+  });
+  return div;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+async function doSearch() {
+  const query = $("#searchQuery").value.trim();
+  if (!query) return;
+  const mode = $("#searchMode").value;
+  const topN = Number($("#searchTopN").value) || 6;
+  const all = $("#wsAll").checked;
+  const selected = Array.from(document.querySelectorAll(".ws-cb:checked")).map((cb) => cb.value);
+  const workspaces = all ? "all" : selected;
+
+  $("#searchResults").innerHTML = "검색 중...";
+  $("#searchWarnings").textContent = "";
+  try {
+    const r = await fetch("/api/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, workspaces, topN, mode }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || r.statusText);
+    $("#searchResults").innerHTML = "";
+    if (data.warnings && data.warnings.length) {
+      $("#searchWarnings").textContent = data.warnings.join(" · ");
+    }
+    if (data.hits.length === 0) {
+      $("#searchResults").textContent = "결과 없음";
+      return;
+    }
+    for (const h of data.hits) $("#searchResults").appendChild(renderHit(h));
+  } catch (e) {
+    $("#searchResults").textContent = "검색 실패: " + e.message;
+  }
+}
+$("#searchBtn").addEventListener("click", doSearch);
+$("#searchQuery").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+$("#wsAll").addEventListener("change", () => {
+  document.querySelectorAll(".ws-cb").forEach((cb) => (cb.disabled = $("#wsAll").checked));
+});
+
+// ---------- 진행 로그 ----------
+let currentEventSource = null;
+let selectedJobId = null;
+
+async function refreshJobs() {
+  const r = await fetch("/api/jobs");
+  const jobs = await r.json();
+  const jobList = $("#jobList");
+  jobList.innerHTML = "";
+  for (const j of jobs) {
+    const div = document.createElement("div");
+    div.className = "job-item" + (j.id === selectedJobId ? " selected" : "");
+    div.innerHTML = `<span class="state-${j.state}">${j.state}</span> <span>${j.slug}</span> <span style="color:var(--muted)">${j.id.slice(0, 8)}</span>`;
+    div.addEventListener("click", () => selectJob(j.id));
+    jobList.appendChild(div);
+  }
+}
+
+function selectJob(jobId) {
+  selectedJobId = jobId;
+  document.querySelectorAll(".job-item").forEach((el) => el.classList.remove("selected"));
+  refreshJobs();
+
+  if (currentEventSource) currentEventSource.close();
+  const panel = $("#logPanel");
+  panel.textContent = "";
+  currentEventSource = new EventSource(`/api/jobs/${jobId}/events`);
+  currentEventSource.onmessage = (ev) => {
+    const data = JSON.parse(ev.data);
+    panel.textContent += `[${data.ts}] ${data.level.toUpperCase()} ${data.msg}\n`;
+    panel.scrollTop = panel.scrollHeight;
+  };
+  currentEventSource.addEventListener("done", () => {
+    panel.textContent += "--- 완료 ---\n";
+    currentEventSource.close();
+    refreshWorkspaces();
+    refreshJobs();
+  });
+}
+
+// ---------- 초기화 ----------
+async function init() {
+  await refreshStatus();
+  await refreshWorkspaces();
+  await refreshJobs();
+  setInterval(refreshStatus, 5000);
+  setInterval(refreshWorkspaces, 5000);
+  setInterval(refreshJobs, 5000);
+}
+init();
+</script>
+
+</body>
+</html>

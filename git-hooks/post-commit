@@ -1,0 +1,26 @@
+#!/bin/sh
+# post-commit 훅 — 커밋 후 greplet 인덱서에 해당 워크스페이스 증분 인덱스를 트리거
+#
+# 동작:
+#   - 인덱서 서버에 증분 인덱스 요청만 던지고 즉시 반환한다.
+#     실제 스캔·해시 diff·삭제 반영·임베딩은 서버 쪽 잡 큐가 처리(락·rerun 로직도 서버가 담당).
+#   - 인덱서 서버가 꺼져 있으면 조용히 스킵.
+#
+# 설정(리포별로 git config 에 저장):
+#   git config greplet.slug <workspaces.json 의 slug>      # 필수 — 이 리포가 속한 워크스페이스
+#   git config greplet.baseUrl http://localhost:7802      # 선택 — 기본 http://localhost:7802
+#
+# 설치: 리포 루트에서
+#   cp <greplet>/git-hooks/post-commit .git/hooks/post-commit
+#   chmod +x .git/hooks/post-commit
+#
+# 인덱서가 안 떠 있으면: pwsh <greplet>/indexer/start-indexer.ps1
+
+SLUG=$(git config --get greplet.slug)
+[ -z "$SLUG" ] && exit 0
+BASE_URL=$(git config --get greplet.baseUrl)
+[ -z "$BASE_URL" ] && BASE_URL="http://localhost:7802"
+
+curl -s -o /dev/null -m 3 -X POST "$BASE_URL/api/index/$SLUG" -H 'Content-Type: application/json' -d '{}' || exit 0
+
+exit 0

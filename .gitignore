@@ -1,0 +1,16 @@
+# 빌드 산출물
+**/bin/
+**/obj/
+**/dist/
+**/node_modules/
+*.mcpb
+
+# 머신 로컬 설정·비밀
+indexer/workspaces.json
+**/.env
+**/logs/
+
+# 편집기
+.vs/
+.vscode/
+.idea/

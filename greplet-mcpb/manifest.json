@@ -1,0 +1,49 @@
+{
+  "manifest_version": "0.3",
+  "name": "greplet",
+  "display_name": "greplet",
+  "version": "0.4.0",
+  "description": "코드/문서 하이브리드 검색 — 자체 인덱서(Roslyn/PdfPig 청크 + Ollama bge-m3 + LanceDB 벡터+FTS RRF)에서 소스코드·PDF·문서 청크를 검색. 로컬 stdio, Claude Desktop/Cowork 브릿지용.",
+  "license": "MIT",
+  "author": {
+    "name": "hoonstyle"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "GREPLET_BASE_URL": "${user_config.base_url}",
+        "GREPLET_DEFAULT_WORKSPACE": "${user_config.default_workspace}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "greplet",
+      "description": "소스코드·문서 하이브리드 검색 (읽기 전용)"
+    },
+    {
+      "name": "greplet_workspaces",
+      "description": "인덱스된 워크스페이스 목록 (읽기 전용)"
+    }
+  ],
+  "user_config": {
+    "base_url": {
+      "type": "string",
+      "title": "greplet 인덱서 Base URL",
+      "description": "greplet 인덱서 서버 주소. 같은 PC 에서 실행 시 기본값 유지(indexer/start-indexer.ps1 로 기동)",
+      "required": false,
+      "default": "http://localhost:7802"
+    },
+    "default_workspace": {
+      "type": "string",
+      "title": "기본 워크스페이스 slug",
+      "description": "workspace 를 지정하지 않았을 때 검색할 워크스페이스. 비워두면 서버에 정의된 첫 워크스페이스.",
+      "required": false,
+      "default": ""
+    }
+  }
+}

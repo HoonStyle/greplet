@@ -1,0 +1,16 @@
+{
+  "name": "greplet-mcpb",
+  "version": "0.4.0",
+  "private": true,
+  "license": "MIT",
+  "description": "greplet 로컬 stdio MCP 서버 (.mcpb 번들). Claude Desktop/Cowork 확장 설치용.",
+  "type": "module",
+  "scripts": {
+    "smoke": "node scripts/smoke-stdio.mjs",
+    "pack": "npx @anthropic-ai/mcpb pack . greplet.mcpb"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.16.0",
+    "zod": "^3.24.1"
+  }
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "slug": "code",
+    "label": "내 솔루션",
+    "kind": "code",
+    "roots": [
+      "C:\\work\\my-solution"
+    ]
+  },
+  {
+    "slug": "code-legacy",
+    "label": "레거시 소스 (리포 밖)",
+    "kind": "code",
+    "roots": [
+      "C:\\work\\legacy-v1",
+      "C:\\work\\legacy-v2"
+    ],
+    "excludeDirs": [
+      "bin",
+      "obj",
+      ".vs",
+      ".git",
+      "packages",
+      "node_modules",
+      "ThirdParty"
+    ]
+  },
+  {
+    "slug": "docs",
+    "label": "사양서·매뉴얼·설계 문서",
+    "kind": "docs",
+    "roots": [
+      "C:\\work\\specs",
+      "C:\\work\\my-solution\\Doc"
+    ],
+    "pdfPasswordFile": "C:\\work\\specs\\passwords.txt",
+    "includeExt": [
+      ".pdf",
+      ".html",
+      ".htm",
+      ".md"
+    ],
+    "excludeDirs": [
+      "archive"
+    ]
+  }
+]
