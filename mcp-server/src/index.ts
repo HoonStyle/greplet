@@ -42,6 +42,7 @@ function buildMcpServer(): McpServer {
         '"코드에서 ~찾아줘", "문서에 ~어떻게 정의됐어", "~구현이 어디 있어" 같은 내용 조회에 사용. ' +
         "읽기 전용. mode=fts 로 상수·메서드명 등 정확 토큰 검색이 가능하다. " +
         "워크스페이스 목록은 greplet_workspaces 툴로 확인.",
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       inputSchema: {
         query: z.string().min(1).describe("검색어 (자연어/키워드)"),
         workspace: z
@@ -85,6 +86,7 @@ function buildMcpServer(): McpServer {
     {
       title: "greplet 워크스페이스 목록",
       description: "인덱서에 정의된 워크스페이스(slug·종류·파일 수·청크 수·마지막 인덱스 시각)를 나열한다. 읽기 전용.",
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       inputSchema: {},
     },
     async () => {
