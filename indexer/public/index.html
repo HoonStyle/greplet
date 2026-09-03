@@ -4,27 +4,29 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>greplet 인덱서 관리</title>
+<link rel="stylesheet" href="/live.css" />
 <style>
   :root {
-    --bg: #f4f5f7;
-    --panel: #ffffff;
-    --panel-2: #f8f9fb;
-    --border: #e3e5ea;
-    --border-strong: #cfd3da;
-    --text: #1c1f24;
-    --muted: #697180;
-    --faint: #9aa1ad;
-    --accent: #2f5fd6;
-    --accent-hover: #244cb0;
-    --accent-bg: #edf2ff;
-    --ok: #1a7f37;  --ok-bg: #e6f4ea;
-    --warn: #9a5b00; --warn-bg: #fff4e0;
-    --err: #c22b2b;  --err-bg: #fdecec;
-    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    --bg: #0F172A;
+    --panel: #1B2336;
+    --panel-2: #272F42;
+    --border: #334155;
+    --border-strong: #475569;
+    --text: #F8FAFC;
+    --muted: #94A3B8;
+    --faint: #64748B;
+    --accent: #22C55E;
+    --accent-hover: #16A34A;
+    --accent-bg: rgba(34, 197, 94, .12);
+    --ok: #22C55E;  --ok-bg: rgba(34, 197, 94, .12);
+    --warn: #F59E0B; --warn-bg: rgba(245, 158, 11, .14);
+    --err: #EF4444;  --err-bg: rgba(239, 68, 68, .14);
+    /* Offline first. IBM Plex Sans / JetBrains Mono may be installed locally. */
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
     --radius: 10px;
     --radius-sm: 6px;
-    --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .06);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4);
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -48,7 +50,7 @@
     display: flex; align-items: center; gap: 16px;
   }
   header h1 { font-size: 15px; font-weight: 650; margin: 0; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
-  header h1 .logo { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; display: inline-grid; place-items: center; font-family: var(--mono); }
+  header h1 .logo { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); color: var(--bg); font-size: 12px; font-weight: 700; display: inline-grid; place-items: center; font-family: var(--mono); }
   .status-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .status-item {
     display: inline-flex; align-items: center; gap: 6px;
@@ -108,7 +110,7 @@
   }
   button:hover { background: var(--panel-2); border-color: var(--faint); }
   button:disabled { opacity: .45; cursor: default; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
   button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
   button.small { padding: 4px 9px; font-size: 12px; }
   input[type="text"], select, input[type="number"] {
@@ -197,7 +199,7 @@
     cursor: pointer;
     transition: border-color .12s, background .12s;
   }
-  .hit:hover { border-color: var(--faint); }
+  .hit:hover { border-color: var(--faint); background: var(--panel-2); }
   .hit .hit-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); align-items: baseline; }
   .hit .hit-head .loc { font-family: var(--mono); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .hit .hit-head .rank { color: var(--faint); margin-right: 6px; }
@@ -228,8 +230,8 @@
   .job-item .state-running { background: var(--accent-bg); color: var(--accent); }
   .job-item .state-queued  { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
   #logPanel {
-    background: #0f1117;
-    color: #d7dae0;
+    background: var(--bg);
+    color: var(--text);
     font-family: var(--mono);
     font-size: 12px;
     line-height: 1.5;
@@ -240,7 +242,7 @@
     white-space: pre-wrap;
     word-break: break-all;
   }
-  #logPanel:empty::before { content: "잡을 선택하면 로그가 여기에 흐릅니다"; color: #5c6270; }
+  #logPanel:empty::before { content: "잡을 선택하면 로그가 여기에 흐릅니다"; color: var(--faint); }
 </style>
 </head>
 <body>
@@ -254,6 +256,128 @@
   </div>
   <div class="header-right" title="데이터 디렉터리">DB <span id="dbDirLabel">-</span></div>
 </header>
+
+<section id="section-live" class="live" aria-labelledby="liveTitle">
+  <svg style="display:none" aria-hidden="true">
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l2.2-6 4.1 12 2.3-6H21" /></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z" /></symbol>
+    <symbol id="i-request" viewBox="0 0 24 24"><path d="M4 12h13M13 7l5 5-5 5" /></symbol>
+    <symbol id="i-cache" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" /></symbol>
+    <symbol id="i-embed" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="m8 11 8-4M8 13l8 4" /></symbol>
+    <symbol id="i-vector" viewBox="0 0 24 24"><path d="M5 19 19 5M12 5h7v7M5 5v14h14" /></symbol>
+    <symbol id="i-fts" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 5 5M8 9h5M8 12h3" /></symbol>
+    <symbol id="i-merge" viewBox="0 0 24 24"><path d="M5 5h3c3 0 4 2 4 4v6c0 2 1 4 4 4h3M5 19h3c2 0 4-2 4-4V9c0-2 2-4 4-4h3" /></symbol>
+    <symbol id="i-result" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 9l2 2 4-4M8 15h8" /></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4M7 12h10" /></symbol>
+    <symbol id="i-extract" viewBox="0 0 24 24"><path d="M5 4h14v6H5zM7 14h10M7 18h7M12 10v4" /></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M5 5h14v14H5zM8 5v5h8V5M8 19v-5h8v5" /></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 9v5M12 17h.01" /></symbol>
+    <symbol id="i-error" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6" /></symbol>
+  </svg>
+
+  <div class="live-head">
+    <div class="live-title-group">
+      <span class="live-mark" aria-hidden="true"><svg><use href="#i-activity" /></svg></span>
+      <div>
+        <h2 id="liveTitle">Live Pipeline</h2>
+        <p>검색과 인덱싱이 흐르는 경로를 실시간으로 추적합니다.</p>
+      </div>
+    </div>
+    <div class="live-controls">
+      <span class="live-connection" id="liveConnection"><span class="connection-dot"></span><span id="liveConnectionText">재연결 중 0s</span></span>
+      <span class="live-active">활성 검색 <strong id="liveActiveCount">0</strong></span>
+      <button type="button" id="livePause" class="live-pause" aria-pressed="false">
+        <svg aria-hidden="true"><use href="#i-pause" /></svg><span>Pause</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="live-overview">
+    <div class="live-flow-column">
+      <div class="live-block search-flow-block">
+        <div class="live-block-head"><h3>검색 파이프</h3><span>실시간 요청 경로</span></div>
+        <div class="pipeline search-pipeline" id="searchPipeline" aria-label="검색 파이프라인">
+          <div class="node" data-search-node="request"><svg aria-hidden="true"><use href="#i-request" /></svg><span>요청</span><b class="node-count" hidden>0</b></div>
+          <span class="edge" data-search-edge="request:cache" aria-hidden="true"></span>
+          <div class="node" data-search-node="cache"><svg aria-hidden="true"><use href="#i-cache" /></svg><span>캐시</span><b class="node-count" hidden>0</b></div>
+          <span class="edge" data-search-edge="cache:embed" aria-hidden="true"></span>
+          <div class="node" data-search-node="embed"><svg aria-hidden="true"><use href="#i-embed" /></svg><span>임베딩</span><b class="node-count" hidden>0</b></div>
+          <span class="edge" data-search-edge="embed:vector" aria-hidden="true"></span>
+          <div class="node" data-search-node="vector"><svg aria-hidden="true"><use href="#i-vector" /></svg><span>벡터</span><b class="node-count" hidden>0</b></div>
+          <span class="edge" data-search-edge="vector:fts" aria-hidden="true"></span>
+          <div class="node" data-search-node="fts"><svg aria-hidden="true"><use href="#i-fts" /></svg><span>FTS</span><b class="node-count" hidden>0</b></div>
+          <span class="edge" data-search-edge="fts:rerank" aria-hidden="true"></span>
+          <div class="node" data-search-node="rerank"><svg aria-hidden="true"><use href="#i-merge" /></svg><span>RRF</span><b class="node-count" hidden>0</b></div>
+          <span class="edge" data-search-edge="rerank:result" aria-hidden="true"></span>
+          <div class="node" data-search-node="result"><svg aria-hidden="true"><use href="#i-result" /></svg><span>결과</span><b class="node-count" hidden>0</b></div>
+        </div>
+      </div>
+
+      <div class="live-block lane-block">
+        <div class="live-block-head"><h3>요청 레인</h3><span>진행 중 · 직전 검색</span></div>
+        <div id="liveLanes" class="lane-list" aria-label="검색 요청 레인">
+          <p class="live-empty">검색 요청을 기다리는 중</p>
+        </div>
+      </div>
+    </div>
+
+    <aside class="live-telemetry" aria-label="검색 지표">
+      <div class="kpi-grid">
+        <div class="kpi"><span>총 호출</span><strong id="kpiTotal">—</strong></div>
+        <div class="kpi"><span>평균 ms</span><strong id="kpiAvg">—</strong></div>
+        <div class="kpi"><span>캐시 히트율</span><strong id="kpiCache">—</strong></div>
+        <div class="kpi"><span>1분 QPS</span><strong id="kpiQps">—</strong></div>
+      </div>
+      <div class="spark-list">
+        <div class="spark">
+          <div><span>호출수</span><strong id="sparkCallsValue">0회 / 10초</strong></div>
+          <svg viewBox="0 0 160 36" preserveAspectRatio="none" role="img" aria-label="최근 5분 10초당 호출수"><polyline id="sparkCalls" points="0,34 160,34" /></svg>
+        </div>
+        <div class="spark">
+          <div><span>평균 응답</span><strong id="sparkMsValue">0 ms</strong></div>
+          <svg viewBox="0 0 160 36" preserveAspectRatio="none" role="img" aria-label="최근 5분 10초당 평균 응답 시간"><polyline id="sparkMs" points="0,34 160,34" /></svg>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="live-block index-flow-block">
+    <div class="live-block-head">
+      <h3>인덱스 파이프</h3>
+      <span id="indexState" class="index-state">대기 중</span>
+    </div>
+    <div class="pipeline index-pipeline" id="indexPipeline" aria-label="인덱스 파이프라인">
+      <div class="node" data-index-node="scan"><svg aria-hidden="true"><use href="#i-scan" /></svg><span>스캔</span></div>
+      <span class="edge" data-index-edge="scan:extract" aria-hidden="true"></span>
+      <div class="node" data-index-node="extract"><svg aria-hidden="true"><use href="#i-extract" /></svg><span>추출</span></div>
+      <span class="edge" data-index-edge="extract:embed" aria-hidden="true"></span>
+      <div class="node" data-index-node="embed"><svg aria-hidden="true"><use href="#i-embed" /></svg><span>임베딩</span></div>
+      <span class="edge" data-index-edge="embed:store" aria-hidden="true"></span>
+      <div class="node" data-index-node="store"><svg aria-hidden="true"><use href="#i-store" /></svg><span>저장</span></div>
+      <span class="edge" data-index-edge="store:fts" aria-hidden="true"></span>
+      <div class="node" data-index-node="fts"><svg aria-hidden="true"><use href="#i-fts" /></svg><span>FTS</span></div>
+    </div>
+    <div class="index-progress" id="indexProgressWrap" hidden>
+      <span id="indexProgressStage">임베딩</span>
+      <progress id="indexProgress" value="0" max="1" aria-labelledby="indexProgressStage">0 / 1</progress>
+      <strong id="indexProgressText">0 / 0</strong>
+    </div>
+  </div>
+
+  <div class="live-block feed-block">
+    <div class="live-block-head"><h3 id="activityFeedTitle">활동 피드</h3><span>최근 50건</span></div>
+    <div class="feed-scroll">
+      <table class="activity-table" aria-labelledby="activityFeedTitle">
+        <thead><tr><th>시각</th><th>클라이언트</th><th>쿼리</th><th>모드</th><th>워크스페이스</th><th class="num">hits</th><th class="num">ms</th><th>상태</th></tr></thead>
+        <tbody id="activityFeed"><tr class="feed-placeholder"><td colspan="8">아직 완료된 검색이 없습니다.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <p id="liveStatus" role="status" aria-atomic="true" class="sr-only"></p>
+</section>
 
 <main>
 
@@ -354,6 +478,7 @@ async function refreshStatus() {
 
 // ---------- 워크스페이스 카드 ----------
 let workspacesCache = [];
+let jobsCache = [];
 
 function fmtDate(iso) {
   if (!iso) return "인덱스 안 됨";
@@ -375,6 +500,15 @@ async function refreshWorkspaces() {
   const list = await r.json();
   workspacesCache = list;
 
+  if (list.some((ws) => ws.indexing) && jobsCache.length === 0) {
+    try {
+      const jobsResponse = await fetch("/api/jobs");
+      jobsCache = await jobsResponse.json();
+    } catch (_) {
+      // 기존 폴링이 다음 주기에 다시 시도한다.
+    }
+  }
+
   $("#wsCount").textContent = list.length ? `${list.length}개` : "";
   const wsList = $("#wsList");
   wsList.innerHTML = "";
@@ -382,6 +516,12 @@ async function refreshWorkspaces() {
     wsList.innerHTML = '<div class="empty">워크스페이스 없음 — indexer/workspaces.json 을 확인하세요</div>';
   }
   for (const ws of list) {
+    const runningJob = jobsCache.find((job) => job.slug === ws.slug && job.state === "running");
+    const stageLabels = { check: "스캔", scan: "스캔", delete: "추출", extract: "추출", embed: "임베딩", store: "저장", manifest: "저장", fts: "FTS", optimize: "FTS" };
+    const stageLabel = runningJob && runningJob.stage ? stageLabels[runningJob.stage] || runningJob.stage : "인덱싱 중";
+    const progressLabel = runningJob && runningJob.progress && Number(runningJob.progress.total) > 0
+      ? ` ${fmtNum(runningJob.progress.done)} / ${fmtNum(runningJob.progress.total)}`
+      : "";
     const card = document.createElement("div");
     card.className = "ws-card";
     card.innerHTML = `
@@ -396,7 +536,7 @@ async function refreshWorkspaces() {
         <div class="meta path" title="${escapeHtml(ws.roots.join("\n"))}">${escapeHtml(ws.roots.join("  ·  "))}</div>
       </div>
       <div class="actions">
-        ${ws.indexing ? '<span class="indexing"><span class="spinner"></span>인덱싱 중</span>' : ""}
+        ${ws.indexing ? `<span class="indexing"><span class="spinner"></span>${escapeHtml(stageLabel + progressLabel)}</span>` : ""}
         <button class="small" data-slug="${escapeHtml(ws.slug)}" data-force="false" ${ws.indexing ? "disabled" : ""}>증분 인덱스</button>
         <button class="small" data-slug="${escapeHtml(ws.slug)}" data-force="true" ${ws.indexing ? "disabled" : ""}>전체 재인덱스</button>
       </div>
@@ -519,7 +659,7 @@ async function doSearch() {
   try {
     const r = await fetch("/api/search", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Greplet-Client": "ui" },
       body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     });
     const data = await r.json();
@@ -557,6 +697,7 @@ let selectedJobId = null;
 async function refreshJobs() {
   const r = await fetch("/api/jobs");
   const jobs = await r.json();
+  jobsCache = jobs;
   const jobList = $("#jobList");
   jobList.innerHTML = "";
   for (const j of jobs) {
@@ -610,11 +751,16 @@ async function init() {
     doSearch();
   }
   setInterval(refreshStatus, 5000);
-  setInterval(refreshWorkspaces, 5000);
-  setInterval(refreshJobs, 5000);
+  setInterval(async () => {
+    await refreshJobs();
+    await refreshWorkspaces();
+  }, 5000);
 }
 init();
+window.grepletUI = { refreshWorkspaces, refreshJobs, selectJob, escapeHtml };
 </script>
+
+<script src="/live.js" defer></script>
 
 </body>
 </html>

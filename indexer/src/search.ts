@@ -1,11 +1,14 @@
 /*
   search.ts — hybrid/vector/fts 검색(§5.3). LanceDB API 형태는 §5.4 프로브로 검증된 것을 그대로 쓴다.
 */
+import { randomUUID } from "node:crypto";
+import { performance } from "node:perf_hooks";
 import { rerankers } from "@lancedb/lancedb";
 import type { AppConfig, WorkspaceConfig } from "./config.js";
 import { openOrCreateTable, tableExists, manifestPathFor } from "./db.js";
 import { embedQuery } from "./embed.js";
 import { loadManifest } from "./scan.js";
+import { emitActivity, type ClientId } from "./activity.js";
 
 export type SearchMode = "hybrid" | "vector" | "fts";
 
@@ -31,6 +34,8 @@ export interface SearchResponse {
 export interface SearchOptions {
   // 결과를 파일 상대경로 글롭으로 거른다. `*` 는 세그먼트 안, `**` 는 깊이 무관. 예: "Lib/**" + "/*.cs"
   fileGlob?: string;
+  // 활동 이벤트 태깅용 클라이언트 식별자. 캐시 키에는 포함하지 않는다.
+  client?: ClientId;
 }
 
 /** 파일 글롭 → 정규식. scan.ts 의 파일명 글롭과 달리 경로 전체를 대상으로 하며 `**` 를 지원한다. */
@@ -110,7 +115,14 @@ async function searchOneWorkspace(
   mode: SearchMode,
   warnings: string[],
   fileRe: RegExp | null,
+  searchId: string,
 ): Promise<SearchHit[]> {
+  const stage = (
+    s: "cache" | "embed" | "vector" | "fts" | "rerank" | "glob" | "sort",
+    status: "enter" | "fallback" | "skip",
+    note?: string,
+  ) => emitActivity({ type: "search.stage", id: searchId, workspace: ws.slug, stage: s, status, ...(note !== undefined ? { note } : {}) });
+
   const exists = await tableExists(cfg, ws);
   if (!exists) return [];
 
@@ -118,7 +130,11 @@ async function searchOneWorkspace(
   let effectiveMode = mode;
   // 글롭 필터는 검색 후 적용하므로 후보를 더 뽑는다
   const limit = fileRe ? topN * GLOB_POOL_FACTOR : topN;
-  const applyGlob = (hits: SearchHit[]) => (fileRe ? hits.filter((h) => fileRe.test(h.file)).slice(0, topN) : hits);
+  const applyGlob = (hits: SearchHit[]) => {
+    if (!fileRe) return hits;
+    stage("glob", "enter");
+    return hits.filter((h) => fileRe.test(h.file)).slice(0, topN);
+  };
 
   // 임베딩 없는(구버전 매니페스트는 있음으로 간주) 워크스페이스는 hybrid/vector 를 fts 로 강등한다.
   // 영벡터에 cosine 을 적용하면 NaN 이 나오므로 이 강등이 유일한 보호막이다.
@@ -126,22 +142,28 @@ async function searchOneWorkspace(
     const manifest = loadManifest(manifestPathFor(cfg, ws.slug));
     if (manifest.embeddings === "none") {
       warnings.push(`[${ws.slug}] 임베딩 없음 → fts 로 강등`);
+      stage("embed", "skip");
       effectiveMode = "fts";
     }
   }
 
   try {
     if (effectiveMode === "fts") {
+      stage("fts", "enter");
       const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
       return applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0))));
     }
 
     let qvec: number[];
     try {
+      stage("embed", "enter");
       qvec = await embedQuery(cfg, query);
     } catch (embedErr) {
       // 질의 임베딩 실패(Ollama 미가동 등) 시 fts 로 폴백해 결과가 비지 않게 한다.
-      warnings.push(`[${ws.slug}] 질의 임베딩 실패 → fts 로 폴백: ${errMsg(embedErr)}`);
+      const msg = errMsg(embedErr);
+      warnings.push(`[${ws.slug}] 질의 임베딩 실패 → fts 로 폴백: ${msg}`);
+      stage("embed", "fallback", msg.slice(0, 80));
+      stage("fts", "enter");
       const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
       return applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0))));
     }
@@ -151,23 +173,32 @@ async function searchOneWorkspace(
       try {
         // limit 은 벡터·FTS 하위 질의 각각에 걸린다. topN 만 주면 두 목록이 거의 겹치지 않아 RRF 점수가
         // 전부 1/(60+rank) 동점이 되고 순위가 사실상 무작위가 된다 → 후보를 넉넉히 뽑아 융합한 뒤 topN 만 남긴다.
+        stage("vector", "enter");
+        stage("fts", "enter");
+        stage("rerank", "enter");
         const rr = await rerankers.RRFReranker.create();
         const poolSize = Math.max(limit * 10, HYBRID_MIN_POOL);
         const rows = await q.fullTextSearch(query).rerank(rr).select(SELECT_COLS).limit(poolSize).toArray();
         return applyGlob(rows.slice(0, limit).map((r: any) => toHit(ws.slug, r, Number(r._relevance_score ?? 0))));
       } catch (ftsErr) {
         // FTS 구문 오류 등 → vector 로 폴백(§5.3)
-        warnings.push(`[${ws.slug}] hybrid 검색 실패 → vector 로 폴백: ${errMsg(ftsErr)}`);
+        const msg = errMsg(ftsErr);
+        warnings.push(`[${ws.slug}] hybrid 검색 실패 → vector 로 폴백: ${msg}`);
+        stage("rerank", "fallback", msg.slice(0, 80));
         effectiveMode = "vector";
       }
     }
 
     try {
+      if (effectiveMode === "vector") stage("vector", "enter");
       const rows = await table.query().nearestTo(qvec).distanceType("cosine").select(SELECT_COLS).limit(limit).toArray();
       return applyGlob(rows.map((r: any) => toHit(ws.slug, r, 1 - Number(r._distance ?? 0))));
     } catch (vecErr) {
       // Ollama 가 잡 중간에 죽는 등 vector 경로 실패 시 fts 로 폴백해 결과가 비지 않게 한다.
-      warnings.push(`[${ws.slug}] vector 검색 실패 → fts 로 폴백: ${errMsg(vecErr)}`);
+      const msg = errMsg(vecErr);
+      warnings.push(`[${ws.slug}] vector 검색 실패 → fts 로 폴백: ${msg}`);
+      stage("vector", "fallback", msg.slice(0, 80));
+      stage("fts", "enter");
       const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
       return applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0))));
     }
@@ -203,16 +234,74 @@ export async function search(
   mode: SearchMode,
   opts: SearchOptions = {},
 ): Promise<SearchResponse> {
-  const key = cacheKey(cfg, workspaces, query, topN, mode, opts);
-  const cached = cacheGet(key);
-  if (cached) return { ...cached, cached: true };
+  const id = randomUUID();
+  const t0 = performance.now();
+  const client: ClientId = opts.client ?? "unknown";
 
-  const fileRe = opts.fileGlob ? fileGlobToRegex(opts.fileGlob) : null;
-  const warnings: string[] = [];
-  const perWs = await Promise.all(workspaces.map((ws) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe)));
-  const hits = perWs.flat().sort((a, b) => b.score - a.score);
-  const result: SearchResponse = { hits, mode, warnings };
-  // 경고(폴백·실패)가 있는 응답은 일시적일 수 있으니 캐시하지 않는다
-  if (warnings.length === 0) cacheSet(key, result);
-  return result;
+  emitActivity({
+    type: "search.start",
+    id,
+    client,
+    query,
+    workspaces: workspaces.map((ws) => ws.slug),
+    mode,
+    topN,
+    ...(opts.fileGlob !== undefined ? { fileGlob: opts.fileGlob } : {}),
+  });
+
+  try {
+    const key = cacheKey(cfg, workspaces, query, topN, mode, opts);
+    const cached = cacheGet(key);
+    if (cached) {
+      emitActivity({ type: "search.stage", id, workspace: "*", stage: "cache", status: "enter" });
+      emitActivity({
+        type: "search.done",
+        id,
+        client,
+        hits: cached.hits.length,
+        ms: Math.round(performance.now() - t0),
+        cached: true,
+        mode: cached.mode,
+        warnings: cached.warnings.length,
+      });
+      return { ...cached, cached: true };
+    }
+    emitActivity({ type: "search.stage", id, workspace: "*", stage: "cache", status: "skip" });
+
+    const fileRe = opts.fileGlob ? fileGlobToRegex(opts.fileGlob) : null;
+    const warnings: string[] = [];
+    const perWs = await Promise.all(
+      workspaces.map((ws) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, id)),
+    );
+    emitActivity({ type: "search.stage", id, workspace: "*", stage: "sort", status: "enter" });
+    const hits = perWs.flat().sort((a, b) => b.score - a.score);
+    const result: SearchResponse = { hits, mode, warnings };
+    // 경고(폴백·실패)가 있는 응답은 일시적일 수 있으니 캐시하지 않는다
+    if (warnings.length === 0) cacheSet(key, result);
+
+    emitActivity({
+      type: "search.done",
+      id,
+      client,
+      hits: hits.length,
+      ms: Math.round(performance.now() - t0),
+      cached: false,
+      mode,
+      warnings: warnings.length,
+    });
+    return result;
+  } catch (err) {
+    emitActivity({
+      type: "search.done",
+      id,
+      client,
+      hits: 0,
+      ms: Math.round(performance.now() - t0),
+      cached: false,
+      mode,
+      warnings: 0,
+      error: errMsg(err),
+    });
+    throw err;
+  }
 }

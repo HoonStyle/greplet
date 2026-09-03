@@ -47,6 +47,9 @@ jobs:
       - name: Indexer incremental test (fts-only path)
         run: npm run test:incremental
         working-directory: indexer
+      - name: Indexer activity event test (fts-only path)
+        run: npm run test:activity
+        working-directory: indexer
 
       # Remote MCP server: build only (smoke needs a running indexer + token)
       - name: mcp-server install + build

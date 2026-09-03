@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added
+- 관리 UI 의 Live Pipeline: 검색·인덱싱 파이프라인, 요청 레인, KPI·스파크라인, 클라이언트별 활동 피드를 실시간으로 표시.
+- `/api/events` SSE, `/api/activity` 요약 API, 검색·인덱싱 활동 이벤트와 `JobRecord.stage`·`progress`.
+- `X-Greplet-Client` 및 `GREPLET_CLIENT_NAME` 기반 클라이언트별 활동 기록과 `GREPLET_ACTIVITY_QUERY=hidden` 질의 비공개 옵션.
+
+### Changed
+- 관리 UI 를 다크 테마와 `public/live.js`·`live.css` 분리 구조로 개편하고 5초 폴링과 SSE를 병행한다.
+- `scripts/screenshot.sh` 를 Google Chrome 헤드리스 대신 Python Playwright 캡처로 변경하고 실시간 모의 트래픽을 포함한다.
+
 ## [0.6.0] - 2026-09-03
 
 ### Added

@@ -30,10 +30,12 @@ args = ["<GREPLET>/greplet-mcpb/server/index.js"]
 [mcp_servers.greplet.env]
 GREPLET_BASE_URL = "http://localhost:7802"
 GREPLET_DEFAULT_WORKSPACE = ""
+GREPLET_CLIENT_NAME = "mcp:codex"
 ```
 
 - `GREPLET_BASE_URL`: 인덱서 주소. 같은 PC 에서 기본값(`http://localhost:7802`)을 그대로 쓰면 된다.
 - `GREPLET_DEFAULT_WORKSPACE`: workspace 를 지정하지 않았을 때 검색할 기본 워크스페이스 slug. 비워두면 서버에 정의된 첫 워크스페이스를 쓴다.
+- `GREPLET_CLIENT_NAME`: 대시보드 활동 피드에 표시할 호출자 이름.
 
 등록 후 Codex 를 재시작하면 `greplet`, `greplet_workspaces` 두 도구를 사용할 수 있다.
 

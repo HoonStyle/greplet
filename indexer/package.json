@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
-    "test:incremental": "node tests/incremental.mjs"
+    "test:incremental": "node tests/incremental.mjs",
+    "test:activity": "node tests/activity.mjs"
   },
   "dependencies": {
     "@lancedb/lancedb": "^0.38.0",

@@ -50,3 +50,22 @@ console.log("-".repeat(70));
 console.log(result.content?.[0]?.text ?? "(내용 없음)");
 
 await client.close();
+
+// ---- 활동 피드: 인덱서가 요청 호출자를 기록했는지 확인 ----
+{
+  const indexerUrl = process.env.GREPLET_INDEXER_URL ?? "http://127.0.0.1:7802";
+  const expectedClient = process.env.GREPLET_CLIENT_NAME || "mcp:remote";
+  const activityResp = await fetch(`${indexerUrl}/api/activity?limit=1`);
+  if (activityResp.status === 404) {
+    console.warn(`[activity] ${indexerUrl}/api/activity 미지원(404) — 경고만 출력`);
+  } else {
+    if (!activityResp.ok) {
+      throw new Error(`[activity] HTTP ${activityResp.status}: ${await activityResp.text()}`);
+    }
+    const activity = await activityResp.json();
+    const actualClient = activity.recent?.[0]?.client;
+    const ok = actualClient === expectedClient;
+    console.log(`[activity] recent[0].client=${actualClient ?? "(없음)"}, expected=${expectedClient} ${ok ? "✅" : "❌"}`);
+    if (!ok) process.exit(1);
+  }
+}

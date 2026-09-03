@@ -33,7 +33,7 @@ greplet 는 여러 리포지토리·폴더·PDF 를 **워크스페이스**로 �
 
 Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(PowerShell·Node), git 훅으로 붙여 쓴다. 목적은 하나다. 에이전트가 "이 기능 어디 구현돼 있어?", "사양서에 이 값 어떻게 정의돼 있어?" 같은 질문에 폴더 전체를 읽지 않고 답하게 하는 것.
 
-<p align="center"><img src="docs/images/dashboard.png" alt="greplet 관리 UI" width="900"><br><sub>관리 UI: 워크스페이스 상태, 업로드, 검색 테스트, 진행 로그</sub></p>
+<p align="center"><img src="docs/images/dashboard.png" alt="greplet Live Pipeline 관리 UI" width="900"><br><sub>관리 UI: 검색·인덱싱 Live Pipeline, 클라이언트 활동 피드, 워크스페이스 상태와 검색 테스트</sub></p>
 
 ## 목차
 
@@ -71,7 +71,7 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
 - **구문 단위 청킹** — C# 멤버 단위, PDF 페이지 단위, 그 외 텍스트는 줄 윈도우. 암호 PDF 지원.
 - **증분 인덱싱** — 커밋 훅이나 API 호출로 변경분만 재인덱스.
 - **다중 워크스페이스** — 코드·레거시·문서를 분리해 두고 개별 또는 통합 검색.
-- **관리 UI** — 워크스페이스 상태, 파일 업로드, 재인덱스, 검색 테스트(파일 글롭 필터, 결과 클릭 시 VS Code/Cursor 로 열기), 실시간 로그.
+- **관리 UI** — 워크스페이스 상태, 파일 업로드, 재인덱스, 검색 테스트(파일 글롭 필터, 결과 클릭 시 VS Code/Cursor 로 열기), 실시간 로그, Live Pipeline 시각화와 클라이언트별 활동 피드.
 - **결과 캐시** — 같은 질의는 인덱스가 바뀔 때까지 10분간 서버가 캐시. 반복 질의하는 에이전트의 임베딩 호출을 줄인다.
 - **에이전트 연동** — Claude Code 스킬, Codex, MCP(stdio·원격), CLI, git 훅.
 
@@ -251,6 +251,8 @@ node greplet.mjs index docs --force                 # 전체 재인덱스 잡 �
 | `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS·Linux) | Extractor 실행 파일 |
 | `GREPLET_DEFAULT_WORKSPACE` | 첫 워크스페이스 | 워크스페이스 미지정 시 기본값 (CLI·MCP) |
 | `GREPLET_OPEN_UI` | 없음 | `1` 이면 기동 스크립트가 기동 확인 후 관리 UI 를 브라우저로 연다 (`--open`/`-OpenUI` 와 동일) |
+| `GREPLET_CLIENT_NAME` | 클라이언트별 기본값 | `/api/search` 에 보내고 활동 피드에 표시할 클라이언트 이름. `^[a-z0-9:_-]{1,32}$` 형식만 허용 |
+| `GREPLET_ACTIVITY_QUERY` | 없음 | `hidden` 이면 활동 이벤트·이력의 질의를 `(hidden)` 으로 바꾼다 |
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama 주소 |
 
 ## 클라이언트

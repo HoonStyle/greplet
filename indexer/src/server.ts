@@ -12,6 +12,7 @@ import { openOrCreateTable, tableExists, manifestPathFor, VECTOR_DIM } from "./d
 import { loadManifest } from "./scan.js";
 import { search, type SearchMode } from "./search.js";
 import { JobManager } from "./indexJob.js";
+import { subscribeActivity, getRecentEvents, getRecentSearches, getStats, listenerCount, type ActivityEvent } from "./activity.js";
 
 const cfg = loadConfig();
 fs.mkdirSync(cfg.dbDir, { recursive: true });
@@ -38,6 +39,14 @@ async function ensureExtractor(): Promise<void> {
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
+
+const CLIENT_RE = /^[a-z0-9:_-]{1,32}$/;
+function sanitizeClient(raw: string | undefined): string {
+  if (typeof raw === "string" && CLIENT_RE.test(raw)) return raw;
+  return "unknown";
+}
+
+const activeSse = new Set<express.Response>();
 
 app.get("/healthz", (_req, res) => {
   res.status(200).send("ok");
@@ -87,6 +96,7 @@ app.post("/api/search", async (req, res) => {
   const mode: SearchMode = ["hybrid", "vector", "fts"].includes(modeRaw) ? modeRaw : "hybrid";
   const topN = Math.min(20, Math.max(1, Number(topNRaw) || 6));
   const fileGlob = typeof fileGlobRaw === "string" && fileGlobRaw.trim() ? fileGlobRaw.trim() : undefined;
+  const client = sanitizeClient(req.get("X-Greplet-Client"));
 
   let targets: WorkspaceConfig[];
   if (wsParam === "all") {
@@ -99,7 +109,7 @@ app.post("/api/search", async (req, res) => {
   }
 
   try {
-    const result = await search(cfg, targets, query, topN, mode, { fileGlob });
+    const result = await search(cfg, targets, query, topN, mode, { fileGlob, client });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -210,6 +220,70 @@ app.delete("/api/workspaces/:slug/files", (req, res) => {
   res.json({ deleted: base, jobId });
 });
 
+app.get("/api/events", (req, res) => {
+  if (listenerCount() >= 50) {
+    res.status(503).json({ error: "too many active listeners" });
+    return;
+  }
+
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+
+  const afterSeq = Number(req.get("Last-Event-ID")) || Number(req.query.after) || 0;
+
+  const writeFrame = (ev: ActivityEvent) => {
+    res.write(`id: ${ev.seq}\nevent: ${ev.type}\ndata: ${JSON.stringify(ev)}\n\n`);
+  };
+
+  const replayed = getRecentEvents(afterSeq);
+  for (const ev of replayed) writeFrame(ev);
+  const lastSeq = replayed.length > 0 ? replayed[replayed.length - 1].seq : afterSeq;
+
+  res.write(
+    `event: hello\ndata: ${JSON.stringify({
+      stats: getStats(),
+      recent: getRecentSearches(30),
+      jobs: jobManager.getRecentJobs(5),
+      seq: lastSeq,
+    })}\n\n`,
+  );
+
+  let paused = false;
+  const onDrain = () => {
+    paused = false;
+  };
+  res.on("drain", onDrain);
+
+  const unsubscribe = subscribeActivity((ev) => {
+    if (paused && (ev.type === "search.stage" || ev.type === "index.progress")) {
+      return;
+    }
+    const ok = res.write(`id: ${ev.seq}\nevent: ${ev.type}\ndata: ${JSON.stringify(ev)}\n\n`);
+    if (!ok) paused = true;
+  });
+
+  const pingTimer = setInterval(() => {
+    res.write(": ping\n\n");
+  }, 25000);
+
+  activeSse.add(res);
+
+  req.on("close", () => {
+    unsubscribe();
+    clearInterval(pingTimer);
+    res.off("drain", onDrain);
+    activeSse.delete(res);
+  });
+});
+
+app.get("/api/activity", (req, res) => {
+  const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
+  res.json({ stats: getStats(), recent: getRecentSearches(limit) });
+});
+
 app.use(express.static(path.join(cfg.indexerRoot, "public")));
 
 const server = app.listen(cfg.port, "127.0.0.1", async () => {
@@ -221,6 +295,7 @@ const server = app.listen(cfg.port, "127.0.0.1", async () => {
 // 프로세스가 남는 경우가 있어(start-indexer 로 띄운 서버를 kill 해도 안 죽음) 명시적으로 exit 한다.
 function shutdown(signal: string): void {
   console.log(`[greplet] ${signal} 수신 — 종료합니다`);
+  for (const res of activeSse) res.end();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 2000).unref();
 }

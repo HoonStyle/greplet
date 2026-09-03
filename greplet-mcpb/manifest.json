@@ -16,7 +16,8 @@
       "args": ["${__dirname}/server/index.js"],
       "env": {
         "GREPLET_BASE_URL": "${user_config.base_url}",
-        "GREPLET_DEFAULT_WORKSPACE": "${user_config.default_workspace}"
+        "GREPLET_DEFAULT_WORKSPACE": "${user_config.default_workspace}",
+        "GREPLET_CLIENT_NAME": "${user_config.client_name}"
       }
     }
   },
@@ -44,6 +45,13 @@
       "description": "workspace 를 지정하지 않았을 때 검색할 워크스페이스. 비워두면 서버에 정의된 첫 워크스페이스.",
       "required": false,
       "default": ""
+    },
+    "client_name": {
+      "type": "string",
+      "title": "클라이언트 이름",
+      "description": "대시보드 활동 피드에 표시될 호출자 이름",
+      "required": false,
+      "default": "mcp:claude"
     }
   }
 }

@@ -33,7 +33,7 @@ Three things set it apart from a generic RAG setup:
 
 It plugs in as a Claude Code skill, a Codex MCP server, a Claude Desktop MCP bundle, a remote MCP server, a CLI (PowerShell or Node), and a git hook. The goal is one thing: let an agent answer "where is this feature implemented?" or "how does the spec define this value?" without reading the whole folder.
 
-<p align="center"><img src="docs/images/dashboard.png" alt="greplet admin UI" width="900"><br><sub>Admin UI: workspace status, upload, search test, job logs</sub></p>
+<p align="center"><img src="docs/images/dashboard.png" alt="greplet Live Pipeline admin UI" width="900"><br><sub>Admin UI: Live Pipeline for search/indexing activity, client feed, workspace status, and search test</sub></p>
 
 ## Table of contents
 
@@ -71,7 +71,7 @@ Conversely, with one repo and a handful of documents there is little reason to u
 - **Syntax-aware chunking** — C# by member, PDF by page, other text by line windows. Encrypted PDFs supported.
 - **Incremental indexing** — only changed files are reindexed, triggered by the commit hook or the API.
 - **Multiple workspaces** — keep code, legacy, and docs separate; search one or all.
-- **Admin UI** — workspace status, file upload, reindex, search test (file-glob filter, click a hit to open it in VS Code/Cursor), live logs.
+- **Admin UI** — workspace status, file upload, reindex, search test (file-glob filter, click a hit to open it in VS Code/Cursor), live logs, and Live Pipeline visualization with a per-client activity feed.
 - **Result cache** — identical queries are served from a server-side cache for 10 minutes until the index changes, cutting embedding calls for agents that repeat themselves.
 - **Agent integration** — Claude Code skill, Codex, MCP (stdio and remote), CLI, git hook.
 
@@ -253,6 +253,8 @@ Full rules in [docs/design.md §3](docs/design.md) (Korean).
 | `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS, Linux) | Extractor executable |
 | `GREPLET_DEFAULT_WORKSPACE` | First workspace | Default when no workspace is given (CLI, MCP) |
 | `GREPLET_OPEN_UI` | unset | `1` makes the start scripts open the admin UI in the browser after the health check (same as `--open` / `-OpenUI`) |
+| `GREPLET_CLIENT_NAME` | client-specific | Client name sent to `/api/search` and shown in the activity feed; valid names match `^[a-z0-9:_-]{1,32}$` |
+| `GREPLET_ACTIVITY_QUERY` | unset | Set to `hidden` to replace query text in activity events and history with `(hidden)` |
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama address |
 
 ## Clients

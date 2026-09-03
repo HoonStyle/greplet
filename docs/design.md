@@ -217,15 +217,34 @@ await t.delete("file IN ('a')"); await t.countRows();
 | `GET /healthz` | | `ok` |
 | `GET /api/status` | | `{ ollama: {ok, model, hasModel}, dbDir, extractor: {ok, path}, queue: [slug…] }` |
 | `GET /api/workspaces` | | `[{ slug, label, kind, roots, files, chunks, lastRun, indexing, embeddings }]` |
-| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN=6, mode="hybrid" }` | `{ hits: [{ workspace, file, symbol, kind, startLine, endLine, score, text }], mode, warnings }` (topN 상한 20) |
+| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN=6, mode="hybrid" }`; 선택 헤더 `X-Greplet-Client` (`^[a-z0-9:_-]{1,32}$`, 아니면 `unknown`) | `{ hits: [{ workspace, file, symbol, kind, startLine, endLine, score, text }], mode, warnings }` (topN 상한 20) |
 | `POST /api/index/:slug` | `{ force?: boolean }` | `202 { jobId }` · 이미 큐에 있으면 `200 { jobId, queued: true }` |
-| `GET /api/jobs` | | 최근 잡 20개 |
+| `GET /api/events` | SSE. `Last-Event-ID` 헤더 또는 `?after=<seq>` 뒤의 링(500) 이벤트를 재생한 뒤 `event: hello` (`stats`, 최근 `recent` 30건, `jobs` 5건, `seq`) | 프레임은 `id: seq`, `event: 이벤트 타입`, `data: JSON`; 25초마다 `: ping`. 리스너가 50개를 넘으면 `503` |
+| `GET /api/activity?limit=` | | `{ stats, recent }` |
+| `GET /api/jobs` | | 최근 잡 20개. `JobRecord` 에 `stage` 와 `progress: { done, total }` 포함 |
 | `GET /api/jobs/:id/events` | SSE | 로그 라인 스트림(링버퍼 재생 후 실시간), 종료 시 `event: done` |
 | `POST /api/upload/:slug` | multipart `files[]` | `uploads/<slug>/` 저장 → 증분 인덱스 등록 |
 | `DELETE /api/workspaces/:slug/files?file=<rel>` | | 업로드 파일 삭제 + 재인덱스(uploads 하위만) |
 | `GET /` | | 관리 UI |
 
 slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파일명은 basename 만 취하고 `..` 제거.
+
+### 5.7 활동 이벤트
+
+검색과 인덱싱은 메모리 이벤트 버스에서 공통 이벤트를 발행한다. 모든 이벤트에는 단조 증가하는 `seq` 와 ISO `ts` 가 붙고, 이벤트 링은 최근 500건을 보관한다. 검색 완료 이력은 최근 200건을 별도로 보관한다.
+
+| 이벤트 타입 | 주요 필드 |
+|---|---|
+| `search.start` | `id`, `client`, `query`, `workspaces`, `mode`, `topN`, 선택 `fileGlob` |
+| `search.stage` | `id`, `workspace`, `stage`(`cache`·`embed`·`vector`·`fts`·`rerank`·`glob`·`sort`), `status`(`enter`·`fallback`·`skip`), 선택 `note` |
+| `search.done` | `id`, `client`, `hits`, `ms`, `cached`, `mode`, `warnings`, 선택 `error` |
+| `index.start` | `jobId`, `slug`, `force` |
+| `index.stage` | `jobId`, `slug`, `stage`(`check`·`scan`·`delete`·`extract`·`embed`·`store`·`manifest`·`fts`·`optimize`) |
+| `index.progress` | `jobId`, `slug`, `stage`(`embed`·`store`), `done`, `total` |
+| `index.done` | `jobId`, `slug`, `ms`, `added`, `changed`, `deleted`, `chunks` |
+| `index.failed` | `jobId`, `slug`, `ms`, `error` |
+
+`search.ts` 는 캐시·임베딩·벡터·FTS·RRF(`rerank`)·글롭(`glob`)·정렬 단계에서 이벤트를 발행하고, `indexJob.ts` 는 위 9단계를 순서대로 발행한다. `index.progress` 는 `max(16, total/100)` 단위와 마지막 완료 시점에만 발행한다. SSE 연결이 백프레셔 상태이면 `search.stage` 와 `index.progress` 를 드롭하고, 그 외 이벤트는 유지한다. 검색 질의는 발행 시 120자로 절단하며 `GREPLET_ACTIVITY_QUERY=hidden` 이면 `(hidden)` 으로 대체한다. 검색 결과 캐시 키에는 클라이언트 이름을 넣지 않는다.
 
 ### 5.6 기동
 
@@ -236,7 +255,15 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 
 ## 6. 관리 UI (`public/index.html`)
 
-워크스페이스 목록(청크 수·마지막 인덱스) · 파일 업로드 · [증분 인덱스]/[전체 재인덱스] · 검색 테스트(모드·topN) · 잡 진행 로그(SSE). 외부 CDN 없이 단일 파일.
+관리 UI는 어두운 테마를 기본으로 하며 색상·간격·상태 표현을 CSS 변수로 관리한다. 상단의 **Live Pipeline** 섹션은 다음을 보여 준다.
+
+- 검색 파이프 7노드(요청·캐시·임베딩·벡터·FTS·RRF·결과)와 단계 사이의 흐름
+- 최근 검색 요청 레인(질의·클라이언트·모드·경과 시간·진행 상태)
+- 총 검색 수·평균 지연·캐시 적중률·최근 1분 QPS KPI 및 호출/지연 스파크라인
+- 인덱스 파이프(스캔·추출·임베딩·저장·FTS)와 현재 단계·진행률
+- 클라이언트별 검색 활동 피드(완료 검색·히트 수·지연·경고·오류)
+
+동적 동작은 `public/live.js`, 전용 스타일은 `public/live.css` 로 분리한다. UI는 5초 폴링으로 상태·잡을 보완하고 SSE `/api/events` 로 실시간 이벤트를 병행한다. 연결 직후 hello/replay 로 화면을 채우며 `index.done` 을 받으면 즉시 워크스페이스와 잡을 갱신한다. Pause 는 렌더링을 잠시 멈추고, 연결 끊김은 지수 백오프로 재연결한다. `prefers-reduced-motion` 을 존중하며 `?demo=1` 에서는 네트워크 없이 데모 이벤트를 재생한다. 기존 워크스페이스·업로드·검색 테스트·잡 로그 기능도 유지하며 외부 CDN은 사용하지 않는다.
 
 ## 7. 클라이언트
 
@@ -246,6 +273,7 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 - `greplet.mjs`: Windows 를 포함한 모든 OS 에서 동작하는 Node CLI 동치물. `<query> -q -w --all --top-n --full --mode --base-url`. `-w` 미지정 시 `GREPLET_DEFAULT_WORKSPACE` → `workspaces.json` 첫 항목.
 - `mcp-server`: Streamable HTTP, stateless, Bearer 필수, `127.0.0.1:7801` 바인딩(외부 노출은 터널 경유). 툴 `greplet` · `greplet_workspaces`.
 - `greplet-mcpb`: stdio, 인증 없음(로컬). 같은 툴 2개. 워크스페이스 목록은 `GET /api/workspaces` 로 받아 온다(60초 캐시).
+- 기본 활동 클라이언트 이름은 mcpb=`mcp:claude`, 원격 `mcp-server`=`mcp:remote`, CLI=`cli`, UI=`ui` 이며, 예시 Codex 호출자는 `mcp:codex` 를 사용한다. `GREPLET_CLIENT_NAME` 으로 변경할 수 있다.
 - `git-hooks/post-commit`: `git config greplet.slug` 가 가리키는 워크스페이스에 `POST /api/index/:slug`. 서버 꺼져 있으면 조용히 스킵.
 
 ## 8. 검증
@@ -255,3 +283,4 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 3. `tests/incremental.mjs`: 임시 root 워크스페이스에서 파일 2개 추가 → 인덱스 → 1개 수정 → 해당 파일 청크만 교체(id 집합 비교) → 1개 삭제 → 청크 0, 매니페스트에서 제거.
 4. `greplet.ps1 -Mode fts` 로 실제 존재하는 상수 리터럴 검색 → 그 상수를 담은 청크가 1위. `-All` 이 빈 워크스페이스가 있어도 오류 없이 동작.
 5. `mcp-server` `npm run smoke`, `greplet-mcpb` `npm run smoke`.
+6. `npm run test:activity` — 활동 이벤트 버스, 인덱스 진행 이벤트, SSE/API 계약 검증.

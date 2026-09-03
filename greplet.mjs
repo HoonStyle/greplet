@@ -155,7 +155,11 @@ function serverDown(baseUrl, e) {
 async function api(baseUrl, path, init = {}, timeoutMs = 120000) {
   let resp;
   try {
-    resp = await fetch(`${baseUrl}${path}`, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+    resp = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: { "X-Greplet-Client": "cli", ...(init.headers ?? {}) },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
   } catch (e) {
     serverDown(baseUrl, e);
   }

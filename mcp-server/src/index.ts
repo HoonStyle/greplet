@@ -5,6 +5,7 @@
   환경변수:
     MCP_AUTH_TOKEN              필수. 클라이언트 Bearer 토큰 (미설정 시 기동 거부)
     GREPLET_BASE_URL            선택. 기본 http://localhost:7802
+    GREPLET_CLIENT_NAME         선택. 대시보드 활동 피드에 표시할 호출자 이름 (기본 mcp:remote)
     GREPLET_DEFAULT_WORKSPACE   선택. workspace 미지정 시 기본값 (없으면 서버의 첫 워크스페이스)
     PORT                        선택. 기본 7801
 */
@@ -19,6 +20,7 @@ import { listWorkspacesText, runGreplet, type BackendConfig } from "./greplet.js
 const AUTH_TOKEN = process.env.MCP_AUTH_TOKEN ?? "";
 const backend: BackendConfig = {
   baseUrl: process.env.GREPLET_BASE_URL ?? "http://localhost:7802",
+  clientName: process.env.GREPLET_CLIENT_NAME || "mcp:remote",
   defaultWorkspace: process.env.GREPLET_DEFAULT_WORKSPACE || undefined,
 };
 const PORT = Number(process.env.PORT ?? 7801);

@@ -7,12 +7,14 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 import type { AppConfig, WorkspaceConfig } from "./config.js";
 import { uploadsDirFor } from "./config.js";
 import { enumerateWorkspaceFiles, diffAgainstManifest, loadManifest, saveManifest, relativeFileKey, type Manifest } from "./scan.js";
 import { runExtractor, rowId } from "./extract.js";
 import { embedAll, checkOllama } from "./embed.js";
 import { openOrCreateTable, deleteByFiles, rebuildFtsIndex, manifestPathFor, zeroVector } from "./db.js";
+import { emitActivity, type IndexStage } from "./activity.js";
 
 export type JobState = "queued" | "running" | "done" | "failed";
 
@@ -33,6 +35,8 @@ export interface JobRecord {
   deleted: number;
   chunks: number;
   error?: string;
+  stage?: IndexStage;
+  progress?: { done: number; total: number };
 }
 
 const LOG_RING_MAX = 2000;
@@ -143,6 +147,12 @@ export class JobManager {
     }
   }
 
+  private setStage(rec: JobRecord, stage: IndexStage): void {
+    rec.stage = stage;
+    rec.progress = undefined;
+    emitActivity({ type: "index.stage", jobId: rec.id, slug: rec.slug, stage });
+  }
+
   private finish(jobId: string): void {
     for (const d of this.doneListeners.get(jobId) ?? []) d();
     this.listeners.delete(jobId);
@@ -169,14 +179,33 @@ export class JobManager {
     const rec = this.jobs.get(item.jobId)!;
     rec.state = "running";
     rec.startedAt = new Date().toISOString();
+    const t0 = performance.now();
+    emitActivity({ type: "index.start", jobId: item.jobId, slug: item.slug, force: item.force });
 
     try {
       await this.doIndex(item, rec);
       rec.state = "done";
+      emitActivity({
+        type: "index.done",
+        jobId: item.jobId,
+        slug: item.slug,
+        ms: Math.round(performance.now() - t0),
+        added: rec.added,
+        changed: rec.changed,
+        deleted: rec.deleted,
+        chunks: rec.chunks,
+      });
     } catch (err) {
       rec.state = "failed";
       rec.error = err instanceof Error ? err.message : String(err);
       this.log(item.jobId, "error", `잡 실패: ${rec.error}`);
+      emitActivity({
+        type: "index.failed",
+        jobId: item.jobId,
+        slug: item.slug,
+        ms: Math.round(performance.now() - t0),
+        error: rec.error,
+      });
     } finally {
       rec.endedAt = new Date().toISOString();
       this.finish(item.jobId);
@@ -198,6 +227,7 @@ export class JobManager {
     const manifest: Manifest = loadManifest(manifestPath);
 
     // Ollama 준비 상태를 매니페스트 로드 직후, diff 계산 전에 확인한다 — not-ready 여도 예외 없이 fts 전용으로 진행한다.
+    this.setStage(rec, "check");
     const ollamaStatus = await checkOllama(this.cfg);
     const embedReady = ollamaStatus.ok && ollamaStatus.hasModel;
     if (!embedReady) {
@@ -214,6 +244,7 @@ export class JobManager {
       this.log(jobId, "info", `[${ws.slug}] 이전에는 임베딩 없이 인덱싱됨 — Ollama 준비됨, 전체 재인덱스로 승격합니다`);
     }
 
+    this.setStage(rec, "scan");
     this.log(jobId, "info", `[${ws.slug}] 파일 스캔 중...`);
     const files = enumerateWorkspaceFiles(ws, uploadsDir);
     const diff = diffAgainstManifest(files, roots, manifest, item.force || promoteFullReindex);
@@ -231,6 +262,7 @@ export class JobManager {
     const table = await openOrCreateTable(this.cfg, ws);
 
     if (changedOrDeletedKeys.length > 0) {
+      this.setStage(rec, "delete");
       this.log(jobId, "info", `[${ws.slug}] 기존 행 삭제 중 (${changedOrDeletedKeys.length}개 파일)...`);
       await deleteByFiles(table, changedOrDeletedKeys);
     }
@@ -245,6 +277,7 @@ export class JobManager {
       return;
     }
 
+    this.setStage(rec, "extract");
     this.log(jobId, "info", `[${ws.slug}] Extractor 호출 중 (${targetAbs.length}개 파일)...`);
     const result = await runExtractor(this.cfg, ws, roots, targetAbs, (line) => this.log(jobId, "info", `  ${line}`));
 
@@ -262,10 +295,18 @@ export class JobManager {
 
     let vectors: number[][];
     if (embedReady) {
+      this.setStage(rec, "embed");
       this.log(jobId, "info", `[${ws.slug}] 청크 ${result.chunks.length}개 추출됨. 임베딩 시작...`);
       const texts = result.chunks.map((c) => c.text);
+      let lastEmitted = 0;
       vectors = await embedAll(this.cfg, texts, (done, total) => {
         if (done % 320 === 0 || done === total) this.log(jobId, "info", `  임베딩 진행 ${done}/${total}`);
+        rec.progress = { done, total };
+        const step = Math.max(16, Math.floor(total / 100));
+        if (done - lastEmitted >= step || done === total) {
+          lastEmitted = done;
+          emitActivity({ type: "index.progress", jobId, slug: ws.slug, stage: "embed", done, total });
+        }
       });
     } else {
       this.log(jobId, "info", `[${ws.slug}] 청크 ${result.chunks.length}개 추출됨. Ollama 없음 — 영벡터로 채웁니다`);
@@ -288,9 +329,13 @@ export class JobManager {
       vector: vectors[i],
     }));
 
+    this.setStage(rec, "store");
     this.log(jobId, "info", `[${ws.slug}] LanceDB 반영 중 (${rows.length}행)...`);
     for (let i = 0; i < rows.length; i += ADD_BATCH) {
       await table.add(rows.slice(i, i + ADD_BATCH));
+      const done = Math.min(i + ADD_BATCH, rows.length);
+      rec.progress = { done, total: rows.length };
+      emitActivity({ type: "index.progress", jobId, slug: ws.slug, stage: "store", done, total: rows.length });
     }
     rec.chunks = rows.length;
 
@@ -305,11 +350,14 @@ export class JobManager {
     }
     manifest.lastRun = now;
     manifest.embeddings = embedReady ? this.cfg.ollamaModel : "none";
+    this.setStage(rec, "manifest");
     saveManifest(manifestPath, manifest);
 
+    this.setStage(rec, "fts");
     this.log(jobId, "info", `[${ws.slug}] FTS 인덱스 재생성 중...`);
     await rebuildFtsIndex(table);
 
+    this.setStage(rec, "optimize");
     try {
       await table.optimize();
     } catch (err) {

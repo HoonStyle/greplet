@@ -54,6 +54,7 @@ export interface WorkspaceInfo {
 
 export interface BackendConfig {
   baseUrl: string; // 예: http://localhost:7802
+  clientName: string;
   defaultWorkspace?: string;
 }
 
@@ -63,7 +64,10 @@ let wsCache: { at: number; list: WorkspaceInfo[] } | null = null;
 /** GET /api/workspaces — 60초 캐시 */
 export async function fetchWorkspaces(cfg: BackendConfig): Promise<WorkspaceInfo[]> {
   if (wsCache && Date.now() - wsCache.at < WS_CACHE_TTL_MS) return wsCache.list;
-  const resp = await fetch(`${cfg.baseUrl}/api/workspaces`, { signal: AbortSignal.timeout(10_000) });
+  const resp = await fetch(`${cfg.baseUrl}/api/workspaces`, {
+    headers: { "X-Greplet-Client": cfg.clientName },
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!resp.ok) throw new Error(`/api/workspaces HTTP ${resp.status}: ${await resp.text()}`);
   const list = (await resp.json()) as WorkspaceInfo[];
   wsCache = { at: Date.now(), list };
@@ -87,7 +91,7 @@ async function callSearchApi(
 ): Promise<SearchApiResponse> {
   const resp = await fetch(`${cfg.baseUrl}/api/search`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Greplet-Client": cfg.clientName },
     body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     signal: AbortSignal.timeout(120_000),
   });

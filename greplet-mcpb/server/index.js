@@ -8,6 +8,7 @@
 
   환경변수(매니페스트 user_config 에서 주입):
     GREPLET_BASE_URL            선택. 기본 http://localhost:7802
+    GREPLET_CLIENT_NAME         선택. 대시보드 활동 피드에 표시할 호출자 이름 (기본 mcp:claude)
     GREPLET_DEFAULT_WORKSPACE   선택. workspace 미지정 시 기본값 (없으면 서버의 첫 워크스페이스)
 */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -15,6 +16,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 
 const BASE_URL = process.env.GREPLET_BASE_URL || "http://localhost:7802";
+const CLIENT_NAME = process.env.GREPLET_CLIENT_NAME || "mcp:claude";
 const DEFAULT_WORKSPACE = process.env.GREPLET_DEFAULT_WORKSPACE || undefined;
 
 const WS_CACHE_TTL_MS = 60_000;
@@ -27,7 +29,10 @@ function backendDownMessage(e) {
 /** GET /api/workspaces — 60초 캐시 */
 async function fetchWorkspaces() {
   if (wsCache && Date.now() - wsCache.at < WS_CACHE_TTL_MS) return wsCache.list;
-  const resp = await fetch(`${BASE_URL}/api/workspaces`, { signal: AbortSignal.timeout(10_000) });
+  const resp = await fetch(`${BASE_URL}/api/workspaces`, {
+    headers: { "X-Greplet-Client": CLIENT_NAME },
+    signal: AbortSignal.timeout(10_000),
+  });
   if (!resp.ok) throw new Error(`/api/workspaces HTTP ${resp.status}: ${await resp.text()}`);
   const list = await resp.json();
   wsCache = { at: Date.now(), list };
@@ -38,7 +43,7 @@ async function fetchWorkspaces() {
 async function callSearchApi(workspaces, query, topN, mode, fileGlob) {
   const resp = await fetch(`${BASE_URL}/api/search`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Greplet-Client": CLIENT_NAME },
     body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     signal: AbortSignal.timeout(120_000),
   });
