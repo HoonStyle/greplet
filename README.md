@@ -1,5 +1,23 @@
 # greplet
 
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
+  <img alt="Node 22+" src="https://img.shields.io/badge/Node-22%2B-339933?logo=nodedotjs&logoColor=white">
+  <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
+  <img alt="C# / Roslyn" src="https://img.shields.io/badge/C%23-Roslyn-239120?logo=csharp&logoColor=white">
+  <br>
+  <img alt="LanceDB" src="https://img.shields.io/badge/LanceDB-vector%20%2B%20FTS-EF6A3C">
+  <img alt="Ollama bge-m3" src="https://img.shields.io/badge/Ollama-bge--m3-000000?logo=ollama&logoColor=white">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-stdio%20%C2%B7%20HTTP-6E56CF">
+  <img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-skill%20%2B%20MCP-D97757?logo=claude&logoColor=white">
+  <img alt="Codex" src="https://img.shields.io/badge/Codex-MCP%20%2B%20skill-000000?logo=openai&logoColor=white">
+  <br>
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-verified-0078D4?logo=windows&logoColor=white">
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-Intel%20%C2%B7%20Apple%20Silicon-000000?logo=apple&logoColor=white">
+  <img alt="Linux" src="https://img.shields.io/badge/Linux-untested-FCC624?logo=linux&logoColor=black">
+</p>
+
 > 레거시 코드 여러 벌, 현재 코드, 사양서 PDF 를 한 번에 뒤져 **파일 · 심볼 · 줄 범위**로 답하는 로컬 검색 서버. AI 코딩 에이전트가 grep 대신 쓰도록 만들었다.
 
 greplet 는 여러 리포지토리·폴더·PDF 를 **워크스페이스**로 묶어 인덱싱하고, 자연어나 키워드로 질의하면 관련 **청크**(C# 멤버, PDF 페이지 등)만 점수순으로 돌려주는 로컬 서비스다. 벡터 검색(Ollama `bge-m3`)과 전문 검색(BM25)을 RRF 로 융합한다. LLM 생성도, 외부 네트워크 호출도 없다.
