@@ -1,6 +1,6 @@
 {
   "name": "greplet-mcpb",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "license": "MIT",
   "description": "greplet 로컬 stdio MCP 서버 (.mcpb 번들). Claude Desktop/Cowork 확장 설치용.",

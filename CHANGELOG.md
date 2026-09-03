@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-03
+
 ### Added
 - `greplet.mjs` 관리 서브커맨드: `status`, `workspaces`, `index <slug> [--force] [--wait]`. `--wait` 는 잡 로그를 완료까지 스트리밍한다.
 - `greplet.mjs --json`: 서버 응답 JSON 을 그대로 출력.
@@ -48,6 +50,7 @@
 
 Windows 에서 개발·검증된 초기 상태. Extractor(Roslyn/PdfPig), LanceDB 하이브리드 인덱서, PowerShell CLI, Claude Desktop `.mcpb`, 원격 MCP 서버, post-commit 훅, Claude Code 스킬 예제.
 
-[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/HoonStyle/greplet/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/HoonStyle/greplet/compare/3a3e05b...v0.5.0
 [0.0.0]: https://github.com/HoonStyle/greplet/commit/3a3e05b
