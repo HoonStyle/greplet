@@ -5,8 +5,17 @@
 param(
   # 127.0.0.1 명시 - "localhost" 는 PowerShell(.NET HttpClient)이 IPv6(::1)를 먼저 시도하다
   # 로컬 환경에 따라 수 초 지연 후 폴백하는 경우가 있어 healthz 폴링이 불필요하게 느려진다.
-  [string]$BaseUrl = "http://127.0.0.1:7802"
+  [string]$BaseUrl = "http://127.0.0.1:7802",
+  # 기동 확인 후 관리 UI 를 기본 브라우저로 연다. 환경변수 GREPLET_OPEN_UI=1 과 동일.
+  [switch]$OpenUI
 )
+
+if ($env:GREPLET_OPEN_UI -eq "1") { $OpenUI = $true }
+
+function Open-GrepletUI {
+  if (-not $OpenUI) { return }
+  Start-Process ($BaseUrl -replace "127\.0\.0\.1", "localhost")
+}
 
 $ErrorActionPreference = "Stop"
 $IndexerRoot = $PSScriptRoot
@@ -23,6 +32,7 @@ function Test-Healthz {
 
 if (Test-Healthz) {
   Write-Host "[start-indexer] 이미 기동 중 ($BaseUrl) — 스킵"
+  Open-GrepletUI
   exit 0
 }
 
@@ -42,6 +52,7 @@ $deadline = (Get-Date).AddSeconds(10)
 while ((Get-Date) -lt $deadline) {
   if (Test-Healthz) {
     Write-Host "[start-indexer] 기동 확인 ($BaseUrl)"
+    Open-GrepletUI
     exit 0
   }
   Start-Sleep -Milliseconds 500

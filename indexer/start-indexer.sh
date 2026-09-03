@@ -1,9 +1,29 @@
 #!/usr/bin/env bash
 # start-indexer.sh - greplet 인덱서 서버 백그라운드 기동(§5.6).
 # 이미 떠 있으면(healthz 200) 그대로 스킵하고, 아니면 새로 띄운 뒤 healthz 를 최대 10초 폴링한다.
+#
+# 사용: bash indexer/start-indexer.sh [BASE_URL] [--open]
+#   BASE_URL  기본 http://127.0.0.1:7802
+#   --open    기동 확인 후 관리 UI 를 기본 브라우저로 연다 (환경변수 GREPLET_OPEN_UI=1 과 동일)
 set -euo pipefail
 
-BASE_URL="${1:-http://127.0.0.1:7802}"
+BASE_URL="http://127.0.0.1:7802"
+OPEN_UI="${GREPLET_OPEN_UI:-0}"
+for arg in "$@"; do
+  case "$arg" in
+    --open) OPEN_UI=1 ;;
+    http://*|https://*) BASE_URL="$arg" ;;
+    *) echo "[start-indexer] 알 수 없는 인자: $arg" >&2; exit 2 ;;
+  esac
+done
+
+open_ui() {
+  [ "$OPEN_UI" = "1" ] || return 0
+  local url="${BASE_URL/127.0.0.1/localhost}"
+  if command -v open >/dev/null 2>&1; then open "$url"
+  elif command -v xdg-open >/dev/null 2>&1; then xdg-open "$url" >/dev/null 2>&1 &
+  else echo "[start-indexer] 브라우저를 열 명령이 없습니다. 직접 여세요: $url"; fi
+}
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_PATH="$SCRIPT_DIR/logs/server.log"
@@ -16,6 +36,7 @@ check_healthz() {
 
 if check_healthz; then
   echo "[start-indexer] 이미 기동 중 ($BASE_URL) — 스킵"
+  open_ui
   exit 0
 fi
 
@@ -49,6 +70,7 @@ deadline=$(( $(date +%s) + 10 ))
 while [ "$(date +%s)" -lt "$deadline" ]; do
   if check_healthz; then
     echo "[start-indexer] 기동 확인 ($BASE_URL)"
+    open_ui
     exit 0
   fi
   sleep 0.5

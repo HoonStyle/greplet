@@ -1,0 +1,17 @@
+{
+  "_comment": "Claude Code 세션이 열릴 때 greplet 인덱서를 기동하고 관리 UI 를 브라우저로 여는 SessionStart 훅 예시. <GREPLET> 을 체크아웃 절대경로로 바꿔 .claude/settings.json(프로젝트) 또는 ~/.claude/settings.json(전역) 의 hooks 에 합친다. UI 를 열고 싶지 않으면 --open 을 뺀다. Windows 는 command 를 pwsh -File <GREPLET>/indexer/start-indexer.ps1 -OpenUI 로 바꾼다.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"<GREPLET>/indexer/start-indexer.sh\" --open",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

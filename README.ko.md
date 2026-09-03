@@ -93,7 +93,7 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
 | `greplet-mcpb/` | Claude Desktop/Cowork 용 로컬 stdio MCP 번들. Codex 도 이 서버를 쓴다 |
 | `mcp-server/` | Bearer 인증 원격 MCP 서버 |
 | `git-hooks/` | 커밋 후 증분 인덱스를 트리거하는 post-commit 훅 |
-| `examples/claude-code-skill/` | Claude Code 스킬 예제, CLAUDE.md 규칙 스니펫 |
+| `examples/claude-code-skill/` | Claude Code 스킬 예제, CLAUDE.md 규칙 스니펫, SessionStart 훅 예제 |
 | `examples/codex/` | Codex MCP 등록·스킬 예제 |
 | `docs/design.md` | 상세 설계 문서 |
 
@@ -141,7 +141,9 @@ cp workspaces.example.json workspaces.json     # roots 를 실제 경로로 수�
 bash start-indexer.sh                          # 백그라운드 기동, healthz 확인
 ```
 
-기동 후 `http://localhost:7802` 관리 UI 에서 **[전체 재인덱스]** 를 누르면 첫 인덱싱이 시작된다.
+기동 후 `http://localhost:7802` 관리 UI 에서 **[전체 재인덱스]** 를 누르면 첫 인덱싱이 시작된다. 기동 스크립트에 `--open`(bash) 또는 `-OpenUI`(PowerShell)를 주면 기동 확인 직후 관리 UI 를 기본 브라우저로 연다. 환경변수 `GREPLET_OPEN_UI=1` 도 같은 효과다.
+
+Claude Code 세션이 열릴 때마다 인덱서를 띄우고 UI 를 열려면 SessionStart 훅에 그 명령을 등록한다. 예시는 [`examples/claude-code-skill/hooks.settings.json`](examples/claude-code-skill/hooks.settings.json).
 
 데이터(LanceDB·매니페스트·업로드·로그)는 `GREPLET_DATA_DIR` 에 저장되며 기본값은 OS 별로 다르다.
 
@@ -233,6 +235,7 @@ node greplet.mjs "에러 코드" --all --full
 | `GREPLET_WORKSPACES` | `indexer/workspaces.json` | 워크스페이스 정의 파일. CLI(`greplet.ps1`·`greplet.mjs`)도 기본 워크스페이스를 여기서 읽으므로 서버에 다른 경로를 줬다면 CLI 에도 같은 값을 넘긴다 |
 | `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS·Linux) | Extractor 실행 파일 |
 | `GREPLET_DEFAULT_WORKSPACE` | 첫 워크스페이스 | 워크스페이스 미지정 시 기본값 (CLI·MCP) |
+| `GREPLET_OPEN_UI` | 없음 | `1` 이면 기동 스크립트가 기동 확인 후 관리 UI 를 브라우저로 연다 (`--open`/`-OpenUI` 와 동일) |
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama 주소 |
 
 ## 클라이언트

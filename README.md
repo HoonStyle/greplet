@@ -93,7 +93,7 @@ Conversely, with one repo and a handful of documents there is little reason to u
 | `greplet-mcpb/` | Local stdio MCP bundle for Claude Desktop/Cowork. Codex uses this server too |
 | `mcp-server/` | Remote MCP server with Bearer auth |
 | `git-hooks/` | post-commit hook that triggers an incremental index |
-| `examples/claude-code-skill/` | Claude Code skill example and CLAUDE.md rule snippet |
+| `examples/claude-code-skill/` | Claude Code skill example, CLAUDE.md rule snippet, SessionStart hook example |
 | `examples/codex/` | Codex MCP registration and skill example |
 | `docs/design.md` | Detailed design document (Korean) |
 
@@ -141,7 +141,9 @@ cp workspaces.example.json workspaces.json     # set roots to real paths
 bash start-indexer.sh                          # background start, waits for healthz
 ```
 
-Open the admin UI at `http://localhost:7802` and press **[Full reindex]** to run the first indexing.
+Open the admin UI at `http://localhost:7802` and press **[Full reindex]** to run the first indexing. Pass `--open` (bash) or `-OpenUI` (PowerShell) to the start script to open the admin UI in the default browser right after the health check. The environment variable `GREPLET_OPEN_UI=1` does the same.
+
+To start the indexer and open the UI every time a Claude Code session begins, register that command as a SessionStart hook. Example: [`examples/claude-code-skill/hooks.settings.json`](examples/claude-code-skill/hooks.settings.json).
 
 Data (LanceDB, manifests, uploads, logs) lives in `GREPLET_DATA_DIR`. The default depends on the OS.
 
@@ -235,6 +237,7 @@ Full rules in [docs/design.md §3](docs/design.md) (Korean).
 | `GREPLET_WORKSPACES` | `indexer/workspaces.json` | Workspace definition file. The CLIs (`greplet.ps1`, `greplet.mjs`) also read the default workspace from here, so pass the same value to the CLI if you gave the server a different path |
 | `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS, Linux) | Extractor executable |
 | `GREPLET_DEFAULT_WORKSPACE` | First workspace | Default when no workspace is given (CLI, MCP) |
+| `GREPLET_OPEN_UI` | unset | `1` makes the start scripts open the admin UI in the browser after the health check (same as `--open` / `-OpenUI`) |
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama address |
 
 ## Clients
