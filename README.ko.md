@@ -33,6 +33,8 @@ greplet 는 여러 리포지토리·폴더·PDF 를 **워크스페이스**로 �
 
 Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(PowerShell·Node), git 훅으로 붙여 쓴다. 목적은 하나다. 에이전트가 "이 기능 어디 구현돼 있어?", "사양서에 이 값 어떻게 정의돼 있어?" 같은 질문에 폴더 전체를 읽지 않고 답하게 하는 것.
 
+<p align="center"><img src="docs/images/dashboard.png" alt="greplet 관리 UI" width="900"><br><sub>관리 UI: 워크스페이스 상태, 업로드, 검색 테스트, 진행 로그</sub></p>
+
 ## 목차
 
 - [왜 필요한가](#왜-필요한가)

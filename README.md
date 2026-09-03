@@ -33,6 +33,8 @@ Three things set it apart from a generic RAG setup:
 
 It plugs in as a Claude Code skill, a Codex MCP server, a Claude Desktop MCP bundle, a remote MCP server, a CLI (PowerShell or Node), and a git hook. The goal is one thing: let an agent answer "where is this feature implemented?" or "how does the spec define this value?" without reading the whole folder.
 
+<p align="center"><img src="docs/images/dashboard.png" alt="greplet admin UI" width="900"><br><sub>Admin UI: workspace status, upload, search test, job logs</sub></p>
+
 ## Table of contents
 
 - [Why](#why)
