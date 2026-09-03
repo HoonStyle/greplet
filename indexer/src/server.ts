@@ -216,5 +216,12 @@ const server = app.listen(cfg.port, "127.0.0.1", async () => {
   await ensureExtractor();
 });
 
-process.on("SIGTERM", () => server.close());
-process.on("SIGINT", () => server.close());
+// SIGTERM/SIGINT: 리스너를 닫고 프로세스를 끝낸다. server.close() 만 부르면 잡 큐 타이머·keep-alive 연결 때문에
+// 프로세스가 남는 경우가 있어(start-indexer 로 띄운 서버를 kill 해도 안 죽음) 명시적으로 exit 한다.
+function shutdown(signal: string): void {
+  console.log(`[greplet] ${signal} 수신 — 종료합니다`);
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 2000).unref();
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
