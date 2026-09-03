@@ -1,0 +1,120 @@
+name: Release
+
+# 태그 v* 푸시 시: 버전 일치 검사 → Extractor self-contained 4종 + .mcpb 빌드 → GitHub Release 생성·첨부.
+# 릴리스 노트는 CHANGELOG.md 의 해당 버전 절을 그대로 쓴다.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  check-version:
+    name: version strings match tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare tag with package versions
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          fail=0
+          for f in indexer/package.json mcp-server/package.json greplet-mcpb/package.json greplet-mcpb/manifest.json; do
+            v=$(node -p "require('./$f').version")
+            if [ "$v" != "$TAG" ]; then echo "::error::$f version $v != tag $TAG"; fail=1; fi
+          done
+          v=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' Extractor/Extractor.csproj)
+          if [ "$v" != "$TAG" ]; then echo "::error::Extractor.csproj Version $v != tag $TAG"; fail=1; fi
+          grep -q "## \[$TAG\]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no section for $TAG"; fail=1; }
+          exit $fail
+
+  extractor:
+    name: Extractor (${{ matrix.rid }})
+    needs: check-version
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [win-x64, linux-x64, osx-x64, osx-arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: dotnet publish (self-contained, single file)
+        run: >
+          dotnet publish Extractor -c Release -r ${{ matrix.rid }}
+          --self-contained true -p:PublishSingleFile=true -p:DebugType=none
+          -o out/${{ matrix.rid }}
+      - name: Archive
+        shell: bash
+        run: |
+          NAME="greplet-extractor-${GITHUB_REF_NAME}-${{ matrix.rid }}"
+          cd out/${{ matrix.rid }}
+          if [[ "${{ matrix.rid }}" == win-* ]]; then
+            zip -r "../../$NAME.zip" .
+          else
+            chmod +x Extractor
+            tar -czf "../../$NAME.tar.gz" .
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extractor-${{ matrix.rid }}
+          path: greplet-extractor-*
+          if-no-files-found: error
+
+  mcpb:
+    name: greplet.mcpb
+    needs: check-version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: greplet-mcpb/package-lock.json
+      - name: Install (production deps only — bundled into the .mcpb)
+        run: npm ci --omit=dev
+        working-directory: greplet-mcpb
+      - name: Pack
+        run: npx -y @anthropic-ai/mcpb pack . "greplet-${GITHUB_REF_NAME}.mcpb"
+        working-directory: greplet-mcpb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcpb
+          path: greplet-mcpb/greplet-*.mcpb
+          if-no-files-found: error
+
+  release:
+    name: GitHub Release
+    needs: [extractor, mcpb]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Release notes from CHANGELOG
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          awk -v tag="$TAG" '
+            $0 ~ "^## \\[" tag "\\]" { on=1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          echo "" >> notes.md
+          echo "## Assets" >> notes.md
+          echo "- \`greplet-${GITHUB_REF_NAME}.mcpb\` — Claude Desktop / Cowork 확장" >> notes.md
+          echo "- \`greplet-extractor-${GITHUB_REF_NAME}-<rid>.{zip,tar.gz}\` — self-contained Extractor (.NET SDK 불필요). 압축을 풀고 \`GREPLET_EXTRACTOR\` 로 경로를 지정한다." >> notes.md
+          cat notes.md
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -la dist
+          gh release create "$GITHUB_REF_NAME" dist/* --title "greplet $GITHUB_REF_NAME" --notes-file notes.md

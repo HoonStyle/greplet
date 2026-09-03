@@ -112,6 +112,8 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
 
 순서는 모든 OS 가 같다. Extractor 빌드 → 인덱서 빌드 → 워크스페이스 정의 → 기동.
 
+.NET SDK 없이 쓰려면 [Releases](https://github.com/HoonStyle/greplet/releases) 에서 OS 별 self-contained Extractor(`greplet-extractor-<버전>-<rid>`)를 받아 압축을 풀고 `GREPLET_EXTRACTOR` 로 그 경로를 지정한다. 그러면 아래의 `dotnet build` 단계를 건너뛴다. Claude Desktop 용 `.mcpb` 도 같은 곳에 있다. 버전별 변경 내역은 [CHANGELOG.md](CHANGELOG.md).
+
 **Windows (PowerShell)**
 
 ```powershell

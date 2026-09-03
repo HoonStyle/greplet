@@ -119,7 +119,7 @@ async function runGreplet({ query, workspace, all, topN, full, mode }) {
 }
 
 // ---------- MCP 서버 (stdio) ----------
-const server = new McpServer({ name: "greplet", version: "0.4.0" });
+const server = new McpServer({ name: "greplet", version: "0.5.0" });
 
 server.registerTool(
   "greplet",

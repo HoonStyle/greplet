@@ -112,6 +112,8 @@ Conversely, with one repo and a handful of documents there is little reason to u
 
 The order is the same on every OS: build the Extractor → build the indexer → define workspaces → start.
 
+To skip the .NET SDK, download a self-contained Extractor for your OS (`greplet-extractor-<version>-<rid>`) from [Releases](https://github.com/HoonStyle/greplet/releases), unpack it, and point `GREPLET_EXTRACTOR` at the binary. Then skip the `dotnet build` step below. The `.mcpb` for Claude Desktop is in the same place. Per-version changes are in [CHANGELOG.md](CHANGELOG.md).
+
 **Windows (PowerShell)**
 
 ```powershell
