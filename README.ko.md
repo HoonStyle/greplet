@@ -4,6 +4,7 @@
   <a href="README.md"><img alt="언어: English" src="https://img.shields.io/badge/lang-English-blue"></a>
   <a href="README.ko.md"><img alt="언어: 한국어" src="https://img.shields.io/badge/lang-%ED%95%9C%EA%B5%AD%EC%96%B4-blue"></a>
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
+  <a href="https://github.com/HoonStyle/greplet/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/HoonStyle/greplet/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Node 22+" src="https://img.shields.io/badge/Node-22%2B-339933?logo=nodedotjs&logoColor=white">
   <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
@@ -15,9 +16,9 @@
   <img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-skill%20%2B%20MCP-D97757?logo=claude&logoColor=white">
   <img alt="Codex" src="https://img.shields.io/badge/Codex-MCP%20%2B%20skill-000000?logo=openai&logoColor=white">
   <br>
-  <img alt="Windows" src="https://img.shields.io/badge/Windows-verified-0078D4?logo=windows&logoColor=white">
-  <img alt="macOS" src="https://img.shields.io/badge/macOS-Intel%20%C2%B7%20Apple%20Silicon-000000?logo=apple&logoColor=white">
-  <img alt="Linux" src="https://img.shields.io/badge/Linux-untested-FCC624?logo=linux&logoColor=black">
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-CI-0078D4?logo=windows&logoColor=white">
+  <img alt="macOS" src="https://img.shields.io/badge/macOS-CI%20%C2%B7%20Intel%20%C2%B7%20Apple%20Silicon-000000?logo=apple&logoColor=white">
+  <img alt="Linux" src="https://img.shields.io/badge/Linux-CI-FCC624?logo=linux&logoColor=black">
 </p>
 
 > 레거시 코드 여러 벌, 현재 코드, 사양서 PDF 를 한 번에 뒤져 **파일 · 심볼 · 줄 범위**로 답하는 로컬 검색 서버. AI 코딩 에이전트가 grep 대신 쓰도록 만들었다.

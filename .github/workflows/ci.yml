@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: build + test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            indexer/package-lock.json
+            mcp-server/package-lock.json
+            greplet-mcpb/package-lock.json
+
+      # Extractor (C#/Roslyn/PdfPig)
+      - name: Build Extractor
+        run: dotnet build Extractor -c Release
+
+      # Indexer: type-check, build, incremental integration test.
+      # Ollama is absent on runners, so the test exercises the fts-only path.
+      - name: Indexer install
+        run: npm ci
+        working-directory: indexer
+      - name: Indexer build
+        run: npm run build
+        working-directory: indexer
+      - name: Indexer incremental test (fts-only path)
+        run: npm run test:incremental
+        working-directory: indexer
+
+      # Remote MCP server: build only (smoke needs a running indexer + token)
+      - name: mcp-server install + build
+        run: npm ci && npm run build
+        working-directory: mcp-server
+
+      # stdio MCP bundle: install + syntax check + tools/list over stdio
+      - name: greplet-mcpb install
+        run: npm ci
+        working-directory: greplet-mcpb
+      - name: greplet-mcpb tools/list
+        shell: bash
+        run: |
+          node --check server/index.js
+          node -e '
+            const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+            const { StdioClientTransport } = await import("@modelcontextprotocol/sdk/client/stdio.js");
+            const c = new Client({ name: "ci", version: "0" });
+            await c.connect(new StdioClientTransport({ command: "node", args: ["server/index.js"] }));
+            const { tools } = await c.listTools();
+            const names = tools.map(t => t.name).sort().join(",");
+            if (names !== "greplet,greplet_workspaces") throw new Error("unexpected tools: " + names);
+            for (const t of tools) if (!t.annotations?.readOnlyHint) throw new Error(t.name + " lacks readOnlyHint");
+            console.log("tools ok:", names);
+            await c.close();
+          ' --input-type=module
+        working-directory: greplet-mcpb
+
+      # CLI: help + offline error path
+      - name: greplet.mjs smoke
+        shell: bash
+        run: |
+          node greplet.mjs --help
+          if node greplet.mjs "x" --all --base-url http://127.0.0.1:1; then
+            echo "expected non-zero exit when indexer is down"; exit 1
+          fi
