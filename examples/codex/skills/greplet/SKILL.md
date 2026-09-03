@@ -61,3 +61,4 @@ node <GREPLET>/greplet.mjs "검색어" --all --full --workspace docs --top-n 10 
 - 서버가 없거나 결과가 비면(신규 파일이 아직 인덱싱 안 됐을 수 있음) → 그때만 rg/파일 탐색으로 폴백한다.
 - 벡터 검색은 **의미 기반**이라 정확 일치를 보장하지 않는다. 완전성이 중요한 작업은 rg 로 교차 확인.
 - 관리 UI(워크스페이스 상태·재인덱스·검색 테스트·로그)는 `http://localhost:7802`.
+- 사용자가 "greplet 대시보드(관리 UI) 열어줘" 라고 하면 별도 툴 없이 셸로 연다: macOS `open http://localhost:7802`, Linux `xdg-open http://localhost:7802`, Windows `Start-Process http://localhost:7802`. 인덱서가 안 떠 있으면 먼저 기동 스크립트를 `--open`(bash) / `-OpenUI`(pwsh) 로 실행하면 기동과 열기가 한 번에 된다.
