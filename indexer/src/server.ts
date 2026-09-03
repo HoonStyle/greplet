@@ -79,13 +79,14 @@ app.get("/api/workspaces", async (_req, res) => {
 });
 
 app.post("/api/search", async (req, res) => {
-  const { query, workspaces: wsParam, topN: topNRaw, mode: modeRaw } = req.body ?? {};
+  const { query, workspaces: wsParam, topN: topNRaw, mode: modeRaw, fileGlob: fileGlobRaw } = req.body ?? {};
   if (typeof query !== "string" || query.length === 0) {
     res.status(400).json({ error: "query 는 필수 문자열입니다" });
     return;
   }
   const mode: SearchMode = ["hybrid", "vector", "fts"].includes(modeRaw) ? modeRaw : "hybrid";
   const topN = Math.min(20, Math.max(1, Number(topNRaw) || 6));
+  const fileGlob = typeof fileGlobRaw === "string" && fileGlobRaw.trim() ? fileGlobRaw.trim() : undefined;
 
   let targets: WorkspaceConfig[];
   if (wsParam === "all") {
@@ -98,7 +99,7 @@ app.post("/api/search", async (req, res) => {
   }
 
   try {
-    const result = await search(cfg, targets, query, topN, mode);
+    const result = await search(cfg, targets, query, topN, mode, { fileGlob });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -147,7 +148,7 @@ app.get("/api/jobs/:id/events", (req, res) => {
 
   const unsubscribe = jobManager.subscribe(
     jobId,
-    (line) => res.write(`data: ${JSON.stringify({ ts: new Date().toISOString(), level: "info", msg: line })}\n\n`),
+    (ev) => res.write(`data: ${JSON.stringify(ev)}\n\n`),
     () => {
       res.write("event: done\ndata: {}\n\n");
       res.end();

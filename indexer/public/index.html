@@ -203,6 +203,9 @@
   .hit .hit-head .rank { color: var(--faint); margin-right: 6px; }
   .hit .hit-head .ws-tag { color: var(--accent); font-weight: 600; }
   .hit .hit-head .file { color: var(--text); }
+  .hit .hit-head a.file { text-decoration: none; border-bottom: 1px dotted var(--faint); }
+  .hit .hit-head a.file:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .hit .hit-head .cached { color: var(--faint); font-size: 11px; margin-left: 6px; }
   .hit .hit-head .score { flex: none; font-family: var(--mono); color: var(--faint); }
   .hit .hit-body { margin-top: 6px; white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 12px; color: var(--text); }
 
@@ -296,6 +299,17 @@
       <span class="sep"></span>
       <label class="cb"><input type="checkbox" id="wsAll" checked /> 전체</label>
       <div class="checkbox-group" id="wsCheckboxes"></div>
+      <span class="sep"></span>
+      <label for="searchFile">file</label>
+      <input type="text" id="searchFile" placeholder="Lib/**/*.cs" style="width:150px" title="파일 상대경로 글롭으로 결과 필터" />
+      <span class="sep"></span>
+      <label for="editorScheme">열기</label>
+      <select id="editorScheme" title="결과의 파일 경로를 클릭했을 때 여는 에디터">
+        <option value="vscode">VS Code</option>
+        <option value="cursor">Cursor</option>
+        <option value="vscode-insiders">VS Code Insiders</option>
+        <option value="">링크 없음</option>
+      </select>
     </div>
     <div id="searchWarnings"></div>
     <div id="searchResults"></div>
@@ -450,21 +464,36 @@ dropzone.addEventListener("drop", (e) => {
 });
 
 // ---------- 검색 테스트 ----------
+// 에디터 딥링크: vscode://file/<abs>:<line>. PDF 페이지는 줄 번호가 없으니 파일만 연다.
+function editorHref(h) {
+  const scheme = $("#editorScheme").value;
+  if (!scheme || !h.abs) return null;
+  const abs = h.abs.replace(/\\/g, "/");
+  const path = abs.startsWith("/") ? abs : "/" + abs; // Windows 드라이브 경로는 /C:/... 형태
+  const line = h.kind === "page" ? "" : `:${h.startLine}`;
+  return `${scheme}://file${path}${line}`;
+}
+
 function renderHit(h, rank) {
   const div = document.createElement("div");
   div.className = "hit";
   const loc = h.kind === "page" ? `p.${h.startLine}` : `L${h.startLine}-${h.endLine}`;
   const snippet = h.text.replace(/\s+/g, " ").slice(0, 300);
   const tail = h.text.length > 300 ? " ..." : "";
+  const href = editorHref(h);
+  const fileHtml = href
+    ? `<a class="file" href="${escapeHtml(href)}" title="에디터에서 열기: ${escapeHtml(h.abs)}">${escapeHtml(h.file)}</a>`
+    : `<span class="file">${escapeHtml(h.file)}</span>`;
   div.innerHTML = `
     <div class="hit-head">
-      <span class="loc" title="${escapeHtml(h.file)}"><span class="rank">#${rank}</span><span class="ws-tag">[${escapeHtml(h.workspace)}]</span> <span class="file">${escapeHtml(h.file)}</span> :: ${escapeHtml(h.symbol)} (${loc})</span>
+      <span class="loc" title="${escapeHtml(h.abs || h.file)}"><span class="rank">#${rank}</span><span class="ws-tag">[${escapeHtml(h.workspace)}]</span> ${fileHtml} :: ${escapeHtml(h.symbol)} (${loc})</span>
       <span class="score">score ${h.score.toFixed(4)}</span>
     </div>
     <div class="hit-body">${escapeHtml(snippet)}${tail}</div>
   `;
   let expanded = false;
-  div.addEventListener("click", () => {
+  div.addEventListener("click", (ev) => {
+    if (ev.target.closest("a")) return; // 파일 링크 클릭은 토글하지 않는다
     expanded = !expanded;
     div.querySelector(".hit-body").textContent = expanded ? h.text : snippet + tail;
   });
@@ -483,6 +512,7 @@ async function doSearch() {
   const all = $("#wsAll").checked;
   const selected = Array.from(document.querySelectorAll(".ws-cb:checked")).map((cb) => cb.value);
   const workspaces = all ? "all" : selected;
+  const fileGlob = $("#searchFile").value.trim();
 
   $("#searchResults").innerHTML = '<div class="empty">검색 중...</div>';
   $("#searchWarnings").textContent = "";
@@ -490,13 +520,20 @@ async function doSearch() {
     const r = await fetch("/api/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, workspaces, topN, mode }),
+      body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || r.statusText);
     $("#searchResults").innerHTML = "";
     if (data.warnings && data.warnings.length) {
       $("#searchWarnings").textContent = data.warnings.join(" · ");
+    }
+    if (data.cached) {
+      const note = document.createElement("div");
+      note.className = "empty";
+      note.style.padding = "0 0 4px";
+      note.textContent = "캐시된 결과 (인덱스가 바뀌면 자동 갱신)";
+      $("#searchResults").appendChild(note);
     }
     if (data.hits.length === 0) {
       $("#searchResults").innerHTML = '<div class="empty">결과 없음</div>';
@@ -558,8 +595,14 @@ async function init() {
   await refreshStatus();
   await refreshWorkspaces();
   await refreshJobs();
-  // ?q=검색어&mode=fts&topN=10 으로 열면 바로 검색한다 (결과 공유·재현용)
+  // 에디터 선택은 브라우저에 저장
+  const savedScheme = localStorage.getItem("greplet.editorScheme");
+  if (savedScheme !== null) $("#editorScheme").value = savedScheme;
+  $("#editorScheme").addEventListener("change", () => localStorage.setItem("greplet.editorScheme", $("#editorScheme").value));
+
+  // ?q=검색어&mode=fts&topN=10&file=Lib/**/*.cs 으로 열면 바로 검색한다 (결과 공유·재현용)
   const params = new URLSearchParams(location.search);
+  if (params.get("file")) $("#searchFile").value = params.get("file");
   if (params.get("q")) {
     $("#searchQuery").value = params.get("q");
     if (["hybrid", "vector", "fts"].includes(params.get("mode"))) $("#searchMode").value = params.get("mode");

@@ -43,6 +43,8 @@ node <GREPLET>/greplet.mjs "검색어" --all --full --workspace docs --top-n 10 
 
 `--mode`: `hybrid`(기본, 벡터+FTS RRF 병합) · `vector`(의미 기반만) · `fts`(정확 토큰만, 임베딩 호출 없음).
 
+추가 옵션(`greplet.mjs`): `--file "Lib/**/*.cs"` 로 파일 경로 글롭 필터, `--json` 으로 원본 JSON. 인덱서 상태·재인덱스는 `node <GREPLET>/greplet.mjs status` / `workspaces` / `index <slug> --wait` 로 curl 없이 처리한다.
+
 워크스페이스 slug (`<GREPLET>/indexer/workspaces.json` 이 단일 소스):
 - `code` — 이 리포 소스 (기본값)
 - `code-legacy` — 레거시 소스 (리포 밖)

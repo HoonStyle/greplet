@@ -21,6 +21,8 @@ export interface GrepletParams {
   topN: number;
   full: boolean;
   mode: SearchMode;
+  // 결과를 파일 상대경로 글롭으로 필터 (예: "Lib/**" + "/*.cs")
+  fileGlob?: string;
 }
 
 interface Hit {
@@ -81,11 +83,12 @@ async function callSearchApi(
   query: string,
   topN: number,
   mode: SearchMode,
+  fileGlob?: string,
 ): Promise<SearchApiResponse> {
   const resp = await fetch(`${cfg.baseUrl}/api/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, workspaces, topN, mode }),
+    body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     signal: AbortSignal.timeout(120_000),
   });
   if (!resp.ok) {
@@ -136,7 +139,7 @@ export async function runGreplet(cfg: BackendConfig, p: GrepletParams): Promise<
 
   let data: SearchApiResponse;
   try {
-    data = await callSearchApi(cfg, targets, p.query, p.topN, p.mode);
+    data = await callSearchApi(cfg, targets, p.query, p.topN, p.mode, p.fileGlob);
   } catch (e) {
     throw new Error(backendDownMessage(cfg, e));
   }
@@ -144,7 +147,7 @@ export async function runGreplet(cfg: BackendConfig, p: GrepletParams): Promise<
   const label = p.all ? `ALL(${slugs.join(",")})` : workspace;
 
   if (data.hits.length === 0) {
-    return `결과 없음 (targets=${p.all ? "all" : workspace}, query="${p.query}")`;
+    return `결과 없음 (targets=${p.all ? "all" : workspace}${p.fileGlob ? ` file=${p.fileGlob}` : ""}, query="${p.query}")`;
   }
 
   const lines: string[] = [];

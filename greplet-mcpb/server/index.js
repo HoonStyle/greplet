@@ -35,11 +35,11 @@ async function fetchWorkspaces() {
 }
 
 /** 인덱서 /api/search 1회 호출 */
-async function callSearchApi(workspaces, query, topN, mode) {
+async function callSearchApi(workspaces, query, topN, mode, fileGlob) {
   const resp = await fetch(`${BASE_URL}/api/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, workspaces, topN, mode }),
+    body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     signal: AbortSignal.timeout(120_000),
   });
   if (!resp.ok) throw new Error(`/api/search HTTP ${resp.status}: ${await resp.text()}`);
@@ -68,7 +68,7 @@ async function listWorkspacesText() {
 }
 
 /** greplet 본체 — 인덱서 서버 1회 호출 → 포맷팅(greplet.ts 동치) */
-async function runGreplet({ query, workspace, all, topN, full, mode }) {
+async function runGreplet({ query, workspace, all, topN, full, mode, fileGlob }) {
   let slugs;
   try {
     slugs = (await fetchWorkspaces()).map((w) => w.slug);
@@ -85,7 +85,7 @@ async function runGreplet({ query, workspace, all, topN, full, mode }) {
 
   let data;
   try {
-    data = await callSearchApi(targets, query, topN, mode);
+    data = await callSearchApi(targets, query, topN, mode, fileGlob);
   } catch (e) {
     throw new Error(backendDownMessage(e));
   }
@@ -93,7 +93,8 @@ async function runGreplet({ query, workspace, all, topN, full, mode }) {
   const label = all ? `ALL(${slugs.join(",")})` : ws;
   if (data.hits.length === 0) return `결과 없음 (targets=${all ? "all" : ws}, query="${query}")`;
 
-  const lines = [`[${label}] "${query}" -> 총 ${data.hits.length}건 (점수순)`, "=".repeat(70)];
+  const filterTag = fileGlob ? ` file=${fileGlob}` : "";
+  const lines = [`[${label}] "${query}"${filterTag} -> 총 ${data.hits.length}건 (점수순)`, "=".repeat(70)];
 
   let rank = 1;
   const seen = new Set();
@@ -145,11 +146,15 @@ server.registerTool(
         .enum(["hybrid", "vector", "fts"])
         .default("hybrid")
         .describe("검색 방식: hybrid(기본) · vector(의미 기반만) · fts(정확 토큰만, 상수·메서드명 등에 유리)"),
+      fileGlob: z
+        .string()
+        .optional()
+        .describe('결과를 파일 상대경로 글롭으로 필터. `*` 는 세그먼트 안, `**` 는 깊이 무관. 예: "Lib/**/*.cs", "*.pdf"'),
     },
   },
-  async ({ query, workspace, all, topN, full, mode }) => {
+  async ({ query, workspace, all, topN, full, mode, fileGlob }) => {
     try {
-      const text = await runGreplet({ query, workspace, all, topN, full, mode });
+      const text = await runGreplet({ query, workspace, all, topN, full, mode, fileGlob });
       return { content: [{ type: "text", text }] };
     } catch (e) {
       return {

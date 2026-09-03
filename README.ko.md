@@ -71,7 +71,8 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
 - **구문 단위 청킹** — C# 멤버 단위, PDF 페이지 단위, 그 외 텍스트는 줄 윈도우. 암호 PDF 지원.
 - **증분 인덱싱** — 커밋 훅이나 API 호출로 변경분만 재인덱스.
 - **다중 워크스페이스** — 코드·레거시·문서를 분리해 두고 개별 또는 통합 검색.
-- **관리 UI** — 워크스페이스 상태, 파일 업로드, 재인덱스, 검색 테스트, 실시간 로그.
+- **관리 UI** — 워크스페이스 상태, 파일 업로드, 재인덱스, 검색 테스트(파일 글롭 필터, 결과 클릭 시 VS Code/Cursor 로 열기), 실시간 로그.
+- **결과 캐시** — 같은 질의는 인덱스가 바뀔 때까지 10분간 서버가 캐시. 반복 질의하는 에이전트의 임베딩 호출을 줄인다.
 - **에이전트 연동** — Claude Code 스킬, Codex, MCP(stdio·원격), CLI, git 훅.
 
 ## 구조
@@ -178,7 +179,16 @@ node greplet.mjs "재시도 백오프 로직"
 node greplet.mjs "0x0A03" --mode fts
 node greplet.mjs "설정 파일 스키마" -w docs --top-n 8
 node greplet.mjs "에러 코드" --all --full
+node greplet.mjs "재시도" --file "Lib/**/*.cs"      # 파일 경로 글롭으로 결과 필터
+node greplet.mjs "재시도" --all --json | jq '.hits[0]'   # 서버 JSON 그대로
+
+node greplet.mjs status                             # 서버·Ollama·Extractor·큐 상태
+node greplet.mjs workspaces                         # 워크스페이스 목록과 인덱스 통계
+node greplet.mjs index code --wait                  # 증분 인덱스 후 완료까지 로그 출력
+node greplet.mjs index docs --force                 # 전체 재인덱스 잡 등록
 ```
+
+`greplet.mjs` 의 관리 서브커맨드(`status` · `workspaces` · `index`)는 curl 없이 인덱서를 다루기 위한 것이다. 검색 결과는 인덱스가 바뀌지 않는 한 서버가 10분간 캐시하며, 캐시된 응답은 `cached: true` 로 표시된다.
 
 출력 예:
 
@@ -248,7 +258,7 @@ node greplet.mjs "에러 코드" --all --full
 | 클라이언트 | 위치 | 비고 |
 |---|---|---|
 | PowerShell CLI | `greplet.ps1` | `-Query -Workspace -All -TopN -Full -Mode -BaseUrl`. Windows |
-| Node CLI | `greplet.mjs` | `<query> -w --all --top-n --full --mode --base-url`. 모든 OS |
+| Node CLI | `greplet.mjs` | `<query> -w --all --top-n --full --mode --file --json` 과 `status` · `workspaces` · `index <slug> [--force] [--wait]`. 모든 OS |
 | Claude Code 스킬 | `examples/claude-code-skill/SKILL.md` | `.claude/skills/greplet/` 에 복사하고 워크스페이스 목록만 채운다 |
 | Claude Desktop / Cowork | `greplet-mcpb/` | `npm run pack` → `.mcpb` 설치. stdio, 인증 없음 |
 | Codex | `examples/codex/` | `config.toml` 에 `greplet-mcpb/server/index.js` 를 stdio MCP 로 등록. 스킬 예제 포함 |
@@ -266,7 +276,7 @@ MCP 툴은 `greplet`(검색)과 `greplet_workspaces`(목록) 두 개이며 모�
 | `GET /healthz` | 가동 확인 |
 | `GET /api/status` | Ollama·Extractor·큐 상태 |
 | `GET /api/workspaces` | 워크스페이스 목록과 인덱스 통계 |
-| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode }` |
+| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode, fileGlob? }`. `fileGlob` 은 파일 상대경로 글롭(`*`·`**`·`?`). 응답 hit 에 `abs`(절대경로) 포함, 캐시 응답은 `cached: true` |
 | `POST /api/index/:slug` | 증분 인덱스 잡 등록. `{ force: true }` 로 전체 재인덱스 |
 | `GET /api/jobs` · `GET /api/jobs/:id/events` | 잡 목록, SSE 로그 스트림 |
 | `POST /api/upload/:slug` | 파일 업로드 후 증분 인덱스 |

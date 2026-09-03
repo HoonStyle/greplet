@@ -71,7 +71,8 @@ Conversely, with one repo and a handful of documents there is little reason to u
 - **Syntax-aware chunking** — C# by member, PDF by page, other text by line windows. Encrypted PDFs supported.
 - **Incremental indexing** — only changed files are reindexed, triggered by the commit hook or the API.
 - **Multiple workspaces** — keep code, legacy, and docs separate; search one or all.
-- **Admin UI** — workspace status, file upload, reindex, search test, live logs.
+- **Admin UI** — workspace status, file upload, reindex, search test (file-glob filter, click a hit to open it in VS Code/Cursor), live logs.
+- **Result cache** — identical queries are served from a server-side cache for 10 minutes until the index changes, cutting embedding calls for agents that repeat themselves.
 - **Agent integration** — Claude Code skill, Codex, MCP (stdio and remote), CLI, git hook.
 
 ## Architecture
@@ -178,7 +179,16 @@ node greplet.mjs "retry backoff logic"
 node greplet.mjs "0x0A03" --mode fts
 node greplet.mjs "config file schema" -w docs --top-n 8
 node greplet.mjs "error codes" --all --full
+node greplet.mjs "retry" --file "Lib/**/*.cs"       # filter hits by file-path glob
+node greplet.mjs "retry" --all --json | jq '.hits[0]'   # raw server JSON
+
+node greplet.mjs status                             # server, Ollama, Extractor, queue
+node greplet.mjs workspaces                         # workspace list with index stats
+node greplet.mjs index code --wait                  # incremental index, stream the log until done
+node greplet.mjs index docs --force                 # enqueue a full reindex
 ```
+
+The management subcommands of `greplet.mjs` (`status` · `workspaces` · `index`) exist so you never need curl. Search responses are cached server-side for 10 minutes as long as the index has not changed; cached responses carry `cached: true`.
 
 Example output:
 
@@ -250,7 +260,7 @@ Full rules in [docs/design.md §3](docs/design.md) (Korean).
 | Client | Location | Notes |
 |---|---|---|
 | PowerShell CLI | `greplet.ps1` | `-Query -Workspace -All -TopN -Full -Mode -BaseUrl`. Windows |
-| Node CLI | `greplet.mjs` | `<query> -w --all --top-n --full --mode --base-url`. All OSes |
+| Node CLI | `greplet.mjs` | `<query> -w --all --top-n --full --mode --file --json` plus `status` · `workspaces` · `index <slug> [--force] [--wait]`. All OSes |
 | Claude Code skill | `examples/claude-code-skill/SKILL.md` | Copy into `.claude/skills/greplet/` and fill in the workspace list |
 | Claude Desktop / Cowork | `greplet-mcpb/` | `npm run pack` → install the `.mcpb`. stdio, no auth |
 | Codex | `examples/codex/` | Register `greplet-mcpb/server/index.js` as a stdio MCP server in `config.toml`. Skill example included |
@@ -268,7 +278,7 @@ The indexer listens on `127.0.0.1:7802` without authentication. Put `mcp-server`
 | `GET /healthz` | Liveness |
 | `GET /api/status` | Ollama, Extractor, and queue status |
 | `GET /api/workspaces` | Workspace list with index statistics |
-| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode }` |
+| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode, fileGlob? }`. `fileGlob` is a file-path glob (`*`, `**`, `?`). Hits include `abs` (absolute path); cached responses carry `cached: true` |
 | `POST /api/index/:slug` | Enqueue an incremental index job. `{ force: true }` for a full reindex |
 | `GET /api/jobs` · `GET /api/jobs/:id/events` | Job list, SSE log stream |
 | `POST /api/upload/:slug` | Upload files, then incremental index |

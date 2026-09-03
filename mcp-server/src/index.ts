@@ -65,11 +65,15 @@ function buildMcpServer(): McpServer {
           .enum(["hybrid", "vector", "fts"])
           .default("hybrid")
           .describe("검색 방식: hybrid(기본, 의미+정확 토큰 RRF 병합) · vector(의미 기반만) · fts(정확 토큰만, 상수·메서드명 등에 유리)"),
+        fileGlob: z
+          .string()
+          .optional()
+          .describe('결과를 파일 상대경로 글롭으로 필터. `*` 는 세그먼트 안, `**` 는 깊이 무관. 예: "Lib/**/*.cs", "*.pdf"'),
       },
     },
-    async ({ query, workspace, all, topN, full, mode }) => {
+    async ({ query, workspace, all, topN, full, mode, fileGlob }) => {
       try {
-        const text = await runGreplet(backend, { query, workspace, all, topN, full, mode });
+        const text = await runGreplet(backend, { query, workspace, all, topN, full, mode, fileGlob });
         return { content: [{ type: "text", text }] };
       } catch (e) {
         // 백엔드 미가동 등 — isError 로 원인 명시 (클라이언트 헛재시도 방지)

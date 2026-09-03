@@ -38,7 +38,7 @@ export interface JobRecord {
 const LOG_RING_MAX = 2000;
 const ADD_BATCH = 200;
 
-type LogListener = (line: string) => void;
+type LogListener = (ev: JobLogEvent) => void;
 
 interface QueueItem {
   jobId: string;
@@ -131,7 +131,8 @@ export class JobManager {
       if (ring.length > LOG_RING_MAX) ring.shift();
     }
     const line = `[${ev.ts}] ${level.toUpperCase()} ${msg}`;
-    for (const l of this.listeners.get(jobId) ?? []) l(line);
+    // 구독자에게는 구조화된 이벤트를 넘긴다(SSE 가 다시 감싸면서 접두어가 두 번 붙던 문제 방지)
+    for (const l of this.listeners.get(jobId) ?? []) l(ev);
 
     try {
       const logPath = path.join(this.cfg.logsDir, `${this.jobs.get(jobId)?.slug}-${jobId}.log`);

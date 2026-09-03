@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added
+- `greplet.mjs` 관리 서브커맨드: `status`, `workspaces`, `index <slug> [--force] [--wait]`. `--wait` 는 잡 로그를 완료까지 스트리밍한다.
+- `greplet.mjs --json`: 서버 응답 JSON 을 그대로 출력.
+- `greplet.mjs --file <glob>` · API `fileGlob` · MCP 툴 `fileGlob` 파라미터: 파일 상대경로 글롭(`*`, `**`, `?`)으로 결과 필터.
+- 검색 결과 캐시: 질의 파라미터 + 워크스페이스 매니페스트 `lastRun` 을 키로 10분간 LRU(200건). 인덱스가 바뀌면 자동 무효화. 경고가 있는 응답은 캐시하지 않는다. 응답에 `cached: true`.
+- 검색 hit 에 `abs`(절대경로) 포함. 관리 UI 에서 결과 파일명을 클릭하면 VS Code / Cursor / VS Code Insiders 로 해당 줄을 연다(선택은 브라우저에 저장).
+- 관리 UI 에 파일 글롭 필터 입력과 `?file=` 딥링크.
+
 ### Changed
 - 관리 UI 레이아웃 개편: 2열(워크스페이스·업로드 / 검색·진행 로그), 상태 배지형 헤더, 워크스페이스 카드에 파일·청크·임베딩 지표, 잡 목록과 로그 패널 나란히 배치, 1024px 이하 1열 반응형.
 - 관리 UI 에 `?q=검색어&mode=fts&topN=10` 딥링크. 열면 바로 검색한다.
@@ -11,6 +19,7 @@
 - `scripts/screenshot.sh`: README 스크린샷을 모의 임베딩·샘플 워크스페이스로 재생성.
 
 ### Fixed
+- SSE 잡 로그의 실시간 이벤트에 `[시각] LEVEL` 접두어가 두 번 붙던 문제.
 - 인덱서가 SIGTERM/SIGINT 를 받아도 프로세스가 남던 문제. `server.close()` 뒤 명시적으로 종료한다.
 
 ## [0.5.0] - 2026-09-03
