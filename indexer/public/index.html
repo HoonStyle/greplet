@@ -2,198 +2,314 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>greplet 인덱서 관리</title>
 <style>
   :root {
-    --bg: #f7f7f8;
+    --bg: #f4f5f7;
     --panel: #ffffff;
-    --border: #e2e2e6;
-    --text: #202124;
-    --muted: #6b6f76;
+    --panel-2: #f8f9fb;
+    --border: #e3e5ea;
+    --border-strong: #cfd3da;
+    --text: #1c1f24;
+    --muted: #697180;
+    --faint: #9aa1ad;
     --accent: #2f5fd6;
-    --accent-bg: #eaf0ff;
-    --ok: #1a7f37;
-    --warn: #b26a00;
-    --err: #c22b2b;
+    --accent-hover: #244cb0;
+    --accent-bg: #edf2ff;
+    --ok: #1a7f37;  --ok-bg: #e6f4ea;
+    --warn: #9a5b00; --warn-bg: #fff4e0;
+    --err: #c22b2b;  --err-bg: #fdecec;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 1px 3px rgba(16, 24, 40, .06);
   }
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    font-family: var(--sans);
     font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
   }
+
+  /* ---------- 헤더 ---------- */
   header {
-    padding: 12px 20px;
+    position: sticky; top: 0; z-index: 10;
+    height: 52px;
+    padding: 0 20px;
     background: var(--panel);
     border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
+    display: flex; align-items: center; gap: 16px;
   }
-  header h1 { font-size: 16px; margin: 0; margin-right: 12px; }
-  .status-item { display: flex; align-items: center; gap: 6px; color: var(--muted); }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; display: inline-block; }
+  header h1 { font-size: 15px; font-weight: 650; margin: 0; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+  header h1 .logo { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; display: inline-grid; place-items: center; font-family: var(--mono); }
+  .status-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .status-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px 3px 8px; border-radius: 999px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; white-space: nowrap;
+  }
+  .status-item b { color: var(--text); font-weight: 500; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); display: inline-block; flex: none; }
   .dot.ok { background: var(--ok); }
   .dot.err { background: var(--err); }
+  .header-right { margin-left: auto; color: var(--faint); font-size: 12px; font-family: var(--mono); max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---------- 레이아웃 ---------- */
   main {
-    max-width: 1100px;
-    margin: 20px auto;
-    padding: 0 16px 60px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 20px 20px 64px;
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
   }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  @media (max-width: 1024px) {
+    main { grid-template-columns: 1fr; }
+    .col-right { order: -1; }
+    .header-right { display: none; }
+  }
+
   section {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px 18px;
+    min-width: 0;
   }
-  section > h2 { font-size: 14px; margin: 0 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .ws-list { display: flex; flex-direction: column; gap: 8px; }
-  .ws-card {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+  section > h2 {
+    font-size: 12px; font-weight: 600; margin: 0 0 12px;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+    display: flex; align-items: center; gap: 8px;
   }
-  .ws-card .info { flex: 1; min-width: 220px; }
-  .ws-card .slug { font-weight: 600; }
-  .ws-card .meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  section > h2 .count { font-weight: 500; color: var(--faint); text-transform: none; letter-spacing: 0; }
+
+  /* ---------- 공통 컨트롤 ---------- */
   button {
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
     background: var(--panel);
-    border-radius: 4px;
-    padding: 6px 10px;
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 13px; font-family: inherit; font-weight: 500;
+    line-height: 1.3;
+    transition: background .12s, border-color .12s;
   }
-  button:hover { background: var(--accent-bg); }
-  button:disabled { opacity: .5; cursor: default; }
+  button:hover { background: var(--panel-2); border-color: var(--faint); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  button.small { padding: 4px 9px; font-size: 12px; }
+  input[type="text"], select, input[type="number"] {
+    border: 1px solid var(--border-strong);
+    background: var(--panel);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 13px; font-family: inherit; color: var(--text);
+    line-height: 1.3;
+  }
+  input[type="text"]:focus, select:focus, input[type="number"]:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg);
+  }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .row label { color: var(--muted); font-size: 12px; }
   .spinner {
     width: 12px; height: 12px;
     border: 2px solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-    display: inline-block;
+    display: inline-block; vertical-align: -2px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  input[type="text"], select, input[type="number"] {
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- 워크스페이스 ---------- */
+  .ws-list { display: flex; flex-direction: column; gap: 10px; }
+  .ws-card {
     border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 8px;
-    font-size: 13px;
+    border-radius: var(--radius-sm);
+    padding: 12px 12px 10px;
+    background: var(--panel);
   }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
-  .row label { color: var(--muted); font-size: 12px; }
-  #searchQuery { flex: 1; min-width: 240px; }
-  .hit {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 10px;
-    margin-bottom: 8px;
-    cursor: pointer;
-  }
-  .hit .hit-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
-  .hit .hit-head .ws-tag { color: var(--accent); }
-  .hit .hit-body { margin-top: 6px; white-space: pre-wrap; font-family: Consolas, monospace; font-size: 12px; }
+  .ws-card .info { min-width: 0; }
+  .ws-card .slug { font-weight: 600; font-family: var(--mono); font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ws-card .slug .label { font-family: var(--sans); font-weight: 400; color: var(--muted); }
+  .ws-card .kind { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; font-family: var(--sans); font-weight: 500; }
+  .ws-card .stats { display: flex; gap: 14px; margin: 8px 0 6px; }
+  .ws-card .stat { display: flex; flex-direction: column; }
+  .ws-card .stat .v { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .ws-card .stat .k { font-size: 11px; color: var(--muted); }
+  .ws-card .meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .ws-card .meta.path { font-family: var(--mono); font-size: 11px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ws-card .actions { display: flex; gap: 6px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .ws-card .actions .indexing { color: var(--accent); font-size: 12px; display: inline-flex; align-items: center; gap: 6px; margin-right: auto; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 999px; }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  .badge.err { background: var(--err-bg); color: var(--err); }
+  .badge.accent { background: var(--accent-bg); color: var(--accent); }
+  .badge.neutral { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
+  .empty { color: var(--faint); font-size: 13px; padding: 12px 0; text-align: center; }
+
+  /* ---------- 업로드 ---------- */
   .dropzone {
-    border: 2px dashed var(--border);
-    border-radius: 6px;
-    padding: 20px;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 22px 12px;
     text-align: center;
     color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
   }
-  .dropzone.drag { border-color: var(--accent); background: var(--accent-bg); }
-  .job-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .dropzone:hover { background: var(--panel-2); }
+  .dropzone.drag { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  #uploadResult { margin-top: 8px; color: var(--muted); font-size: 12px; word-break: break-all; }
+
+  /* ---------- 검색 ---------- */
+  .search-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  #searchQuery { flex: 1; min-width: 0; padding: 9px 12px; font-size: 14px; }
+  .search-opts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .search-opts .sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+  .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .checkbox-group label, .search-opts > label.cb { display: inline-flex; align-items: center; gap: 5px; color: var(--text); font-size: 12px; cursor: pointer; }
+  .checkbox-group label { font-family: var(--mono); }
+  #searchWarnings { color: var(--warn); background: var(--warn-bg); font-size: 12px; padding: 6px 10px; border-radius: var(--radius-sm); margin-bottom: 10px; }
+  #searchWarnings:empty { display: none; }
+  #searchResults { display: flex; flex-direction: column; gap: 8px; }
+  #searchResults:empty::before { content: "검색어를 입력하고 Enter"; color: var(--faint); font-size: 13px; display: block; padding: 18px 0; text-align: center; }
+  .hit {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: border-color .12s, background .12s;
+  }
+  .hit:hover { border-color: var(--faint); }
+  .hit .hit-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); align-items: baseline; }
+  .hit .hit-head .loc { font-family: var(--mono); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hit .hit-head .rank { color: var(--faint); margin-right: 6px; }
+  .hit .hit-head .ws-tag { color: var(--accent); font-weight: 600; }
+  .hit .hit-head .file { color: var(--text); }
+  .hit .hit-head .score { flex: none; font-family: var(--mono); color: var(--faint); }
+  .hit .hit-body { margin-top: 6px; white-space: pre-wrap; word-break: break-word; font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+  /* ---------- 잡 / 로그 ---------- */
+  .jobs-grid { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 12px; }
+  @media (max-width: 720px) { .jobs-grid { grid-template-columns: 1fr; } }
+  .job-list { display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow-y: auto; }
+  .job-list:empty::before { content: "실행된 잡 없음"; color: var(--faint); font-size: 12px; display: block; padding: 10px 6px; }
   .job-item {
-    display: flex; gap: 8px; align-items: center;
-    padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 12px;
+    display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; align-items: center;
+    padding: 5px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px;
   }
-  .job-item:hover { background: var(--accent-bg); }
-  .job-item.selected { background: var(--accent-bg); font-weight: 600; }
-  .job-item .state-done { color: var(--ok); }
-  .job-item .state-failed { color: var(--err); }
-  .job-item .state-running { color: var(--accent); }
+  .job-item:hover { background: var(--panel-2); }
+  .job-item.selected { background: var(--accent-bg); }
+  .job-item .slug { font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .job-item .id { font-family: var(--mono); color: var(--faint); }
+  .job-item .state { font-size: 11px; font-weight: 600; text-align: center; border-radius: 999px; padding: 1px 0; }
+  .job-item .state-done    { background: var(--ok-bg);   color: var(--ok); }
+  .job-item .state-failed  { background: var(--err-bg);  color: var(--err); }
+  .job-item .state-running { background: var(--accent-bg); color: var(--accent); }
+  .job-item .state-queued  { background: var(--panel-2); color: var(--muted); border: 1px solid var(--border); }
   #logPanel {
     background: #0f1117;
     color: #d7dae0;
-    font-family: Consolas, monospace;
+    font-family: var(--mono);
     font-size: 12px;
-    border-radius: 6px;
-    padding: 10px;
-    height: 240px;
+    line-height: 1.5;
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    height: 300px;
     overflow-y: auto;
     white-space: pre-wrap;
+    word-break: break-all;
   }
-  .checkbox-group { display: flex; gap: 10px; flex-wrap: wrap; }
-  .checkbox-group label { display: flex; align-items: center; gap: 4px; color: var(--text); font-size: 12px; }
+  #logPanel:empty::before { content: "잡을 선택하면 로그가 여기에 흐릅니다"; color: #5c6270; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>greplet 인덱서</h1>
-  <div class="status-item"><span class="dot" id="dotOllama"></span> Ollama <span id="ollamaLabel">확인 중</span></div>
-  <div class="status-item"><span class="dot" id="dotExtractor"></span> Extractor <span id="extractorLabel">확인 중</span></div>
-  <div class="status-item">DB: <span id="dbDirLabel" style="color:var(--text)">-</span></div>
-  <div class="status-item">큐: <span id="queueLabel" style="color:var(--text)">0</span></div>
+  <h1><span class="logo">g</span>greplet 인덱서</h1>
+  <div class="status-group">
+    <div class="status-item"><span class="dot" id="dotOllama"></span>Ollama <b id="ollamaLabel">확인 중</b></div>
+    <div class="status-item"><span class="dot" id="dotExtractor"></span>Extractor <b id="extractorLabel">확인 중</b></div>
+    <div class="status-item">큐 <b id="queueLabel" class="num">0</b></div>
+  </div>
+  <div class="header-right" title="데이터 디렉터리">DB <span id="dbDirLabel">-</span></div>
 </header>
 
 <main>
 
+<div class="col col-left">
+
   <section id="section-workspaces">
-    <h2>워크스페이스</h2>
+    <h2>워크스페이스 <span class="count" id="wsCount"></span></h2>
     <div class="ws-list" id="wsList"></div>
   </section>
 
   <section id="section-upload">
     <h2>업로드</h2>
     <div class="row">
-      <label>워크스페이스</label>
+      <label for="uploadWs">워크스페이스</label>
       <select id="uploadWs"></select>
     </div>
     <div class="dropzone" id="dropzone">
       파일을 여기로 드래그하거나 클릭해 선택
       <input type="file" id="fileInput" multiple style="display:none" />
     </div>
-    <div id="uploadResult" style="margin-top:8px; color:var(--muted); font-size:12px;"></div>
+    <div id="uploadResult"></div>
   </section>
+
+</div>
+
+<div class="col col-right">
 
   <section id="section-search">
     <h2>검색 테스트</h2>
-    <div class="row">
-      <input type="text" id="searchQuery" placeholder="검색어 입력..." />
+    <div class="search-bar">
+      <input type="text" id="searchQuery" placeholder="검색어 입력 (자연어 또는 상수·메서드명)" autofocus />
+      <button id="searchBtn" class="primary">검색</button>
+    </div>
+    <div class="search-opts">
+      <label for="searchMode">mode</label>
       <select id="searchMode">
         <option value="hybrid">hybrid</option>
         <option value="vector">vector</option>
         <option value="fts">fts</option>
       </select>
-      <label>topN</label>
-      <input type="number" id="searchTopN" value="6" min="1" max="20" style="width:60px" />
-      <button id="searchBtn">검색</button>
-    </div>
-    <div class="row">
-      <label>대상:</label>
-      <label><input type="checkbox" id="wsAll" checked /> 전체</label>
+      <label for="searchTopN">topN</label>
+      <input type="number" id="searchTopN" value="6" min="1" max="20" style="width:64px" />
+      <span class="sep"></span>
+      <label class="cb"><input type="checkbox" id="wsAll" checked /> 전체</label>
       <div class="checkbox-group" id="wsCheckboxes"></div>
     </div>
-    <div id="searchWarnings" style="color:var(--warn); font-size:12px; margin-bottom:8px;"></div>
+    <div id="searchWarnings"></div>
     <div id="searchResults"></div>
   </section>
 
   <section id="section-jobs">
     <h2>진행 로그</h2>
-    <div class="job-list" id="jobList"></div>
-    <div id="logPanel"></div>
+    <div class="jobs-grid">
+      <div class="job-list" id="jobList"></div>
+      <div id="logPanel"></div>
+    </div>
   </section>
+
+</div>
 
 </main>
 
@@ -210,9 +326,9 @@ async function refreshStatus() {
     $("#dotOllama").className = "dot " + (s.ollama.ok && s.ollama.hasModel ? "ok" : "err");
     $("#ollamaLabel").textContent = s.ollama.ok
       ? (s.ollama.hasModel ? `연결됨 (${s.ollama.model})` : `모델 없음 (${s.ollama.model})`)
-      : "미가동";
+      : "미가동 (fts 전용)";
     $("#dotExtractor").className = "dot " + (s.extractor.ok ? "ok" : "err");
-    $("#extractorLabel").textContent = s.extractor.ok ? "준비됨" : "없음(dotnet run 폴백)";
+    $("#extractorLabel").textContent = s.extractor.ok ? "준비됨" : "없음 (dotnet run 폴백)";
     $("#dbDirLabel").textContent = s.dbDir;
     $("#queueLabel").textContent = s.queue.length;
   } catch (e) {
@@ -230,26 +346,46 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleString("ko-KR");
 }
 
+function fmtNum(n) {
+  return Number(n || 0).toLocaleString("ko-KR");
+}
+
+function embeddingBadge(ws) {
+  if (ws.embeddings === "none") return '<span class="badge warn">fts 전용</span>';
+  if (ws.embeddings) return `<span class="badge ok">${escapeHtml(ws.embeddings)}</span>`;
+  return '<span class="badge neutral">임베딩 미확인</span>';
+}
+
 async function refreshWorkspaces() {
   const r = await fetch("/api/workspaces");
   const list = await r.json();
   workspacesCache = list;
 
+  $("#wsCount").textContent = list.length ? `${list.length}개` : "";
   const wsList = $("#wsList");
   wsList.innerHTML = "";
+  if (list.length === 0) {
+    wsList.innerHTML = '<div class="empty">워크스페이스 없음 — indexer/workspaces.json 을 확인하세요</div>';
+  }
   for (const ws of list) {
     const card = document.createElement("div");
     card.className = "ws-card";
     card.innerHTML = `
       <div class="info">
-        <div class="slug">${ws.slug} <span style="color:var(--muted); font-weight:400;">${ws.label}</span></div>
-        <div class="meta">${ws.kind} · 파일 ${ws.files}개 · 청크 ${ws.chunks}개 · 마지막 인덱스: ${fmtDate(ws.lastRun)}</div>
-        <div class="meta">임베딩: ${ws.embeddings === "none" ? "없음 (fts 전용)" : ws.embeddings}</div>
-        <div class="meta">${ws.roots.join(" , ")}</div>
+        <div class="slug">${escapeHtml(ws.slug)} <span class="kind">${escapeHtml(ws.kind)}</span> <span class="label">${escapeHtml(ws.label)}</span></div>
+        <div class="stats">
+          <div class="stat"><span class="v num">${fmtNum(ws.files)}</span><span class="k">파일</span></div>
+          <div class="stat"><span class="v num">${fmtNum(ws.chunks)}</span><span class="k">청크</span></div>
+          <div class="stat"><span class="v" style="font-size:13px;font-weight:500;padding-top:3px">${embeddingBadge(ws)}</span><span class="k">임베딩</span></div>
+        </div>
+        <div class="meta">마지막 인덱스 · ${fmtDate(ws.lastRun)}</div>
+        <div class="meta path" title="${escapeHtml(ws.roots.join("\n"))}">${escapeHtml(ws.roots.join("  ·  "))}</div>
       </div>
-      ${ws.indexing ? '<span class="spinner"></span> <span style="color:var(--muted);font-size:12px;">인덱싱 중</span>' : ""}
-      <button data-slug="${ws.slug}" data-force="false" ${ws.indexing ? "disabled" : ""}>증분 인덱스</button>
-      <button data-slug="${ws.slug}" data-force="true" ${ws.indexing ? "disabled" : ""}>전체 재인덱스</button>
+      <div class="actions">
+        ${ws.indexing ? '<span class="indexing"><span class="spinner"></span>인덱싱 중</span>' : ""}
+        <button class="small" data-slug="${escapeHtml(ws.slug)}" data-force="false" ${ws.indexing ? "disabled" : ""}>증분 인덱스</button>
+        <button class="small" data-slug="${escapeHtml(ws.slug)}" data-force="true" ${ws.indexing ? "disabled" : ""}>전체 재인덱스</button>
+      </div>
     `;
     wsList.appendChild(card);
   }
@@ -272,12 +408,14 @@ async function refreshWorkspaces() {
   // 업로드/검색 선택 목록도 갱신
   const uploadWs = $("#uploadWs");
   const prevUpload = uploadWs.value;
-  uploadWs.innerHTML = list.map((w) => `<option value="${w.slug}">${w.slug}</option>`).join("");
+  uploadWs.innerHTML = list.map((w) => `<option value="${escapeHtml(w.slug)}">${escapeHtml(w.slug)}</option>`).join("");
   if (prevUpload) uploadWs.value = prevUpload;
 
   const wsCheckboxes = $("#wsCheckboxes");
+  const prevChecked = new Set(Array.from(document.querySelectorAll(".ws-cb:checked")).map((cb) => cb.value));
+  const allChecked = $("#wsAll").checked;
   wsCheckboxes.innerHTML = list
-    .map((w) => `<label><input type="checkbox" class="ws-cb" value="${w.slug}" /> ${w.slug}</label>`)
+    .map((w) => `<label><input type="checkbox" class="ws-cb" value="${escapeHtml(w.slug)}" ${prevChecked.has(w.slug) ? "checked" : ""} ${allChecked ? "disabled" : ""} /> ${escapeHtml(w.slug)}</label>`)
     .join("");
 }
 
@@ -312,28 +450,29 @@ dropzone.addEventListener("drop", (e) => {
 });
 
 // ---------- 검색 테스트 ----------
-function renderHit(h) {
+function renderHit(h, rank) {
   const div = document.createElement("div");
   div.className = "hit";
   const loc = h.kind === "page" ? `p.${h.startLine}` : `L${h.startLine}-${h.endLine}`;
   const snippet = h.text.replace(/\s+/g, " ").slice(0, 300);
+  const tail = h.text.length > 300 ? " ..." : "";
   div.innerHTML = `
     <div class="hit-head">
-      <span><span class="ws-tag">[${h.workspace}]</span> ${h.file} :: ${h.symbol} (${loc})</span>
-      <span>score ${h.score.toFixed(4)}</span>
+      <span class="loc" title="${escapeHtml(h.file)}"><span class="rank">#${rank}</span><span class="ws-tag">[${escapeHtml(h.workspace)}]</span> <span class="file">${escapeHtml(h.file)}</span> :: ${escapeHtml(h.symbol)} (${loc})</span>
+      <span class="score">score ${h.score.toFixed(4)}</span>
     </div>
-    <div class="hit-body hit-snippet">${escapeHtml(snippet)}${h.text.length > 300 ? " ..." : ""}</div>
+    <div class="hit-body">${escapeHtml(snippet)}${tail}</div>
   `;
   let expanded = false;
   div.addEventListener("click", () => {
     expanded = !expanded;
-    div.querySelector(".hit-body").textContent = expanded ? h.text : snippet + (h.text.length > 300 ? " ..." : "");
+    div.querySelector(".hit-body").textContent = expanded ? h.text : snippet + tail;
   });
   return div;
 }
 
 function escapeHtml(s) {
-  return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 
 async function doSearch() {
@@ -345,7 +484,7 @@ async function doSearch() {
   const selected = Array.from(document.querySelectorAll(".ws-cb:checked")).map((cb) => cb.value);
   const workspaces = all ? "all" : selected;
 
-  $("#searchResults").innerHTML = "검색 중...";
+  $("#searchResults").innerHTML = '<div class="empty">검색 중...</div>';
   $("#searchWarnings").textContent = "";
   try {
     const r = await fetch("/api/search", {
@@ -360,12 +499,12 @@ async function doSearch() {
       $("#searchWarnings").textContent = data.warnings.join(" · ");
     }
     if (data.hits.length === 0) {
-      $("#searchResults").textContent = "결과 없음";
+      $("#searchResults").innerHTML = '<div class="empty">결과 없음</div>';
       return;
     }
-    for (const h of data.hits) $("#searchResults").appendChild(renderHit(h));
+    data.hits.forEach((h, i) => $("#searchResults").appendChild(renderHit(h, i + 1)));
   } catch (e) {
-    $("#searchResults").textContent = "검색 실패: " + e.message;
+    $("#searchResults").innerHTML = `<div class="empty">검색 실패: ${escapeHtml(e.message)}</div>`;
   }
 }
 $("#searchBtn").addEventListener("click", doSearch);
@@ -386,7 +525,7 @@ async function refreshJobs() {
   for (const j of jobs) {
     const div = document.createElement("div");
     div.className = "job-item" + (j.id === selectedJobId ? " selected" : "");
-    div.innerHTML = `<span class="state-${j.state}">${j.state}</span> <span>${j.slug}</span> <span style="color:var(--muted)">${j.id.slice(0, 8)}</span>`;
+    div.innerHTML = `<span class="state state-${escapeHtml(j.state)}">${escapeHtml(j.state)}</span><span class="slug">${escapeHtml(j.slug)}</span><span class="id">${escapeHtml(j.id.slice(0, 8))}</span>`;
     div.addEventListener("click", () => selectJob(j.id));
     jobList.appendChild(div);
   }
@@ -419,6 +558,14 @@ async function init() {
   await refreshStatus();
   await refreshWorkspaces();
   await refreshJobs();
+  // ?q=검색어&mode=fts&topN=10 으로 열면 바로 검색한다 (결과 공유·재현용)
+  const params = new URLSearchParams(location.search);
+  if (params.get("q")) {
+    $("#searchQuery").value = params.get("q");
+    if (["hybrid", "vector", "fts"].includes(params.get("mode"))) $("#searchMode").value = params.get("mode");
+    if (params.get("topN")) $("#searchTopN").value = params.get("topN");
+    doSearch();
+  }
   setInterval(refreshStatus, 5000);
   setInterval(refreshWorkspaces, 5000);
   setInterval(refreshJobs, 5000);
