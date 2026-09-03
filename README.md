@@ -1,6 +1,8 @@
 # greplet
 
 <p align="center">
+  <a href="README.md"><img alt="Language: English" src="https://img.shields.io/badge/lang-English-blue"></a>
+  <a href="README.ko.md"><img alt="Language: Korean" src="https://img.shields.io/badge/lang-%ED%95%9C%EA%B5%AD%EC%96%B4-blue"></a>
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
   <img alt="Node 22+" src="https://img.shields.io/badge/Node-22%2B-339933?logo=nodedotjs&logoColor=white">
   <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white">
@@ -18,58 +20,58 @@
   <img alt="Linux" src="https://img.shields.io/badge/Linux-untested-FCC624?logo=linux&logoColor=black">
 </p>
 
-> 레거시 코드 여러 벌, 현재 코드, 사양서 PDF 를 한 번에 뒤져 **파일 · 심볼 · 줄 범위**로 답하는 로컬 검색 서버. AI 코딩 에이전트가 grep 대신 쓰도록 만들었다.
+> A local search server that indexes several legacy codebases, the current code, and spec PDFs at once and answers with **file · symbol · line range**. Built for AI coding agents to use instead of grep.
 
-greplet 는 여러 리포지토리·폴더·PDF 를 **워크스페이스**로 묶어 인덱싱하고, 자연어나 키워드로 질의하면 관련 **청크**(C# 멤버, PDF 페이지 등)만 점수순으로 돌려주는 로컬 서비스다. 벡터 검색(Ollama `bge-m3`)과 전문 검색(BM25)을 RRF 로 융합한다. LLM 생성도, 외부 네트워크 호출도 없다.
+greplet indexes repositories, folders, and PDFs as **workspaces**. Given a natural-language or keyword query, it returns only the relevant **chunks** (C# members, PDF pages, and so on), ranked by score. Vector search (Ollama `bge-m3`) and full-text search (BM25) are fused with RRF. There is no LLM generation and no outbound network call.
 
-일반 RAG 와 다른 점은 세 가지다.
+Three things set it apart from a generic RAG setup:
 
-1. **인덱스가 코드를 따라간다.** 파일 해시 매니페스트로 추가·변경·삭제를 증분 반영한다. 커밋 훅이 돌리므로 지운 파일의 청크가 검색에 남지 않는다.
-2. **위치로 답한다.** C# 은 Roslyn 으로 타입·멤버 단위, PDF 는 페이지 단위로 자른다. 결과는 `파일 :: 심볼 (L시작-끝)` 형태라 에이전트는 그 자리만 열어 보면 된다.
-3. **찾기만 한다.** 요약·해석·검증은 하지 않는다. 구조는 LSP(Serena), 사양 문서화와 인용 검증은 legacy-spec-agent 가 맡는 [역할 분담](#에이전트에서의-역할-분담)을 전제로 설계했다. 검색이 틀려도 다음 단계에서 걸러진다.
+1. **The index follows the code.** A file-hash manifest applies additions, changes, and deletions incrementally. A post-commit hook drives it, so chunks of deleted files do not linger in search results.
+2. **It answers with locations.** C# is chunked by type and member with Roslyn; PDFs by page. Results come back as `file :: symbol (Lstart-end)`, so the agent opens only that spot.
+3. **It only finds.** No summarizing, interpreting, or verifying. Structure belongs to an LSP tool (Serena), and spec writing with citation checks belongs to legacy-spec-agent. That [division of labor](#division-of-labor-among-agent-tools) is a design assumption. If search is wrong, the next stage catches it.
 
-Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(PowerShell·Node), git 훅으로 붙여 쓴다. 목적은 하나다. 에이전트가 "이 기능 어디 구현돼 있어?", "사양서에 이 값 어떻게 정의돼 있어?" 같은 질문에 폴더 전체를 읽지 않고 답하게 하는 것.
+It plugs in as a Claude Code skill, a Codex MCP server, a Claude Desktop MCP bundle, a remote MCP server, a CLI (PowerShell or Node), and a git hook. The goal is one thing: let an agent answer "where is this feature implemented?" or "how does the spec define this value?" without reading the whole folder.
 
-## 목차
+## Table of contents
 
-- [왜 필요한가](#왜-필요한가)
-- [주요 기능](#주요-기능)
-- [구조](#구조)
-- [요구 환경](#요구-환경)
-- [설치와 실행](#설치와-실행)
-- [사용법](#사용법)
-- [설정](#설정)
-- [클라이언트](#클라이언트)
+- [Why](#why)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Requirements](#requirements)
+- [Install and run](#install-and-run)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Clients](#clients)
 - [HTTP API](#http-api)
-- [에이전트에서의 역할 분담](#에이전트에서의-역할-분담)
-- [청킹 규칙](#청킹-규칙)
-- [개발과 검증](#개발과-검증)
-- [알려진 제약](#알려진-제약)
-- [라이선스](#라이선스)
+- [Division of labor among agent tools](#division-of-labor-among-agent-tools)
+- [Chunking rules](#chunking-rules)
+- [Development and verification](#development-and-verification)
+- [Known limitations](#known-limitations)
+- [License](#license)
 
-## 왜 필요한가
+## Why
 
-| 상황 | 기존 도구의 한계 | greplet |
+| Situation | Limit of existing tools | greplet |
 |---|---|---|
-| 레거시가 여러 벌이고, 현재 코드와 사양서 PDF 가 따로 있다 | IDE·에이전트 내장 검색은 열려 있는 리포 하나만 본다. Serena 도 활성 프로젝트 하나만 본다 | 리포 밖 어디든 여러 루트를 워크스페이스로 묶는다. `-All` 로 벌 간 비교까지 한 번에 |
-| 상수·에러 코드·메서드명으로 찾는다 | 순수 벡터 검색은 정확 토큰에 약하다 | 벡터 + BM25 하이브리드. `fts` 모드는 Ollama 없이 동작 |
-| 결과를 받아 바로 그 자리를 열어야 한다 | 고정 길이 청킹은 메서드 중간에서 끊기고 위치를 못 준다 | Roslyn 멤버 단위, PDF 페이지 단위. 모든 결과에 파일·심볼·줄 범위 |
-| 코드가 계속 바뀐다 | 업로드형 RAG 는 삭제가 반영되지 않아 stale 청크가 쌓인다 | 파일 해시 매니페스트로 추가·변경·삭제 증분 반영. 커밋 훅 연동 |
-| 소스를 외부로 보낼 수 없다 | 클라우드 검색은 업로드가 전제 | 완전 로컬. 인덱서는 `127.0.0.1` 에만 바인딩. 외부 노출은 Bearer 인증 MCP 서버 경유만 |
+| Several legacy codebases, plus current code and spec PDFs kept elsewhere | IDE and agent built-in search sees only the open repo. Serena sees only the active project | Any roots anywhere become workspaces. `--all` compares across codebases in one query |
+| Searching by constant, error code, or method name | Pure vector search is weak on exact tokens | Vector + BM25 hybrid. `fts` mode works without Ollama |
+| The result must point at a place to open | Fixed-length chunking cuts methods in half and gives no location | Roslyn member-level and PDF page-level chunks. Every hit has file, symbol, and line range |
+| The code keeps changing | Upload-style RAG never sees deletions, so stale chunks pile up | Hash manifest applies adds, changes, and deletes incrementally. Hooked into commits |
+| Source cannot leave the machine | Cloud search assumes upload | Fully local. The indexer binds to `127.0.0.1` only. External exposure goes through the Bearer-authenticated MCP server |
 
-반대로 리포 하나에 문서 몇 개인 환경이면 greplet 을 쓸 이유가 약하다. 내장 검색이나 grep 으로 충분하다.
+Conversely, with one repo and a handful of documents there is little reason to use greplet. Built-in search or grep is enough.
 
-## 주요 기능
+## Features
 
-- **하이브리드 검색** — `hybrid`(기본) · `vector` · `fts` 세 모드.
-- **Ollama 없이도 동작** — Ollama 가 없으면 영벡터로 인덱싱하고 검색은 `fts` 로 자동 강등한다. Ollama 가 생기면 다음 인덱스 잡이 전체 재인덱스로 승격돼 벡터를 채운다.
-- **구문 단위 청킹** — C# 멤버 단위, PDF 페이지 단위, 그 외 텍스트는 줄 윈도우. 암호 PDF 지원.
-- **증분 인덱싱** — 커밋 훅이나 API 호출로 변경분만 재인덱스.
-- **다중 워크스페이스** — 코드·레거시·문서를 분리해 두고 개별 또는 통합 검색.
-- **관리 UI** — 워크스페이스 상태, 파일 업로드, 재인덱스, 검색 테스트, 실시간 로그.
-- **에이전트 연동** — Claude Code 스킬, Codex, MCP(stdio·원격), CLI, git 훅.
+- **Hybrid search** — three modes: `hybrid` (default), `vector`, `fts`.
+- **Works without Ollama** — if Ollama is absent, indexing fills zero vectors and search is downgraded to `fts`. Once Ollama appears, the next index job is promoted to a full reindex that fills the vectors.
+- **Syntax-aware chunking** — C# by member, PDF by page, other text by line windows. Encrypted PDFs supported.
+- **Incremental indexing** — only changed files are reindexed, triggered by the commit hook or the API.
+- **Multiple workspaces** — keep code, legacy, and docs separate; search one or all.
+- **Admin UI** — workspace status, file upload, reindex, search test, live logs.
+- **Agent integration** — Claude Code skill, Codex, MCP (stdio and remote), CLI, git hook.
 
-## 구조
+## Architecture
 
 ```
 [Claude Code skill / Codex / MCP / greplet.ps1 / greplet.mjs / post-commit]
@@ -78,36 +80,36 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
         indexer (Node/TS, Express)
       ┌──────────┼──────────────┐
   Extractor    Ollama         LanceDB
-  (C#/Roslyn   bge-m3        벡터 + FTS
-   PdfPig)     임베딩         RRF 하이브리드
+  (C#/Roslyn   bge-m3        vector + FTS
+   PdfPig)     embeddings    RRF hybrid
 ```
 
-| 폴더 | 역할 |
+| Folder | Role |
 |---|---|
-| `Extractor/` | C# 콘솔. Roslyn·PdfPig 로 파일을 청크 JSONL 로 변환 |
-| `indexer/` | Node/TS 서비스. 스캔·임베딩·LanceDB 저장·검색 API·관리 UI |
-| `greplet.ps1` | PowerShell CLI 클라이언트 (Windows) |
-| `greplet.mjs` | Node CLI 클라이언트 (모든 OS) |
-| `greplet-mcpb/` | Claude Desktop/Cowork 용 로컬 stdio MCP 번들. Codex 도 이 서버를 쓴다 |
-| `mcp-server/` | Bearer 인증 원격 MCP 서버 |
-| `git-hooks/` | 커밋 후 증분 인덱스를 트리거하는 post-commit 훅 |
-| `examples/claude-code-skill/` | Claude Code 스킬 예제, CLAUDE.md 규칙 스니펫 |
-| `examples/codex/` | Codex MCP 등록·스킬 예제 |
-| `docs/design.md` | 상세 설계 문서 |
+| `Extractor/` | C# console. Turns files into chunk JSONL with Roslyn and PdfPig |
+| `indexer/` | Node/TS service. Scan, embed, store in LanceDB, search API, admin UI |
+| `greplet.ps1` | PowerShell CLI client (Windows) |
+| `greplet.mjs` | Node CLI client (all OSes) |
+| `greplet-mcpb/` | Local stdio MCP bundle for Claude Desktop/Cowork. Codex uses this server too |
+| `mcp-server/` | Remote MCP server with Bearer auth |
+| `git-hooks/` | post-commit hook that triggers an incremental index |
+| `examples/claude-code-skill/` | Claude Code skill example and CLAUDE.md rule snippet |
+| `examples/codex/` | Codex MCP registration and skill example |
+| `docs/design.md` | Detailed design document (Korean) |
 
-## 요구 환경
+## Requirements
 
-| 항목 | 값 |
+| Item | Value |
 |---|---|
 | Node | 22+ |
 | .NET SDK | 8.0+ |
-| Ollama | 선택. `bge-m3` 모델 (`ollama pull bge-m3`). 없으면 `fts` 전용으로 동작 |
-| PowerShell | 7+. Windows 에서 `greplet.ps1`·`start-indexer.ps1` 을 쓸 때만. 다른 OS 는 `greplet.mjs`·`start-indexer.sh` |
-| OS | Windows · macOS · Linux. Intel Mac 은 LanceDB 버전 제약이 있다([알려진 제약](#알려진-제약)) |
+| Ollama | Optional. `bge-m3` model (`ollama pull bge-m3`). Without it, `fts` only |
+| PowerShell | 7+. Only for `greplet.ps1` and `start-indexer.ps1` on Windows. Other OSes use `greplet.mjs` and `start-indexer.sh` |
+| OS | Windows · macOS · Linux. Intel Macs have a LanceDB version constraint ([Known limitations](#known-limitations)) |
 
-## 설치와 실행
+## Install and run
 
-순서는 모든 OS 가 같다. Extractor 빌드 → 인덱서 빌드 → 워크스페이스 정의 → 기동.
+The order is the same on every OS: build the Extractor → build the indexer → define workspaces → start.
 
 **Windows (PowerShell)**
 
@@ -117,204 +119,206 @@ dotnet build Extractor -c Release
 cd indexer
 npm install
 npm run build
-cp workspaces.example.json workspaces.json     # roots 를 실제 경로로 수정
-pwsh start-indexer.ps1                         # 백그라운드 기동, healthz 확인
+cp workspaces.example.json workspaces.json     # set roots to real paths
+pwsh start-indexer.ps1                         # background start, waits for healthz
 ```
 
 **macOS / Linux (bash)**
 
 ```bash
-# macOS 에 .NET 8 이 없다면. dotnet@8 은 keg-only 라 PATH 에 안 들어간다
+# macOS without .NET 8: dotnet@8 is keg-only and not on PATH
 brew install dotnet@8
 export DOTNET_ROOT=/usr/local/opt/dotnet@8/libexec     # Apple Silicon: /opt/homebrew/opt/dotnet@8/libexec
-export PATH="$DOTNET_ROOT:$PATH"                        # start-indexer.sh 는 이 keg 를 자동 감지한다
+export PATH="$DOTNET_ROOT:$PATH"                        # start-indexer.sh auto-detects this keg
 
 dotnet build Extractor -c Release
 
 cd indexer
 npm install
-npm i @lancedb/lancedb@0.22.3                  # Intel Mac 만. Apple Silicon·Linux 는 불필요
+npm i @lancedb/lancedb@0.22.3                  # Intel Mac only. Not needed on Apple Silicon or Linux
 npm run build
-cp workspaces.example.json workspaces.json     # roots 를 실제 경로로 수정
-bash start-indexer.sh                          # 백그라운드 기동, healthz 확인
+cp workspaces.example.json workspaces.json     # set roots to real paths
+bash start-indexer.sh                          # background start, waits for healthz
 ```
 
-기동 후 `http://localhost:7802` 관리 UI 에서 **[전체 재인덱스]** 를 누르면 첫 인덱싱이 시작된다.
+Open the admin UI at `http://localhost:7802` and press **[Full reindex]** to run the first indexing.
 
-데이터(LanceDB·매니페스트·업로드·로그)는 `GREPLET_DATA_DIR` 에 저장되며 기본값은 OS 별로 다르다.
+Data (LanceDB, manifests, uploads, logs) lives in `GREPLET_DATA_DIR`. The default depends on the OS.
 
-| OS | 기본 경로 |
+| OS | Default path |
 |---|---|
 | Windows | `%LOCALAPPDATA%\greplet` |
 | macOS | `~/Library/Application Support/greplet` |
-| Linux | `$XDG_DATA_HOME/greplet` (기본 `~/.local/share/greplet`) |
+| Linux | `$XDG_DATA_HOME/greplet` (default `~/.local/share/greplet`) |
 
-로그온 시 자동 기동은 Windows 는 작업 스케줄러에 `pwsh -File <경로>\indexer\start-indexer.ps1`, macOS 는 launchd, Linux 는 systemd user service 로 `node indexer/dist/server.js` 를 등록한다.
+For start at logon, register `pwsh -File <path>\indexer\start-indexer.ps1` in Task Scheduler on Windows, or `node indexer/dist/server.js` as a launchd agent on macOS or a systemd user service on Linux.
 
-## 사용법
+## Usage
 
 **Windows (PowerShell)**
 
 ```powershell
-pwsh greplet.ps1 -Query "재시도 백오프 로직"                    # 기본 워크스페이스 의미 검색
-pwsh greplet.ps1 -Query "0x0A03" -Mode fts                      # 정확 토큰 (상수·에러 코드·메서드명)
-pwsh greplet.ps1 -Query "설정 파일 스키마" -Workspace docs -TopN 8
-pwsh greplet.ps1 -Query "에러 코드" -All -Full                  # 모든 워크스페이스 통합, 청크 전문
+pwsh greplet.ps1 -Query "retry backoff logic"                   # semantic search in the default workspace
+pwsh greplet.ps1 -Query "0x0A03" -Mode fts                      # exact token (constants, error codes, method names)
+pwsh greplet.ps1 -Query "config file schema" -Workspace docs -TopN 8
+pwsh greplet.ps1 -Query "error codes" -All -Full                # all workspaces, full chunk text
 ```
 
-**모든 OS (Node)**
+**All OSes (Node)**
 
 ```bash
-node greplet.mjs "재시도 백오프 로직"
+node greplet.mjs "retry backoff logic"
 node greplet.mjs "0x0A03" --mode fts
-node greplet.mjs "설정 파일 스키마" -w docs --top-n 8
-node greplet.mjs "에러 코드" --all --full
+node greplet.mjs "config file schema" -w docs --top-n 8
+node greplet.mjs "error codes" --all --full
 ```
 
-출력 예:
+Example output:
 
 ```
-[code] "재시도 백오프 로직" -> 총 6건 (점수순)
+[code] "retry backoff logic" -> 6 hits (by score)
 ======================================================================
 #1  score 0.0328  |  Lib/Retry/RetryPolicy.cs :: RetryPolicy.Execute (L120-161)
 // Lib/Retry/RetryPolicy.cs // namespace My.Lib.Retry // class RetryPolicy : IRetryPolicy public bool Execute(...
 ----------------------------------------------------------------------
 ```
 
-### 검색 모드
+The CLI prints its labels in Korean. The layout above is what to expect.
 
-| mode | 동작 | 용도 |
+### Search modes
+
+| mode | Behavior | Use for |
 |---|---|---|
-| `hybrid` (기본) | 벡터 + FTS → RRF 융합 | 대부분의 내용 검색 |
-| `vector` | 의미 검색만 | 표현이 다른 유사 코드 찾기 |
-| `fts` | BM25 만, 임베딩 호출 없음 | 정확 토큰. Ollama 없이도 동작 |
+| `hybrid` (default) | vector + FTS → RRF fusion | Most content searches |
+| `vector` | Semantic only | Similar code written differently |
+| `fts` | BM25 only, no embedding call | Exact tokens. Works without Ollama |
 
-임베딩 없이 인덱싱된 워크스페이스에 `hybrid`/`vector` 를 요청하면 서버가 `fts` 로 강등하고 응답의 `warnings` 에 알린다.
+Requesting `hybrid` or `vector` on a workspace indexed without embeddings makes the server fall back to `fts` and say so in the response `warnings`.
 
-## 설정
+## Configuration
 
-### 워크스페이스 (`indexer/workspaces.json`)
+### Workspaces (`indexer/workspaces.json`)
 
-워크스페이스 목록의 단일 소스다. 모든 클라이언트는 이 파일이나 서버의 `GET /api/workspaces` 에서 목록을 읽는다.
+The single source of truth for the workspace list. Every client reads it from this file or from the server's `GET /api/workspaces`.
 
 ```json
 [
-  { "slug": "code", "label": "메인 솔루션", "kind": "code",
+  { "slug": "code", "label": "Main solution", "kind": "code",
     "roots": ["C:\\work\\my-solution"] },
-  { "slug": "docs", "label": "사양서·매뉴얼", "kind": "docs",
+  { "slug": "docs", "label": "Specs and manuals", "kind": "docs",
     "roots": ["/Users/me/work/specs"],
     "includeExt": [".pdf", ".html", ".md"],
     "pdfPasswordFile": "/Users/me/work/specs/passwords.txt" }
 ]
 ```
 
-`roots` 에는 어느 OS 경로든 쓸 수 있다. Windows 경로는 JSON 문자열이므로 백슬래시를 `\\` 로 이스케이프한다.
+`roots` accepts paths from any OS. Windows paths inside JSON strings need backslashes escaped as `\\`.
 
-| 필드 | 설명 |
+| Field | Description |
 |---|---|
-| `slug` | 검색·API 에서 쓰는 식별자 |
-| `label` | 관리 UI 표시 이름 |
-| `kind` | `code` 또는 `docs`. 기본 확장자·제외 규칙이 달라진다 |
-| `roots` | 인덱스할 루트 폴더 목록 |
-| `includeExt` | 대상 확장자. `code` 기본 `.cs .csproj .sln .xaml .proto .config .settings .manifest .md`, `docs` 기본 `.pdf` |
-| `excludeDirs` / `excludeFiles` | 명시하면 기본값을 대체한다 |
-| `pdfPasswordFile` | 암호 PDF 용 비밀번호 목록 파일 |
+| `slug` | Identifier used by search and the API |
+| `label` | Display name in the admin UI |
+| `kind` | `code` or `docs`. Changes the default extensions and exclusion rules |
+| `roots` | Root folders to index |
+| `includeExt` | Target extensions. `code` default: `.cs .csproj .sln .xaml .proto .config .settings .manifest .md`; `docs` default: `.pdf` |
+| `excludeDirs` / `excludeFiles` | Replace the defaults when given |
+| `pdfPasswordFile` | Password list for encrypted PDFs |
 
-자세한 규칙은 [docs/design.md §3](docs/design.md).
+Full rules in [docs/design.md §3](docs/design.md) (Korean).
 
-### 환경변수
+### Environment variables
 
-| 변수 | 기본값 | 설명 |
+| Variable | Default | Description |
 |---|---|---|
-| `GREPLET_PORT` | `7802` | 인덱서 포트 |
-| `GREPLET_DATA_DIR` | OS 별 기본값(위 표) | DB·매니페스트·업로드·로그 저장 위치 |
-| `GREPLET_WORKSPACES` | `indexer/workspaces.json` | 워크스페이스 정의 파일. CLI(`greplet.ps1`·`greplet.mjs`)도 기본 워크스페이스를 여기서 읽으므로 서버에 다른 경로를 줬다면 CLI 에도 같은 값을 넘긴다 |
-| `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS·Linux) | Extractor 실행 파일 |
-| `GREPLET_DEFAULT_WORKSPACE` | 첫 워크스페이스 | 워크스페이스 미지정 시 기본값 (CLI·MCP) |
-| `OLLAMA_URL` | `http://localhost:11434` | Ollama 주소 |
+| `GREPLET_PORT` | `7802` | Indexer port |
+| `GREPLET_DATA_DIR` | Per-OS default (table above) | Location of DB, manifests, uploads, logs |
+| `GREPLET_WORKSPACES` | `indexer/workspaces.json` | Workspace definition file. The CLIs (`greplet.ps1`, `greplet.mjs`) also read the default workspace from here, so pass the same value to the CLI if you gave the server a different path |
+| `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS, Linux) | Extractor executable |
+| `GREPLET_DEFAULT_WORKSPACE` | First workspace | Default when no workspace is given (CLI, MCP) |
+| `OLLAMA_URL` | `http://localhost:11434` | Ollama address |
 
-## 클라이언트
+## Clients
 
-| 클라이언트 | 위치 | 비고 |
+| Client | Location | Notes |
 |---|---|---|
 | PowerShell CLI | `greplet.ps1` | `-Query -Workspace -All -TopN -Full -Mode -BaseUrl`. Windows |
-| Node CLI | `greplet.mjs` | `<query> -w --all --top-n --full --mode --base-url`. 모든 OS |
-| Claude Code 스킬 | `examples/claude-code-skill/SKILL.md` | `.claude/skills/greplet/` 에 복사하고 워크스페이스 목록만 채운다 |
-| Claude Desktop / Cowork | `greplet-mcpb/` | `npm run pack` → `.mcpb` 설치. stdio, 인증 없음 |
-| Codex | `examples/codex/` | `config.toml` 에 `greplet-mcpb/server/index.js` 를 stdio MCP 로 등록. 스킬 예제 포함 |
-| 원격 MCP | `mcp-server/` | Streamable HTTP + Bearer, `127.0.0.1:7801`. 외부 노출은 터널 경유. [README](mcp-server/README.md) |
-| git 훅 | `git-hooks/post-commit` | `git config greplet.slug <slug>` 후 `.git/hooks/` 에 복사 |
+| Node CLI | `greplet.mjs` | `<query> -w --all --top-n --full --mode --base-url`. All OSes |
+| Claude Code skill | `examples/claude-code-skill/SKILL.md` | Copy into `.claude/skills/greplet/` and fill in the workspace list |
+| Claude Desktop / Cowork | `greplet-mcpb/` | `npm run pack` → install the `.mcpb`. stdio, no auth |
+| Codex | `examples/codex/` | Register `greplet-mcpb/server/index.js` as a stdio MCP server in `config.toml`. Skill example included |
+| Remote MCP | `mcp-server/` | Streamable HTTP + Bearer, `127.0.0.1:7801`. Expose only through a tunnel. [README](mcp-server/README.md) (Korean) |
+| git hook | `git-hooks/post-commit` | `git config greplet.slug <slug>`, then copy into `.git/hooks/` |
 
-MCP 툴은 `greplet`(검색)과 `greplet_workspaces`(목록) 두 개이며 모두 `readOnlyHint` 가 붙어 있어 승인 없이 호출된다.
+The MCP tools are `greplet` (search) and `greplet_workspaces` (list). Both carry `readOnlyHint`, so clients call them without an approval prompt.
 
 ## HTTP API
 
-인덱서는 `127.0.0.1:7802` 에 무인증으로 뜬다. 외부에 열려면 `mcp-server` 를 앞에 둔다.
+The indexer listens on `127.0.0.1:7802` without authentication. Put `mcp-server` in front of it to expose it externally.
 
-| 메서드·경로 | 용도 |
+| Method · path | Purpose |
 |---|---|
-| `GET /healthz` | 가동 확인 |
-| `GET /api/status` | Ollama·Extractor·큐 상태 |
-| `GET /api/workspaces` | 워크스페이스 목록과 인덱스 통계 |
+| `GET /healthz` | Liveness |
+| `GET /api/status` | Ollama, Extractor, and queue status |
+| `GET /api/workspaces` | Workspace list with index statistics |
 | `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode }` |
-| `POST /api/index/:slug` | 증분 인덱스 잡 등록. `{ force: true }` 로 전체 재인덱스 |
-| `GET /api/jobs` · `GET /api/jobs/:id/events` | 잡 목록, SSE 로그 스트림 |
-| `POST /api/upload/:slug` | 파일 업로드 후 증분 인덱스 |
-| `DELETE /api/workspaces/:slug/files?file=` | 업로드 파일 삭제 |
+| `POST /api/index/:slug` | Enqueue an incremental index job. `{ force: true }` for a full reindex |
+| `GET /api/jobs` · `GET /api/jobs/:id/events` | Job list, SSE log stream |
+| `POST /api/upload/:slug` | Upload files, then incremental index |
+| `DELETE /api/workspaces/:slug/files?file=` | Delete an uploaded file |
 
-전체 요청·응답 형식은 [docs/design.md §5.5](docs/design.md).
+Full request and response formats in [docs/design.md §5.5](docs/design.md) (Korean).
 
-## 에이전트에서의 역할 분담
+## Division of labor among agent tools
 
-greplet 는 "어디에 무슨 내용이 있나"를 찾는 도구다. 나머지는 다른 도구에 맡긴다.
+greplet answers "where is what". Everything else goes to other tools.
 
-| 질문 | 도구 | 이유 |
+| Question | Tool | Why |
 |---|---|---|
-| 이 기능이 어디 구현돼 있나, 문서에 어떻게 정의돼 있나 | **greplet** | 폴더째 grep/read 보다 빠르고 토큰을 훨씬 덜 쓴다 |
-| 이 메서드를 누가 호출하나, 상속·참조 체인 | **LSP 심볼 도구** ([Serena](https://github.com/oraios/serena) 등) | greplet 는 청크 텍스트만 알고 참조 관계는 모른다 |
-| 문서 없는 레거시 코드의 사양을 인용 근거와 함께 문서화 | **[legacy-spec-agent](https://github.com/HoonStyle/legacy-spec-agent)** | greplet 는 해석·요약·검증을 하지 않는다 |
-| 파일명·경로 찾기, 방금 편집한 파일 확인 | **Glob / Grep / Read** | 인덱스가 아직 안 따라왔을 수 있다 |
-| 정확 문자열의 완전한 출현 목록 | **Grep** | 하이브리드는 topN 만 돌려준다. `fts` 로 후보를 좁힌 뒤 Grep 으로 확인 |
+| Where is this feature implemented, how does the doc define it | **greplet** | Faster and far cheaper in tokens than grep/read over whole folders |
+| Who calls this method, inheritance and reference chains | **LSP symbol tool** ([Serena](https://github.com/oraios/serena) etc.) | greplet only knows chunk text, not references |
+| Write a citation-backed spec for undocumented legacy code | **[legacy-spec-agent](https://github.com/HoonStyle/legacy-spec-agent)** | greplet does not interpret, summarize, or verify |
+| Find a file by name or path, check a file just edited | **Glob / Grep / Read** | The index may not have caught up yet |
+| Every occurrence of an exact string | **Grep** | Hybrid returns only topN. Narrow with `fts`, then confirm with Grep |
 
-규칙 파일(CLAUDE.md 등)에 넣어 둘 원칙: 내용 검색은 greplet 먼저, 구조는 LSP, 경로는 Glob/Grep. greplet 결과가 비거나 서버가 꺼져 있을 때만 폴더 스캔으로 폴백. 예시는 [`examples/claude-code-skill/CLAUDE.md.snippet`](examples/claude-code-skill/CLAUDE.md.snippet).
+Rule for the agent's rules file (CLAUDE.md etc.): content search goes to greplet first, structure to LSP, paths to Glob/Grep. Fall back to folder scanning only when greplet returns nothing or the server is down. Example: [`examples/claude-code-skill/CLAUDE.md.snippet`](examples/claude-code-skill/CLAUDE.md.snippet) (Korean).
 
 ### greplet + Serena + legacy-spec-agent
 
-레거시 코드 여러 벌과 현재 프로젝트, 사양서 PDF 가 뒤섞인 환경에서 쓰는 조합이다. 세 도구는 서로를 호출하지 않는다. 에이전트가 각 결과를 받아 조합한다.
+The combination for environments with several legacy codebases, a current project, and spec PDFs. The three tools never call each other. The agent combines their results.
 
-| 도구 | 준비 | 담당 |
+| Tool | Setup | Owns |
 |---|---|---|
-| greplet | 레거시 각 벌·현재 프로젝트·문서를 워크스페이스로 분리 (`code`, `code-legacy`, `docs`) | 내용 검색. "이 값 어디서 정의되나", "사양서에서 이 프로토콜 설명" |
-| Serena | 레거시 각 벌과 현재 프로젝트를 모두 Serena 프로젝트로 등록. 고정하지 않고 요청이 가리키는 쪽을 `activate_project` 로 그때그때 전환 | 구조 질의. 참조·호출 체인·상속, 심볼 단위 읽기와 편집 |
-| legacy-spec-agent | Claude Code / Codex 플러그인 설치 | `path:line` 인용이 붙은 SPEC/ARCHITECTURE 역생성, 코드 변경 후 drift 검사 |
+| greplet | Separate workspaces for each legacy codebase, the current project, and docs (`code`, `code-legacy`, `docs`) | Content search. "Where is this value defined", "how does the spec describe this protocol" |
+| Serena | Register every legacy codebase and the current project as Serena projects. Do not pin one. Switch with `activate_project` to whichever the request points at | Structure. References, call chains, inheritance, symbol-level read and edit |
+| legacy-spec-agent | Install the Claude Code / Codex plugin | Reverse-generate SPEC/ARCHITECTURE with `path:line` citations, then drift-check after code changes |
 
-Serena 를 `--project` 로 프로젝트를 지정해 띄우면 `claude-code`·`ide` 컨텍스트에서 `activate_project` 툴이 꺼진다. 전환하며 쓰려면 프로젝트 없이 기동해야 한다 ([Serena 문서](https://oraios.github.io/serena/02-usage/040_workflow.html)).
+If Serena is started with `--project`, the `activate_project` tool is disabled in the `claude-code` and `ide` contexts. Start it without a project to switch freely ([Serena docs](https://oraios.github.io/serena/02-usage/040_workflow.html)).
 
-"레거시 기능을 현재 프로젝트로 옮기기"의 전형적인 흐름:
+A typical flow for "port a legacy feature into the current project":
 
-1. **greplet** `-Workspace code-legacy` 로 기능·상수·에러코드가 있는 파일과 위치를 찾는다. 정확 토큰은 `-Mode fts`.
-2. **Serena** 로 그 심볼의 참조·호출 체인을 따라가 실제 범위를 확정한다.
-3. **legacy-spec-agent** 로 그 범위의 사양 문서를 뽑는다. 인용이 없는 주장은 Unverified 로 남는다.
-4. **greplet** `-Workspace docs` 로 사양서 PDF 의 해당 정의를 대조한다.
-5. **greplet** `-Workspace code` 와 **Serena** 로 현재 프로젝트의 대응 위치를 찾아 반영한다.
-6. 커밋 훅이 greplet 증분 인덱스를 돌리므로 다음 검색부터 바뀐 코드가 반영된다.
+1. **greplet** `-Workspace code-legacy` finds the files and locations holding the feature, constants, and error codes. Use `-Mode fts` for exact tokens.
+2. **Serena** follows references and call chains from those symbols to fix the real scope.
+3. **legacy-spec-agent** writes the spec for that scope. Claims without a citation stay Unverified.
+4. **greplet** `-Workspace docs` cross-checks the definition in the spec PDFs.
+5. **greplet** `-Workspace code` and **Serena** locate the counterpart in the current project and apply the change.
+6. The commit hook runs an incremental greplet index, so the next search reflects the new code.
 
-역할이 겹칠 때의 선택 기준:
+When roles overlap:
 
-- 파일 위치를 모른다 → greplet. 심볼 이름을 안다 → Serena.
-- 여러 레거시 벌에서 같은 기능이 어떻게 다른지 → greplet `-All`. Serena 는 활성 프로젝트 하나만 보므로 벌마다 전환해야 한다.
-- 결과를 문서로 남겨야 한다 → legacy-spec-agent. greplet 출력은 근거 위치를 찾는 용도이지 산출물이 아니다.
+- Unknown file location → greplet. Known symbol name → Serena.
+- How the same feature differs across legacy codebases → greplet `--all`. Serena sees one active project at a time, so it needs a switch per codebase.
+- The result must become a document → legacy-spec-agent. greplet output locates evidence; it is not a deliverable.
 
-## 청킹 규칙
+## Chunking rules
 
-- **C#**: 타입 선언·멤버(메서드/생성자/속성/이벤트/연산자)·필드 묶음을 각각 청크로. 모든 청크 앞에 `// file` `// namespace` `// class X : Base` 헤더 3줄. 6000자 초과 멤버는 4000/400 윈도우, 300자 미만 연속 멤버는 1200자까지 병합.
-- **PDF**: 페이지 = 청크. 암호 PDF 지원. 스캔 이미지 페이지는 스킵.
-- **HTML/Markdown/XAML/기타**: 3000/300 줄 윈도우. HTML 은 script·style 제거 후 평문화.
-- **인코딩**: UTF-8 → CP949 폴백.
+- **C#**: type declarations, members (method/constructor/property/event/operator), and field groups each become a chunk. Every chunk starts with three header lines: `// file`, `// namespace`, `// class X : Base`. Members over 6000 chars use a 4000/400 window; consecutive members under 300 chars are merged up to 1200 chars.
+- **PDF**: one page = one chunk. Encrypted PDFs supported. Scanned image pages are skipped.
+- **HTML/Markdown/XAML/other**: 3000/300 line windows. HTML is flattened after removing script and style.
+- **Encoding**: UTF-8, falling back to CP949.
 
-전체 사양은 [docs/design.md](docs/design.md).
+Full specification in [docs/design.md](docs/design.md) (Korean).
 
-## 개발과 검증
+## Development and verification
 
 ```bash
 dotnet build Extractor -c Release
@@ -323,16 +327,16 @@ cd ../mcp-server && npm run build && MCP_AUTH_TOKEN=<token> npm run smoke
 cd ../greplet-mcpb && npm install && npm run smoke
 ```
 
-PowerShell 에서는 `MCP_AUTH_TOKEN=<token>` 대신 `$env:MCP_AUTH_TOKEN = "<token>"` 을 먼저 설정한다. 개발 중에는 `indexer/` 와 `mcp-server/` 에서 `npm run dev`(tsx) 로 빌드 없이 실행할 수 있다.
+In PowerShell, set `$env:MCP_AUTH_TOKEN = "<token>"` first instead of the inline `MCP_AUTH_TOKEN=<token>`. During development, `npm run dev` (tsx) in `indexer/` and `mcp-server/` runs without a build.
 
-## 알려진 제약
+## Known limitations
 
-- 청커는 C# 에 특화돼 있다. 다른 언어는 텍스트 윈도우로 들어간다(확장자를 `includeExt` 에 추가).
-- 벡터 인덱스를 만들지 않는다(flat 스캔). 워크스페이스당 수십만 청크를 넘기면 검색이 느려진다.
-- 인덱서 HTTP API 는 무인증이라 `127.0.0.1` 에만 바인딩한다.
-- Intel Mac(darwin-x64)용 `@lancedb/lancedb` 네이티브 바이너리는 0.22.3 이 마지막이다(0.23.0 은 의존성 목록에만 있고 패키지가 배포되지 않았다). `npm install` 뒤 `npm i @lancedb/lancedb@0.22.3` 을 한 번 더 실행한다. Apple Silicon·Linux·Windows 는 해당 없음.
-- Ollama 없이 인덱싱한 워크스페이스는 벡터가 비어 있어 `fts` 만 의미가 있다. Ollama 가 준비되면 다음 인덱스 잡이 전체 재인덱스로 자동 승격된다.
+- The chunker is specialized for C#. Other languages fall into text windows (add the extension to `includeExt`).
+- No vector index is built (flat scan). Beyond a few hundred thousand chunks per workspace, search slows down.
+- The indexer HTTP API has no authentication, so it binds to `127.0.0.1` only.
+- The last `@lancedb/lancedb` native binary for Intel Macs (darwin-x64) is 0.22.3 (0.23.0 lists it as a dependency but the package was never published). Run `npm i @lancedb/lancedb@0.22.3` after `npm install`. Not needed on Apple Silicon, Linux, or Windows.
+- A workspace indexed without Ollama has empty vectors, so only `fts` is meaningful. Once Ollama is available, the next index job is automatically promoted to a full reindex.
 
-## 라이선스
+## License
 
 [MIT](LICENSE)
