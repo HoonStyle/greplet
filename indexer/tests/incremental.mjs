@@ -3,7 +3,7 @@
 //   1) 파일 2개 추가 -> 인덱스 -> 청크 수 확인
 //   2) 파일 1개 수정 -> 재인덱스 -> 해당 파일 청크만 교체(id 집합 비교)
 //   3) 파일 1개 삭제 -> 재인덱스 -> 그 파일 청크 0, 매니페스트에서 제거
-// Extractor 를 실제로 호출하는 통합 테스트다. Ollama 는 있으면 bge-m3 로 임베딩하고, 없으면 fts 전용 경로를 검증한다. 임시 DB 디렉터리를 쓰고 끝나면 정리한다.
+// 실제 Ollama(bge-m3)·Extractor 를 호출하는 통합 테스트다. 임시 DB 디렉터리를 쓰고 끝나면 정리한다.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -39,21 +39,10 @@ fs.writeFileSync(
 process.env.GREPLET_WORKSPACES = workspacesPath;
 process.env.GREPLET_DATA_DIR = dataDir;
 
-// Homebrew dotnet@8 은 keg-only 라 DOTNET_ROOT 없이는 Extractor(apphost)가 런타임을 못 찾는다(start-indexer.sh 와 동일 규칙).
-if (!process.env.DOTNET_ROOT) {
-  for (const keg of ["/opt/homebrew/opt/dotnet@8/libexec", "/usr/local/opt/dotnet@8/libexec"]) {
-    if (fs.existsSync(path.join(keg, "dotnet"))) {
-      process.env.DOTNET_ROOT = keg;
-      break;
-    }
-  }
-}
-
 const { loadConfig, loadWorkspaces, findWorkspace } = await import("../dist/config.js");
 const { JobManager } = await import("../dist/indexJob.js");
 const { openOrCreateTable } = await import("../dist/db.js");
 const { search } = await import("../dist/search.js");
-const { checkOllama } = await import("../dist/embed.js");
 
 const cfg = loadConfig();
 let workspaces = loadWorkspaces(cfg);
@@ -133,25 +122,17 @@ async function main() {
   assert.ok(!("b.txt" in manifest.files), "매니페스트에서 b.txt 가 제거되어야 함");
   assert.ok("a.txt" in manifest.files, "매니페스트에 a.txt 는 남아있어야 함");
 
-  // ---------- 4) 임베딩 상태: Ollama 유무에 따라 매니페스트 embeddings 와 hybrid 검색 동작이 갈린다 ----------
-  const ollama = await checkOllama(cfg);
-  const embedReady = ollama.ok && ollama.hasModel;
+  // ---------- 4) Ollama 없는 환경에서는 매니페스트가 embeddings="none" 이고, hybrid 검색이 fts 로 강등되어 히트를 반환해야 함 ----------
   const manifestAfterAll = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert.equal(manifestAfterAll.embeddings, "none", `embeddings 는 "none" 이어야 함 (실제 ${manifestAfterAll.embeddings})`);
+
   const searchResult = await search(cfg, [ws], "hello", 6, "hybrid");
-  if (embedReady) {
-    assert.equal(manifestAfterAll.embeddings, cfg.ollamaModel, `embeddings 는 "${cfg.ollamaModel}" 이어야 함 (실제 ${manifestAfterAll.embeddings})`);
-    assert.equal(searchResult.warnings.length, 0, `Ollama 있는 환경의 hybrid 검색은 경고가 없어야 함 (실제 ${JSON.stringify(searchResult.warnings)})`);
-    assert.ok(searchResult.hits.length > 0, "hybrid 검색이 히트를 반환해야 함");
-    console.log(`[incremental] 4) embeddings=${cfg.ollamaModel} 확인, hybrid 검색 히트=${searchResult.hits.length}건`);
-  } else {
-    assert.equal(manifestAfterAll.embeddings, "none", `embeddings 는 "none" 이어야 함 (실제 ${manifestAfterAll.embeddings})`);
-    assert.ok(
-      searchResult.warnings.some((w) => w.includes("fts")),
-      `hybrid 검색 경고에 fts 강등/폴백 문구가 있어야 함 (실제 ${JSON.stringify(searchResult.warnings)})`,
-    );
-    assert.ok(searchResult.hits.length > 0, "fts 로 강등된 hybrid 검색도 히트를 반환해야 함");
-    console.log(`[incremental] 4) embeddings=none 확인, hybrid→fts 강등 검색 히트=${searchResult.hits.length}건`);
-  }
+  assert.ok(
+    searchResult.warnings.some((w) => w.includes("fts")),
+    `hybrid 검색 경고에 fts 강등 문구가 있어야 함 (실제 ${JSON.stringify(searchResult.warnings)})`,
+  );
+  assert.ok(searchResult.hits.length > 0, "fts 로 강등된 hybrid 검색도 히트를 반환해야 함");
+  console.log(`[incremental] 4) embeddings=none 확인, hybrid→fts 강등 검색 히트=${searchResult.hits.length}건`);
 
   console.log("[incremental] 전체 통과");
 }
