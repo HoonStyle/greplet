@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-04
+
 ### Changed
 - 기동 스크립트(`start-indexer.sh`/`.ps1`)가 기본으로 관리 UI 를 브라우저에 연다. 열지 않으려면 `--no-open`/`-NoOpenUI` 또는 `GREPLET_OPEN_UI=0`.
 
@@ -76,7 +78,8 @@
 
 Windows 에서 개발·검증된 초기 상태. Extractor(Roslyn/PdfPig), LanceDB 하이브리드 인덱서, PowerShell CLI, Claude Desktop `.mcpb`, 원격 MCP 서버, post-commit 훅, Claude Code 스킬 예제.
 
-[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/HoonStyle/greplet/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/HoonStyle/greplet/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/HoonStyle/greplet/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/HoonStyle/greplet/compare/v0.6.0...v0.7.0
