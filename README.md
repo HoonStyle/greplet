@@ -147,7 +147,7 @@ cp workspaces.example.json workspaces.json     # set roots to real paths
 bash start-indexer.sh                          # background start, waits for healthz
 ```
 
-Open the admin UI at `http://localhost:7802` and press **[Full reindex]** to run the first indexing. Pass `--open` (bash) or `-OpenUI` (PowerShell) to the start script to open the admin UI in the default browser right after the health check. The environment variable `GREPLET_OPEN_UI=1` does the same.
+Open the admin UI at `http://localhost:7802` and press **[Full reindex]** to run the first indexing. The start script opens the admin UI in the default browser right after the health check. Pass `--no-open` (bash) or `-NoOpenUI` (PowerShell) to skip that. The environment variable `GREPLET_OPEN_UI=0` does the same.
 
 To start the indexer and open the UI every time a Claude Code session begins, register that command as a SessionStart hook. Example: [`examples/claude-code-skill/hooks.settings.json`](examples/claude-code-skill/hooks.settings.json).
 
@@ -252,7 +252,7 @@ Full rules in [docs/design.md §3](docs/design.md) (Korean).
 | `GREPLET_WORKSPACES` | `indexer/workspaces.json` | Workspace definition file. The CLIs (`greplet.ps1`, `greplet.mjs`) also read the default workspace from here, so pass the same value to the CLI if you gave the server a different path |
 | `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS, Linux) | Extractor executable |
 | `GREPLET_DEFAULT_WORKSPACE` | First workspace | Default when no workspace is given (CLI, MCP) |
-| `GREPLET_OPEN_UI` | unset | `1` makes the start scripts open the admin UI in the browser after the health check (same as `--open` / `-OpenUI`) |
+| `GREPLET_OPEN_UI` | `1` | `0` stops the start scripts from opening the admin UI in the browser after the health check (same as `--no-open` / `-NoOpenUI`) |
 | `GREPLET_CLIENT_NAME` | client-specific | Client name sent to `/api/search` and shown in the activity feed; valid names match `^[a-z0-9:_-]{1,32}$` |
 | `GREPLET_ACTIVITY_QUERY` | unset | Set to `hidden` to replace query text in activity events and history with `(hidden)` |
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama address |

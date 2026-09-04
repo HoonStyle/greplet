@@ -2,16 +2,18 @@
 # start-indexer.sh - greplet 인덱서 서버 백그라운드 기동(§5.6).
 # 이미 떠 있으면(healthz 200) 그대로 스킵하고, 아니면 새로 띄운 뒤 healthz 를 최대 10초 폴링한다.
 #
-# 사용: bash indexer/start-indexer.sh [BASE_URL] [--open]
-#   BASE_URL  기본 http://127.0.0.1:7802
-#   --open    기동 확인 후 관리 UI 를 기본 브라우저로 연다 (환경변수 GREPLET_OPEN_UI=1 과 동일)
+# 사용: bash indexer/start-indexer.sh [BASE_URL] [--open|--no-open]
+#   BASE_URL   기본 http://127.0.0.1:7802
+#   --open     기동 확인 후 관리 UI 를 기본 브라우저로 연다 (기본값, 환경변수 GREPLET_OPEN_UI=1 과 동일)
+#   --no-open  관리 UI 를 열지 않는다 (환경변수 GREPLET_OPEN_UI=0 과 동일)
 set -euo pipefail
 
 BASE_URL="http://127.0.0.1:7802"
-OPEN_UI="${GREPLET_OPEN_UI:-0}"
+OPEN_UI="${GREPLET_OPEN_UI:-1}"
 for arg in "$@"; do
   case "$arg" in
     --open) OPEN_UI=1 ;;
+    --no-open) OPEN_UI=0 ;;
     http://*|https://*) BASE_URL="$arg" ;;
     *) echo "[start-indexer] 알 수 없는 인자: $arg" >&2; exit 2 ;;
   esac

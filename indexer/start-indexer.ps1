@@ -6,11 +6,15 @@ param(
   # 127.0.0.1 명시 - "localhost" 는 PowerShell(.NET HttpClient)이 IPv6(::1)를 먼저 시도하다
   # 로컬 환경에 따라 수 초 지연 후 폴백하는 경우가 있어 healthz 폴링이 불필요하게 느려진다.
   [string]$BaseUrl = "http://127.0.0.1:7802",
-  # 기동 확인 후 관리 UI 를 기본 브라우저로 연다. 환경변수 GREPLET_OPEN_UI=1 과 동일.
-  [switch]$OpenUI
+  # 기동 확인 후 관리 UI 를 기본 브라우저로 연다(기본값). 환경변수 GREPLET_OPEN_UI=1 과 동일.
+  [switch]$OpenUI,
+  # 관리 UI 를 열지 않는다. 환경변수 GREPLET_OPEN_UI=0 과 동일.
+  [switch]$NoOpenUI
 )
 
-if ($env:GREPLET_OPEN_UI -eq "1") { $OpenUI = $true }
+$OpenUI = $true
+if ($env:GREPLET_OPEN_UI -eq "0") { $OpenUI = $false }
+if ($NoOpenUI) { $OpenUI = $false }
 
 function Open-GrepletUI {
   if (-not $OpenUI) { return }

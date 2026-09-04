@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed
+- 기동 스크립트(`start-indexer.sh`/`.ps1`)가 기본으로 관리 UI 를 브라우저에 연다. 열지 않으려면 `--no-open`/`-NoOpenUI` 또는 `GREPLET_OPEN_UI=0`.
+
 ## [0.9.0] - 2026-09-04
 
 ### Added
