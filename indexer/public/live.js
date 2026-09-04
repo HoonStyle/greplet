@@ -38,6 +38,8 @@
     connectionText: byId("liveConnectionText"),
     activeCount: byId("liveActiveCount"),
     pause: byId("livePause"),
+    session: byId("liveSession"),
+    filterBadge: byId("liveFilterBadge"),
     lanes: byId("liveLanes"),
     feed: byId("activityFeed"),
     liveStatus: byId("liveStatus"),
@@ -99,12 +101,130 @@
   const renderQueue = new Set();
   const pausedRenderQueue = [];
   const connectionState = { kind: "retry", text: "재연결 중 0s" };
+  const SESSION_STORAGE_KEY = "greplet.live.session";
+  const SESSION_OPTIONS_MAX = 50;
+  const knownSessions = new Map();
+  let sessionFilter = "";
+  try {
+    sessionFilter = window.localStorage.getItem(SESSION_STORAGE_KEY) || "";
+  } catch (_) {
+    sessionFilter = "";
+  }
   const statsState = {
     total: 0,
     sumMs: 0,
     cacheHits: 0,
     qpsTimes: [],
   };
+
+  function sessionKey(client, session) {
+    return `${client || "unknown"}|${session || ""}`;
+  }
+
+  function parseSessionKey(key) {
+    const index = key.indexOf("|");
+    if (index < 0) return [key, ""];
+    return [key.slice(0, index), key.slice(index + 1)];
+  }
+
+  if (sessionFilter && !knownSessions.has(sessionFilter)) {
+    const [client, session] = parseSessionKey(sessionFilter);
+    knownSessions.set(sessionFilter, { client, session, lastTs: 0, count: 0 });
+  }
+
+  function trimKnownSessions() {
+    if (knownSessions.size <= SESSION_OPTIONS_MAX) return;
+    const entries = Array.from(knownSessions.entries()).sort((a, b) => a[1].lastTs - b[1].lastTs);
+    for (const [key] of entries) {
+      if (knownSessions.size <= SESSION_OPTIONS_MAX) break;
+      if (key === sessionFilter) continue;
+      knownSessions.delete(key);
+    }
+  }
+
+  function noteSession(client, session, tsMs) {
+    const key = sessionKey(client, session);
+    const ts = Number.isFinite(tsMs) ? tsMs : now();
+    const existing = knownSessions.get(key);
+    if (existing) {
+      if (ts > existing.lastTs) existing.lastTs = ts;
+      existing.count += 1;
+    } else {
+      knownSessions.set(key, { client: client || "unknown", session: session || "", lastTs: ts, count: 1 });
+    }
+    trimKnownSessions();
+    scheduleRender("sessionOptions");
+  }
+
+  function noteSessionFromRecord(record) {
+    const ts = Date.parse(record.ts);
+    noteSession(record.client, record.session, Number.isFinite(ts) ? ts : now());
+  }
+
+  function sessionOptionLabel(entry) {
+    return entry.session
+      ? `${entry.client} · ${entry.session.slice(0, 8)}`
+      : `${entry.client} · (세션 없음)`;
+  }
+
+  function renderSessionOptions() {
+    const select = elements.session;
+    if (!select) return;
+    const entries = Array.from(knownSessions.entries()).sort((a, b) => b[1].lastTs - a[1].lastTs);
+    const limited = entries.slice(0, SESSION_OPTIONS_MAX);
+    if (sessionFilter && !limited.some(([key]) => key === sessionFilter) && knownSessions.has(sessionFilter)) {
+      limited.push([sessionFilter, knownSessions.get(sessionFilter)]);
+    }
+    const optionsHtml = limited.map(([key, entry]) =>
+      `<option value="${escapeHtml(key)}">${escapeHtml(sessionOptionLabel(entry))}</option>`
+    ).join("");
+    select.innerHTML = `<option value="">전체</option>${optionsHtml}`;
+    select.value = sessionFilter;
+  }
+
+  function updateFilterBadge() {
+    if (!elements.filterBadge) return;
+    if (!sessionFilter) {
+      elements.filterBadge.hidden = true;
+      elements.filterBadge.textContent = "";
+      return;
+    }
+    const entry = knownSessions.get(sessionFilter);
+    const label = entry ? sessionOptionLabel(entry) : sessionFilter;
+    elements.filterBadge.hidden = false;
+    elements.filterBadge.textContent = `필터: ${label}`;
+  }
+
+  function laneMatchesFilter(lane) {
+    return !sessionFilter || sessionKey(lane.client, lane.session) === sessionFilter;
+  }
+
+  function filteredFeedRecords() {
+    if (!sessionFilter) return feedRecords;
+    return feedRecords.filter((record) => sessionKey(record.client, record.session) === sessionFilter);
+  }
+
+  function filteredActiveSearchCount() {
+    if (!sessionFilter) return Math.max(activeEstimate, activeSearches.size);
+    let count = 0;
+    for (const search of activeSearches.values()) {
+      if (sessionKey(search.client, search.session) === sessionFilter) count += 1;
+    }
+    return count;
+  }
+
+  function computeFilteredBuckets() {
+    const map = new Map();
+    filteredFeedRecords().forEach((record) => {
+      const parsed = Date.parse(record.ts);
+      const key = bucketKey(Number.isFinite(parsed) ? parsed : now());
+      const bucket = map.get(key) || { calls: 0, sumMs: 0 };
+      bucket.calls += 1;
+      bucket.sumMs += number(record.ms);
+      map.set(key, bucket);
+    });
+    return map;
+  }
 
   function scheduleRender(...parts) {
     if (paused) {
@@ -134,6 +254,7 @@
     const wants = (part) => all || pending.has(part);
     if (wants("connection")) renderConnection();
     if (wants("nodes")) renderSearchNodes();
+    if (wants("sessionOptions")) renderSessionOptions();
     if (wants("lanes")) renderLanes();
     if (wants("stats")) renderStats();
     if (wants("index")) renderIndexPipeline();
@@ -212,13 +333,14 @@
     for (const [edge, element] of searchEdgeElements) {
       element.classList.toggle("flow", edgeRefs.get(edge).size > 0);
     }
-    elements.activeCount.textContent = String(Math.max(activeEstimate, activeSearches.size));
+    elements.activeCount.textContent = String(filteredActiveSearchCount());
   }
 
   function createSearchFromStart(event) {
     return {
       id: String(event.id),
       client: String(event.client || "unknown"),
+      session: String(event.session || ""),
       query: String(event.query || ""),
       workspaces: Array.isArray(event.workspaces) ? event.workspaces.map(String) : [],
       mode: String(event.mode || "hybrid"),
@@ -237,6 +359,7 @@
     const search = createSearchFromStart({
       id,
       client: event.client || "unknown",
+      session: event.session || "",
       query: event.query || "(진행 중인 검색)",
       workspaces: event.workspaces || [],
       mode: event.mode || "hybrid",
@@ -252,6 +375,7 @@
     lanes.set(search.id, {
       id: search.id,
       client: search.client,
+      session: search.session,
       query: search.query,
       mode: search.mode,
       startedAt: search.startedAt,
@@ -284,7 +408,7 @@
   }
 
   function renderLanes() {
-    const desired = laneOrder.filter((id) => lanes.has(id));
+    const desired = laneOrder.filter((id) => lanes.has(id) && laneMatchesFilter(lanes.get(id)));
     if (desired.length === 0) {
       elements.lanes.innerHTML = '<p class="live-empty">검색 요청을 기다리는 중</p>';
       laneRows.clear();
@@ -341,6 +465,7 @@
       id: String(record.id || fallbackId),
       ts: String(record.ts || new Date().toISOString()),
       client: String(record.client || "unknown"),
+      session: String(record.session || ""),
       query: String(record.query || ""),
       workspaces: Array.isArray(record.workspaces) ? record.workspaces.map(String) : [],
       mode: String(record.mode || "hybrid"),
@@ -398,9 +523,11 @@
 
   function feedRowHtml(record) {
     const workspaces = record.workspaces.length ? record.workspaces.join(" · ") : "—";
+    const sessionText = record.session ? record.session.slice(0, 8) : "—";
     return `
       <td class="activity-time"><time datetime="${escapeHtml(record.ts)}">${escapeHtml(formatTime(record.ts))}</time></td>
       <td class="activity-client">${escapeHtml(record.client)}</td>
+      <td class="activity-session" title="${escapeHtml(record.session || "")}">${escapeHtml(sessionText)}</td>
       <td class="activity-query" title="${escapeHtml(record.query)}">${escapeHtml(shortQuery(record.query) || "(hidden)")}</td>
       <td class="activity-mode">${escapeHtml(record.mode)}</td>
       <td class="activity-workspaces" title="${escapeHtml(workspaces)}">${escapeHtml(workspaces)}</td>
@@ -411,14 +538,16 @@
   }
 
   function renderFeed() {
-    if (feedRecords.length === 0) {
-      elements.feed.innerHTML = '<tr class="feed-placeholder"><td colspan="8">아직 완료된 검색이 없습니다.</td></tr>';
+    const records = filteredFeedRecords();
+    if (records.length === 0) {
+      const message = sessionFilter ? "선택한 세션의 검색이 없습니다." : "아직 완료된 검색이 없습니다.";
+      elements.feed.innerHTML = `<tr class="feed-placeholder"><td colspan="9">${escapeHtml(message)}</td></tr>`;
       feedRows.clear();
       return;
     }
     const placeholder = elements.feed.querySelector(".feed-placeholder");
     if (placeholder) placeholder.remove();
-    const desiredIds = new Set(feedRecords.map((record) => record.id));
+    const desiredIds = new Set(records.map((record) => record.id));
     for (const [id, row] of feedRows) {
       if (!desiredIds.has(id)) {
         if (feedExitReady.has(id)) {
@@ -435,7 +564,7 @@
         }
       }
     }
-    feedRecords.forEach((record, index) => {
+    records.forEach((record, index) => {
       let row = feedRows.get(record.id);
       if (!row) {
         row = document.createElement("tr");
@@ -474,6 +603,26 @@
   }
 
   function renderStats() {
+    if (sessionFilter) {
+      const records = filteredFeedRecords();
+      const total = records.length;
+      const sumMs = records.reduce((sum, record) => sum + record.ms, 0);
+      const cacheHits = records.filter((record) => record.cached).length;
+      const cutoff = now() - 60000;
+      const qpsCount = records.filter((record) => {
+        const ts = Date.parse(record.ts);
+        return Number.isFinite(ts) && ts >= cutoff;
+      }).length;
+      const average = total > 0 ? sumMs / total : 0;
+      const cacheRate = total > 0 ? (cacheHits / total) * 100 : 0;
+      elements.kpiTotal.textContent = formatNumber(total);
+      elements.kpiAvg.textContent = formatNumber(Math.round(average));
+      elements.kpiCache.textContent = `${cacheRate.toFixed(1)}%`;
+      elements.kpiQps.textContent = (qpsCount / 60).toFixed(2);
+      elements.activeCount.textContent = String(filteredActiveSearchCount());
+      updateFilterBadge();
+      return;
+    }
     const cutoff = now() - 60000;
     statsState.qpsTimes = statsState.qpsTimes.filter((timestamp) => timestamp >= cutoff);
     const average = statsState.total > 0 ? statsState.sumMs / statsState.total : 0;
@@ -483,7 +632,8 @@
     elements.kpiAvg.textContent = formatNumber(Math.round(average));
     elements.kpiCache.textContent = `${cacheRate.toFixed(1)}%`;
     elements.kpiQps.textContent = qps.toFixed(2);
-    elements.activeCount.textContent = String(Math.max(activeEstimate, activeSearches.size));
+    elements.activeCount.textContent = String(filteredActiveSearchCount());
+    updateFilterBadge();
   }
 
   function bucketKey(timestamp) {
@@ -520,10 +670,11 @@
   function drawSparklines() {
     if (paused || hidden) return;
     const current = bucketKey(now());
+    const source = sessionFilter ? computeFilteredBuckets() : buckets;
     const calls = [];
     const averageMs = [];
     for (let offset = 29; offset >= 0; offset -= 1) {
-      const bucket = buckets.get(current - offset) || { calls: 0, sumMs: 0 };
+      const bucket = source.get(current - offset) || { calls: 0, sumMs: 0 };
       calls.push(bucket.calls);
       averageMs.push(bucket.calls ? bucket.sumMs / bucket.calls : 0);
     }
@@ -609,6 +760,7 @@
     activeSearches.set(search.id, search);
     moveSearch(search, "request", "enter");
     addLane(search);
+    noteSession(search.client, search.session, search.startedAt);
     if (helloReceived) {
       activeEstimate += 1;
       search.estimateTracked = true;
@@ -633,6 +785,7 @@
     const search = existingSearch || createSearchFromStart({
       id,
       client: event.client,
+      session: event.session,
       query: "(검색 내용 없음)",
       workspaces: [],
       mode: event.mode,
@@ -656,6 +809,7 @@
       id,
       ts: event.ts,
       client: event.client || search.client,
+      session: event.session || search.session,
       query: search.query,
       workspaces: search.workspaces,
       mode: event.mode || search.mode,
@@ -666,6 +820,7 @@
       error: event.error,
     }, id);
     prependFeed(record);
+    noteSessionFromRecord(record);
     statsState.total += 1;
     statsState.sumMs += record.ms;
     if (record.cached) statsState.cacheHits += 1;
@@ -775,6 +930,7 @@
       search.estimateTracked = !search.doneReceived;
     });
     setFeed(payload.recent || []);
+    feedRecords.forEach(noteSessionFromRecord);
     populateBuckets(payload.recent || []);
     lastSeq = Math.max(lastSeq, number(payload.seq));
     const runningJob = (Array.isArray(payload.jobs) ? payload.jobs : []).find((job) => job.state === "running");
@@ -889,6 +1045,18 @@
     window.setTimeout(() => emit({ type: "index.progress", jobId, slug: "greplet", stage: "store", done: 4200, total: 5000 }), 6000);
     window.setTimeout(() => emit({ type: "index.stage", jobId, slug: "greplet", stage: "fts" }), 6650);
     window.setTimeout(() => emit({ type: "index.done", jobId, slug: "greplet", ms: 6840, added: 12, changed: 4, deleted: 1, chunks: 5000 }), 7550);
+  }
+
+  if (elements.session) {
+    elements.session.addEventListener("change", () => {
+      sessionFilter = elements.session.value;
+      try {
+        window.localStorage.setItem(SESSION_STORAGE_KEY, sessionFilter);
+      } catch (_) {
+        // localStorage 사용 불가 환경은 무시
+      }
+      scheduleRender("all");
+    });
   }
 
   elements.pause.addEventListener("click", () => {

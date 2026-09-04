@@ -402,6 +402,59 @@ async function testHttpLevel() {
     const actData2 = await actRes2.json();
     assert.equal(actData2.recent[0].client, "unknown", `잘못된 X-Greplet-Client 헤더는 unknown 으로 기록되어야 함 (실제 ${actData2.recent[0].client})`);
     console.log("[activity]    잘못된 클라이언트 헤더 -> unknown 기록 확인");
+
+    // ---- X-Greplet-Session 헤더: search.start/activity.session 에 반영 ----
+    const ev3Controller = new AbortController();
+    const ev3Res = await fetch(`${baseUrl}/api/events`, { signal: ev3Controller.signal });
+    assert.ok(ev3Res.ok, "/api/events 는 200 이어야 함");
+    const reader3 = ev3Res.body.getReader();
+    await readSseFramesUntil(reader3, (fs2) => fs2.some((f) => f.event === "hello"), 5000);
+
+    const sessionSearchPromise = fetch(`${baseUrl}/api/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Greplet-Client": "cli", "X-Greplet-Session": "sess-abc.123" },
+      body: JSON.stringify({ query: "hello", workspaces: "all", mode: "fts" }),
+    });
+    const sessionFrames = await readSseFramesUntil(
+      reader3,
+      (fs2) => fs2.some((f) => f.event === "search.start"),
+      5000,
+    );
+    const sessionStartFrame = sessionFrames.find((f) => f.event === "search.start");
+    assert.ok(sessionStartFrame, "세션 헤더 검색의 search.start 프레임이 도착해야 함");
+    const sessionStartData = JSON.parse(sessionStartFrame.data);
+    assert.equal(
+      sessionStartData.session,
+      "sess-abc.123",
+      `search.start.data.session 은 "sess-abc.123" 이어야 함 (실제 ${sessionStartData.session})`,
+    );
+    assert.ok((await sessionSearchPromise).ok, "/api/search 는 200 이어야 함");
+    ev3Controller.abort();
+
+    const actRes3 = await fetch(`${baseUrl}/api/activity?limit=1`);
+    const actData3 = await actRes3.json();
+    assert.equal(
+      actData3.recent[0].session,
+      "sess-abc.123",
+      `/api/activity recent[0].session 은 "sess-abc.123" 이어야 함 (실제 ${actData3.recent[0].session})`,
+    );
+    console.log("[activity]    X-Greplet-Session 헤더 -> search.start/activity.session 반영 확인");
+
+    // ---- 잘못된 세션 헤더는 session 필드가 기록되지 않음(undefined) ----
+    const badSessionRes = await fetch(`${baseUrl}/api/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Greplet-Client": "cli", "X-Greplet-Session": "bad session!" },
+      body: JSON.stringify({ query: "hello", workspaces: "all", mode: "fts" }),
+    });
+    assert.ok(badSessionRes.ok, "/api/search 는 200 이어야 함");
+    const actRes4 = await fetch(`${baseUrl}/api/activity?limit=1`);
+    const actData4 = await actRes4.json();
+    assert.equal(
+      actData4.recent[0].session,
+      undefined,
+      `잘못된 X-Greplet-Session 헤더는 session 이 기록되지 않아야 함 (실제 ${actData4.recent[0].session})`,
+    );
+    console.log("[activity]    잘못된 세션 헤더 -> session 미기록 확인");
   } finally {
     // ---- SIGTERM 종료 확인 ----
     const exitPromise = new Promise((resolve) => child.once("exit", (code, signal) => resolve({ code, signal })));

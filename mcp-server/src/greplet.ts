@@ -58,6 +58,11 @@ export interface BackendConfig {
   defaultWorkspace?: string;
 }
 
+function sessionHeaders(): Record<string, string> {
+  const session = process.env.GREPLET_SESSION;
+  return session ? { "X-Greplet-Session": session } : {};
+}
+
 const WS_CACHE_TTL_MS = 60_000;
 let wsCache: { at: number; list: WorkspaceInfo[] } | null = null;
 
@@ -65,7 +70,7 @@ let wsCache: { at: number; list: WorkspaceInfo[] } | null = null;
 export async function fetchWorkspaces(cfg: BackendConfig): Promise<WorkspaceInfo[]> {
   if (wsCache && Date.now() - wsCache.at < WS_CACHE_TTL_MS) return wsCache.list;
   const resp = await fetch(`${cfg.baseUrl}/api/workspaces`, {
-    headers: { "X-Greplet-Client": cfg.clientName },
+    headers: { "X-Greplet-Client": cfg.clientName, ...sessionHeaders() },
     signal: AbortSignal.timeout(10_000),
   });
   if (!resp.ok) throw new Error(`/api/workspaces HTTP ${resp.status}: ${await resp.text()}`);
@@ -91,7 +96,7 @@ async function callSearchApi(
 ): Promise<SearchApiResponse> {
   const resp = await fetch(`${cfg.baseUrl}/api/search`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Greplet-Client": cfg.clientName },
+    headers: { "Content-Type": "application/json", "X-Greplet-Client": cfg.clientName, ...sessionHeaders() },
     body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     signal: AbortSignal.timeout(120_000),
   });

@@ -152,12 +152,17 @@ function serverDown(baseUrl, e) {
   process.exit(1);
 }
 
+function sessionHeader() {
+  const session = process.env.GREPLET_SESSION || process.env.CLAUDE_CODE_SESSION_ID;
+  return session ? { "X-Greplet-Session": session } : {};
+}
+
 async function api(baseUrl, path, init = {}, timeoutMs = 120000) {
   let resp;
   try {
     resp = await fetch(`${baseUrl}${path}`, {
       ...init,
-      headers: { "X-Greplet-Client": "cli", ...(init.headers ?? {}) },
+      headers: { "X-Greplet-Client": "cli", ...sessionHeader(), ...(init.headers ?? {}) },
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (e) {

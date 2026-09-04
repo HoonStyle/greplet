@@ -47,9 +47,13 @@ $body = @{
   mode       = $Mode
 } | ConvertTo-Json
 
+$headers = @{ "Content-Type" = "application/json"; "X-Greplet-Client" = "cli" }
+$session = if ($env:GREPLET_SESSION) { $env:GREPLET_SESSION } else { $env:CLAUDE_CODE_SESSION_ID }
+if ($session) { $headers["X-Greplet-Session"] = $session }
+
 try {
   $resp = Invoke-RestMethod -Uri "$BaseUrl/api/search" -Method Post `
-            -Headers @{ "Content-Type" = "application/json" } -Body $body -TimeoutSec 120
+            -Headers $headers -Body $body -TimeoutSec 120
 } catch {
   Write-Error "인덱서 서버($BaseUrl) 미가동 — pwsh indexer/start-indexer.ps1 로 기동`n상세: $($_.Exception.Message)"
   exit 1

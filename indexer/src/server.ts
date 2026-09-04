@@ -46,6 +46,12 @@ function sanitizeClient(raw: string | undefined): string {
   return "unknown";
 }
 
+const SESSION_RE = /^[A-Za-z0-9:_.-]{1,64}$/;
+function sanitizeSession(raw: string | undefined): string | undefined {
+  if (typeof raw === "string" && SESSION_RE.test(raw)) return raw;
+  return undefined;
+}
+
 const activeSse = new Set<express.Response>();
 
 app.get("/healthz", (_req, res) => {
@@ -97,6 +103,7 @@ app.post("/api/search", async (req, res) => {
   const topN = Math.min(20, Math.max(1, Number(topNRaw) || 6));
   const fileGlob = typeof fileGlobRaw === "string" && fileGlobRaw.trim() ? fileGlobRaw.trim() : undefined;
   const client = sanitizeClient(req.get("X-Greplet-Client"));
+  const session = sanitizeSession(req.get("X-Greplet-Session"));
 
   let targets: WorkspaceConfig[];
   if (wsParam === "all") {
@@ -109,7 +116,7 @@ app.post("/api/search", async (req, res) => {
   }
 
   try {
-    const result = await search(cfg, targets, query, topN, mode, { fileGlob, client });
+    const result = await search(cfg, targets, query, topN, mode, { fileGlob, client, session });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });

@@ -286,6 +286,7 @@
       </div>
     </div>
     <div class="live-controls">
+      <label class="live-session"><span>세션</span><select id="liveSession" aria-label="세션 필터"><option value="">전체</option></select></label>
       <span class="live-connection" id="liveConnection"><span class="connection-dot"></span><span id="liveConnectionText">재연결 중 0s</span></span>
       <span class="live-active">활성 검색 <strong id="liveActiveCount">0</strong></span>
       <button type="button" id="livePause" class="live-pause" aria-pressed="false">
@@ -324,6 +325,7 @@
     </div>
 
     <aside class="live-telemetry" aria-label="검색 지표">
+      <div class="live-block-head"><h3>검색 지표</h3><span id="liveFilterBadge" class="live-filter-badge" hidden></span></div>
       <div class="kpi-grid">
         <div class="kpi"><span>총 호출</span><strong id="kpiTotal">—</strong></div>
         <div class="kpi"><span>평균 ms</span><strong id="kpiAvg">—</strong></div>
@@ -370,8 +372,8 @@
     <div class="live-block-head"><h3 id="activityFeedTitle">활동 피드</h3><span>최근 50건</span></div>
     <div class="feed-scroll">
       <table class="activity-table" aria-labelledby="activityFeedTitle">
-        <thead><tr><th>시각</th><th>클라이언트</th><th>쿼리</th><th>모드</th><th>워크스페이스</th><th class="num">hits</th><th class="num">ms</th><th>상태</th></tr></thead>
-        <tbody id="activityFeed"><tr class="feed-placeholder"><td colspan="8">아직 완료된 검색이 없습니다.</td></tr></tbody>
+        <thead><tr><th>시각</th><th>클라이언트</th><th>세션</th><th>쿼리</th><th>모드</th><th>워크스페이스</th><th class="num">hits</th><th class="num">ms</th><th>상태</th></tr></thead>
+        <tbody id="activityFeed"><tr class="feed-placeholder"><td colspan="9">아직 완료된 검색이 없습니다.</td></tr></tbody>
       </table>
     </div>
   </div>

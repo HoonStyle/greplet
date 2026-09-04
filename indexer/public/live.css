@@ -211,6 +211,46 @@ section > h2 .count,
   color: var(--warn);
 }
 
+.live-session {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.live-session select {
+  max-width: 168px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.live-session select:focus-visible {
+  outline: 1px solid var(--accent);
+}
+
+#liveFilterBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
 .live-overview {
   display: grid;
   grid-template-columns: minmax(0, 1.75fr) minmax(280px, .8fr);
@@ -632,12 +672,13 @@ section > h2 .count,
 
 .activity-table th:nth-child(1) { width: 74px; }
 .activity-table th:nth-child(2) { width: 106px; }
-.activity-table th:nth-child(3) { width: auto; }
-.activity-table th:nth-child(4) { width: 64px; }
-.activity-table th:nth-child(5) { width: 116px; }
-.activity-table th:nth-child(6) { width: 52px; }
-.activity-table th:nth-child(7) { width: 62px; }
-.activity-table th:nth-child(8) { width: 178px; }
+.activity-table th:nth-child(3) { width: 86px; }
+.activity-table th:nth-child(4) { width: auto; }
+.activity-table th:nth-child(5) { width: 64px; }
+.activity-table th:nth-child(6) { width: 116px; }
+.activity-table th:nth-child(7) { width: 52px; }
+.activity-table th:nth-child(8) { width: 62px; }
+.activity-table th:nth-child(9) { width: 178px; }
 
 .activity-table td {
   min-width: 0;
@@ -664,6 +705,7 @@ section > h2 .count,
 .activity-table .num,
 .activity-time,
 .activity-client,
+.activity-session,
 .activity-mode {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
@@ -675,7 +717,8 @@ section > h2 .count,
 }
 
 .activity-time,
-.activity-client {
+.activity-client,
+.activity-session {
   color: var(--muted);
   white-space: nowrap;
 }

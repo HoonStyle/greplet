@@ -36,6 +36,8 @@ export interface SearchOptions {
   fileGlob?: string;
   // 활동 이벤트 태깅용 클라이언트 식별자. 캐시 키에는 포함하지 않는다.
   client?: ClientId;
+  // 활동 이벤트 태깅용 호출 세션 식별자. 캐시 키에는 포함하지 않는다.
+  session?: string;
 }
 
 /** 파일 글롭 → 정규식. scan.ts 의 파일명 글롭과 달리 경로 전체를 대상으로 하며 `**` 를 지원한다. */
@@ -237,6 +239,7 @@ export async function search(
   const id = randomUUID();
   const t0 = performance.now();
   const client: ClientId = opts.client ?? "unknown";
+  const session = opts.session;
 
   emitActivity({
     type: "search.start",
@@ -247,6 +250,7 @@ export async function search(
     mode,
     topN,
     ...(opts.fileGlob !== undefined ? { fileGlob: opts.fileGlob } : {}),
+    ...(session !== undefined ? { session } : {}),
   });
 
   try {
@@ -263,6 +267,7 @@ export async function search(
         cached: true,
         mode: cached.mode,
         warnings: cached.warnings.length,
+        ...(session !== undefined ? { session } : {}),
       });
       return { ...cached, cached: true };
     }
@@ -288,6 +293,7 @@ export async function search(
       cached: false,
       mode,
       warnings: warnings.length,
+      ...(session !== undefined ? { session } : {}),
     });
     return result;
   } catch (err) {
@@ -301,6 +307,7 @@ export async function search(
       mode,
       warnings: 0,
       error: errMsg(err),
+      ...(session !== undefined ? { session } : {}),
     });
     throw err;
   }

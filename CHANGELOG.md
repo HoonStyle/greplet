@@ -8,6 +8,7 @@
 - 관리 UI 의 Live Pipeline: 검색·인덱싱 파이프라인, 요청 레인, KPI·스파크라인, 클라이언트별 활동 피드를 실시간으로 표시.
 - `/api/events` SSE, `/api/activity` 요약 API, 검색·인덱싱 활동 이벤트와 `JobRecord.stage`·`progress`.
 - `X-Greplet-Client` 및 `GREPLET_CLIENT_NAME` 기반 클라이언트별 활동 기록과 `GREPLET_ACTIVITY_QUERY=hidden` 질의 비공개 옵션.
+- 관리 UI 세션 선택기: `X-Greplet-Session` 헤더(`GREPLET_SESSION` → `CLAUDE_CODE_SESSION_ID` 순으로 자동 설정)로 활동 레코드에 세션을 기록하고, Live Pipeline 의 요청 레인·활동 피드·KPI·스파크라인을 세션별로 필터한다.
 
 ### Changed
 - 관리 UI 를 다크 테마와 `public/live.js`·`live.css` 분리 구조로 개편하고 5초 폴링과 SSE를 병행한다.

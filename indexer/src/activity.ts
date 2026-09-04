@@ -23,6 +23,7 @@ export interface SearchStartEvent extends Base {
   mode: SearchMode;
   topN: number;
   fileGlob?: string;
+  session?: string;
 }
 
 export interface SearchStageEvent extends Base {
@@ -44,6 +45,7 @@ export interface SearchDoneEvent extends Base {
   mode: SearchMode;
   warnings: number;
   error?: string;
+  session?: string;
 }
 
 export interface IndexStartEvent extends Base {
@@ -110,6 +112,7 @@ export interface SearchRecord {
   cached: boolean;
   warnings: number;
   error?: string;
+  session?: string;
 }
 
 export interface ActivityStats {
@@ -136,7 +139,7 @@ emitter.setMaxListeners(50);
 let seqCounter = 0;
 const eventRing: ActivityEvent[] = [];
 const searchHistory: SearchRecord[] = [];
-const activeSearches = new Map<string, { startedAt: number; client: ClientId; query: string; workspaces: string[] }>();
+const activeSearches = new Map<string, { startedAt: number; client: ClientId; query: string; workspaces: string[]; session?: string }>();
 
 // 누적 통계
 let totalCompleted = 0;
@@ -165,7 +168,7 @@ export function emitActivity(ev: DistributiveOmit<ActivityEvent, "seq" | "ts">):
 
   if (full.type === "search.start") {
     const e = full as SearchStartEvent;
-    activeSearches.set(e.id, { startedAt: Date.now(), client: e.client, query: e.query, workspaces: e.workspaces });
+    activeSearches.set(e.id, { startedAt: Date.now(), client: e.client, query: e.query, workspaces: e.workspaces, session: e.session });
   } else if (full.type === "search.done") {
     const e = full as SearchDoneEvent;
     const active = activeSearches.get(e.id);
@@ -183,6 +186,7 @@ export function emitActivity(ev: DistributiveOmit<ActivityEvent, "seq" | "ts">):
       cached: e.cached,
       warnings: e.warnings,
       ...(e.error !== undefined ? { error: e.error } : {}),
+      ...((e.session ?? active?.session) !== undefined ? { session: e.session ?? active?.session } : {}),
     };
 
     searchHistory.push(record);
