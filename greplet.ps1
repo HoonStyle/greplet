@@ -47,7 +47,7 @@ $body = @{
   mode       = $Mode
 } | ConvertTo-Json
 
-$headers = @{ "Content-Type" = "application/json"; "X-Greplet-Client" = "cli" }
+$headers = @{ "Content-Type" = "application/json"; "X-Greplet-Client" = "cli"; "X-Greplet-Snippet" = $(if ($Full) { "full" } else { "300" }) }
 $session = if ($env:GREPLET_SESSION) { $env:GREPLET_SESSION } else { $env:CLAUDE_CODE_SESSION_ID }
 if ($session) { $headers["X-Greplet-Session"] = $session }
 

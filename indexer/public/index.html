@@ -331,6 +331,7 @@
         <div class="kpi"><span>평균 ms</span><strong id="kpiAvg">—</strong></div>
         <div class="kpi"><span>캐시 히트율</span><strong id="kpiCache">—</strong></div>
         <div class="kpi"><span>1분 QPS</span><strong id="kpiQps">—</strong></div>
+        <div class="kpi"><span>≈토큰(누적)</span><strong id="kpiApproxTokens">—</strong></div>
       </div>
       <div class="spark-list">
         <div class="spark">
@@ -372,8 +373,8 @@
     <div class="live-block-head"><h3 id="activityFeedTitle">활동 피드</h3><span>최근 50건</span></div>
     <div class="feed-scroll">
       <table class="activity-table" aria-labelledby="activityFeedTitle">
-        <thead><tr><th>시각</th><th>클라이언트</th><th>세션</th><th>쿼리</th><th>모드</th><th>워크스페이스</th><th class="num">hits</th><th class="num">ms</th><th>상태</th></tr></thead>
-        <tbody id="activityFeed"><tr class="feed-placeholder"><td colspan="9">아직 완료된 검색이 없습니다.</td></tr></tbody>
+        <thead><tr><th>시각</th><th>클라이언트</th><th>세션</th><th>쿼리</th><th>모드</th><th>워크스페이스</th><th class="num">hits</th><th class="num">≈tok</th><th class="num">ms</th><th>상태</th></tr></thead>
+        <tbody id="activityFeed"><tr class="feed-placeholder"><td colspan="10">아직 완료된 검색이 없습니다.</td></tr></tbody>
       </table>
     </div>
   </div>

@@ -301,7 +301,7 @@ async function cmdSearch(args) {
 
   const data = await api(args.baseUrl, "/api/search", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Greplet-Snippet": (args.full || args.json) ? "full" : "300" },
     body: JSON.stringify({
       query: args.query,
       workspaces: args.all ? "all" : [workspace],

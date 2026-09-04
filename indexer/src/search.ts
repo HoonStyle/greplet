@@ -9,6 +9,7 @@ import { openOrCreateTable, tableExists, manifestPathFor } from "./db.js";
 import { embedQuery } from "./embed.js";
 import { loadManifest } from "./scan.js";
 import { emitActivity, type ClientId } from "./activity.js";
+import { approxResponseTokens } from "./tokens.js";
 
 export type SearchMode = "hybrid" | "vector" | "fts";
 
@@ -38,6 +39,8 @@ export interface SearchOptions {
   client?: ClientId;
   // 활동 이벤트 태깅용 호출 세션 식별자. 캐시 키에는 포함하지 않는다.
   session?: string;
+  // 응답 근사 토큰 수 계산용 스니펫 길이(문자). undefined=전문. 캐시 키에는 포함하지 않는다.
+  snippetChars?: number;
 }
 
 /** 파일 글롭 → 정규식. scan.ts 의 파일명 글롭과 달리 경로 전체를 대상으로 하며 `**` 를 지원한다. */
@@ -267,6 +270,7 @@ export async function search(
         cached: true,
         mode: cached.mode,
         warnings: cached.warnings.length,
+        approxTokens: approxResponseTokens(cached.hits, opts.snippetChars),
         ...(session !== undefined ? { session } : {}),
       });
       return { ...cached, cached: true };
@@ -293,6 +297,7 @@ export async function search(
       cached: false,
       mode,
       warnings: warnings.length,
+      approxTokens: approxResponseTokens(hits, opts.snippetChars),
       ...(session !== undefined ? { session } : {}),
     });
     return result;
@@ -306,6 +311,7 @@ export async function search(
       cached: false,
       mode,
       warnings: 0,
+      approxTokens: 0,
       error: errMsg(err),
       ...(session !== undefined ? { session } : {}),
     });

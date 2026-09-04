@@ -512,7 +512,7 @@ section > h2 .count,
   border-right: 1px solid var(--border);
 }
 
-.kpi:nth-child(-n + 2) {
+.kpi:nth-child(-n + 4) {
   border-bottom: 1px solid var(--border);
 }
 

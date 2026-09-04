@@ -42,10 +42,15 @@ async function fetchWorkspaces() {
 }
 
 /** 인덱서 /api/search 1회 호출 */
-async function callSearchApi(workspaces, query, topN, mode, fileGlob) {
+async function callSearchApi(workspaces, query, topN, mode, fileGlob, full) {
   const resp = await fetch(`${BASE_URL}/api/search`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Greplet-Client": CLIENT_NAME, ...SESSION_HEADERS },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Greplet-Client": CLIENT_NAME,
+      "X-Greplet-Snippet": full ? "full" : "300",
+      ...SESSION_HEADERS,
+    },
     body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     signal: AbortSignal.timeout(120_000),
   });
@@ -92,7 +97,7 @@ async function runGreplet({ query, workspace, all, topN, full, mode, fileGlob })
 
   let data;
   try {
-    data = await callSearchApi(targets, query, topN, mode, fileGlob);
+    data = await callSearchApi(targets, query, topN, mode, fileGlob, full);
   } catch (e) {
     throw new Error(backendDownMessage(e));
   }

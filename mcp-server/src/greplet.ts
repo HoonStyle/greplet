@@ -93,10 +93,16 @@ async function callSearchApi(
   topN: number,
   mode: SearchMode,
   fileGlob?: string,
+  full?: boolean,
 ): Promise<SearchApiResponse> {
   const resp = await fetch(`${cfg.baseUrl}/api/search`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Greplet-Client": cfg.clientName, ...sessionHeaders() },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Greplet-Client": cfg.clientName,
+      "X-Greplet-Snippet": full ? "full" : "300",
+      ...sessionHeaders(),
+    },
     body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
     signal: AbortSignal.timeout(120_000),
   });
@@ -148,7 +154,7 @@ export async function runGreplet(cfg: BackendConfig, p: GrepletParams): Promise<
 
   let data: SearchApiResponse;
   try {
-    data = await callSearchApi(cfg, targets, p.query, p.topN, p.mode, p.fileGlob);
+    data = await callSearchApi(cfg, targets, p.query, p.topN, p.mode, p.fileGlob, p.full);
   } catch (e) {
     throw new Error(backendDownMessage(cfg, e));
   }

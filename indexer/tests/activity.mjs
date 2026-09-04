@@ -54,6 +54,7 @@ const { JobManager } = await import("../dist/indexJob.js");
 const { search } = await import("../dist/search.js");
 const { checkOllama } = await import("../dist/embed.js");
 const { subscribeActivity, getRecentSearches, getStats } = await import("../dist/activity.js");
+const { approxTokens, approxResponseTokens } = await import("../dist/tokens.js");
 
 const cfg = loadConfig();
 let workspaces = loadWorkspaces(cfg);
@@ -77,6 +78,22 @@ async function runIndex(force = false) {
   const rec = await waitForJob(jobId);
   if (rec.state === "failed") throw new Error(`인덱스 잡 실패: ${rec.error}`);
   return { jobId, rec };
+}
+
+// ---------- 0) tokens.ts 단위 ----------
+function testTokens() {
+  console.log("[activity] 0) tokens.ts 단위 — approxTokens/approxResponseTokens");
+
+  assert.equal(approxTokens("abcd"), 1, 'approxTokens("abcd") 는 1이어야 함');
+  assert.equal(approxTokens("한글"), 2, 'approxTokens("한글") 는 2이어야 함');
+  assert.equal(approxTokens("ab한"), 2, 'approxTokens("ab한") 는 2이어야 함');
+
+  const longAscii = "a".repeat(1000);
+  const withSnippet = approxResponseTokens([{ text: longAscii }], 300);
+  const fullText = approxResponseTokens([{ text: longAscii }], undefined);
+  assert.ok(withSnippet < fullText, `snippetChars=300 응답 토큰(${withSnippet})은 전문 응답 토큰(${fullText})보다 작아야 함`);
+
+  console.log("[activity]    통과");
 }
 
 // ---------- 1) 모듈 단위 ----------
@@ -163,7 +180,9 @@ async function testModuleLevel() {
   const stats = getStats();
   assert.equal(stats.total, 2, `getStats().total 은 2 여야 함 (실제 ${stats.total})`);
   assert.equal(stats.cacheHitRate, 0.5, `cacheHitRate 는 0.5 여야 함 (실제 ${stats.cacheHitRate})`);
-  assert.equal(stats.byClient.test, 2, `byClient.test 는 2 여야 함 (실제 ${JSON.stringify(stats.byClient)})`);
+  assert.equal(stats.byClient.test.count, 2, `byClient.test.count 는 2 여야 함 (실제 ${JSON.stringify(stats.byClient)})`);
+  assert.ok(typeof stats.approxTokensTotal === "number", "stats.approxTokensTotal 은 숫자여야 함");
+  assert.ok(typeof stats.byClient.test.approxTokens === "number", "byClient.test.approxTokens 는 숫자여야 함");
 
   const recent = getRecentSearches(1);
   assert.equal(recent.length, 1);
@@ -360,6 +379,8 @@ async function testHttpLevel() {
     assert.ok(doneFrame, "스트림에 search.done 프레임이 도착해야 함");
     const startData = JSON.parse(startFrame.data);
     assert.equal(startData.client, "cli", `search.start.data.client 는 "cli" 여야 함 (실제 ${startData.client})`);
+    const doneData = JSON.parse(doneFrame.data);
+    assert.ok(typeof doneData.approxTokens === "number" && doneData.approxTokens >= 0, `search.done.approxTokens 는 0 이상의 숫자여야 함 (실제 ${doneData.approxTokens})`);
     const lastSeq = Number(doneFrame.id);
 
     const searchRes = await searchPromise;
@@ -389,7 +410,36 @@ async function testHttpLevel() {
     const actData = await actRes.json();
     assert.ok(actData.recent.length > 0, "/api/activity recent 가 비어있지 않아야 함");
     assert.equal(actData.recent[0].client, "cli", `/api/activity recent[0].client 는 "cli" 여야 함 (실제 ${actData.recent[0].client})`);
+    assert.ok(typeof actData.recent[0].approxTokens === "number", "/api/activity recent[0].approxTokens 는 숫자여야 함");
+    assert.ok(typeof actData.stats.approxTokensTotal === "number", "/api/activity stats.approxTokensTotal 은 숫자여야 함");
     console.log("[activity]    /api/activity?limit=5 확인 완료");
+
+    // ---- X-Greplet-Snippet: full vs 50 ----
+    const query2 = "hello";
+    const fullRes = await fetch(`${baseUrl}/api/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Greplet-Client": "cli", "X-Greplet-Snippet": "full" },
+      body: JSON.stringify({ query: query2, workspaces: "all", mode: "fts" }),
+    });
+    assert.ok(fullRes.ok, "/api/search(full) 는 200 이어야 함");
+    const actAfterFull = await (await fetch(`${baseUrl}/api/activity?limit=1`)).json();
+    const fullApproxTokens = actAfterFull.recent[0].approxTokens;
+
+    const snippetRes = await fetch(`${baseUrl}/api/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Greplet-Client": "cli", "X-Greplet-Snippet": "50" },
+      body: JSON.stringify({ query: query2, workspaces: "all", mode: "fts" }),
+    });
+    assert.ok(snippetRes.ok, "/api/search(snippet=50) 는 200 이어야 함");
+    const actAfterSnippet = await (await fetch(`${baseUrl}/api/activity?limit=1`)).json();
+    const snippetApproxTokens = actAfterSnippet.recent[0].approxTokens;
+
+    // 히트가 없으면 두 값이 같을 수 있으므로(둘 다 0) 등호를 허용한다.
+    assert.ok(
+      fullApproxTokens >= snippetApproxTokens,
+      `X-Greplet-Snippet=full(${fullApproxTokens}) 은 snippet=50(${snippetApproxTokens}) 이상이어야 함`,
+    );
+    console.log(`[activity]    X-Greplet-Snippet full=${fullApproxTokens} >= 50=${snippetApproxTokens} 확인`);
 
     // ---- 잘못된 헤더는 "unknown" 으로 기록 ----
     const badRes = await fetch(`${baseUrl}/api/search`, {
@@ -476,6 +526,7 @@ async function testHttpLevel() {
 
 async function main() {
   console.log("[activity] tmpRoot =", tmpRoot);
+  testTokens();
   await testModuleLevel();
   await testIndexJob();
   await testHttpLevel();

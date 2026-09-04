@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- 검색 응답 근사 토큰 수(`approxTokens`) 서버 계산: 클라이언트가 `X-Greplet-Snippet` 헤더로 실제 출력할 스니펫 길이를 알리면, `search.done` 이벤트·`/api/activity`·`ActivityStats.approxTokensTotal`·`byClient` 에 근사치를 기록.
+
 ## [0.7.0] - 2026-09-04
 
 ### Added

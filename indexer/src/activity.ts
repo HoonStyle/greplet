@@ -44,6 +44,7 @@ export interface SearchDoneEvent extends Base {
   cached: boolean;
   mode: SearchMode;
   warnings: number;
+  approxTokens: number;
   error?: string;
   session?: string;
 }
@@ -111,6 +112,7 @@ export interface SearchRecord {
   ms: number;
   cached: boolean;
   warnings: number;
+  approxTokens: number;
   error?: string;
   session?: string;
 }
@@ -122,8 +124,9 @@ export interface ActivityStats {
   cacheHitRate: number;
   qps1m: number;
   active: number;
-  byClient: Record<string, number>;
+  byClient: Record<string, { count: number; approxTokens: number }>;
   errors: number;
+  approxTokensTotal: number;
 }
 
 /** 유니온의 각 멤버에서 키를 개별 제거하는 분배형 Omit. */
@@ -145,7 +148,8 @@ const activeSearches = new Map<string, { startedAt: number; client: ClientId; qu
 let totalCompleted = 0;
 let cachedCompleted = 0;
 let totalErrors = 0;
-const byClientCounts: Record<string, number> = {};
+let approxTokensTotal = 0;
+const byClientCounts: Record<string, { count: number; approxTokens: number }> = {};
 // 최근 200건(검색 이력 ring 과 동일 범위) 의 ms 로 avg/p95 산출
 // 완료 타임스탬프(ms epoch) — qps1m 계산용, 최근 60초 넘는 건 정리
 const completionTimestamps: number[] = [];
@@ -185,6 +189,7 @@ export function emitActivity(ev: DistributiveOmit<ActivityEvent, "seq" | "ts">):
       ms: e.ms,
       cached: e.cached,
       warnings: e.warnings,
+      approxTokens: e.approxTokens,
       ...(e.error !== undefined ? { error: e.error } : {}),
       ...((e.session ?? active?.session) !== undefined ? { session: e.session ?? active?.session } : {}),
     };
@@ -195,7 +200,11 @@ export function emitActivity(ev: DistributiveOmit<ActivityEvent, "seq" | "ts">):
     totalCompleted += 1;
     if (e.cached) cachedCompleted += 1;
     if (e.error) totalErrors += 1;
-    byClientCounts[e.client] = (byClientCounts[e.client] ?? 0) + 1;
+    approxTokensTotal += e.approxTokens;
+    const clientEntry = byClientCounts[e.client] ?? { count: 0, approxTokens: 0 };
+    clientEntry.count += 1;
+    clientEntry.approxTokens += e.approxTokens;
+    byClientCounts[e.client] = clientEntry;
     completionTimestamps.push(Date.now());
   }
 
@@ -248,6 +257,7 @@ export function getStats(): ActivityStats {
     active: activeSearches.size,
     byClient: { ...byClientCounts },
     errors: totalErrors,
+    approxTokensTotal,
   };
 }
 

@@ -52,6 +52,16 @@ function sanitizeSession(raw: string | undefined): string | undefined {
   return undefined;
 }
 
+/** X-Greplet-Snippet 헤더 파싱: "full"(대소문자 무관)→전문(undefined), 1..100000 정수 문자열→그 값, 그 외/부재→기본값 300. */
+function sanitizeSnippet(raw: string | undefined): number | undefined {
+  if (typeof raw === "string" && raw.trim().toLowerCase() === "full") return undefined;
+  if (typeof raw === "string" && /^[0-9]+$/.test(raw.trim())) {
+    const n = Number(raw.trim());
+    if (n >= 1 && n <= 100000) return n;
+  }
+  return 300;
+}
+
 const activeSse = new Set<express.Response>();
 
 app.get("/healthz", (_req, res) => {
@@ -104,6 +114,7 @@ app.post("/api/search", async (req, res) => {
   const fileGlob = typeof fileGlobRaw === "string" && fileGlobRaw.trim() ? fileGlobRaw.trim() : undefined;
   const client = sanitizeClient(req.get("X-Greplet-Client"));
   const session = sanitizeSession(req.get("X-Greplet-Session"));
+  const snippetChars = sanitizeSnippet(req.get("X-Greplet-Snippet"));
 
   let targets: WorkspaceConfig[];
   if (wsParam === "all") {
@@ -116,7 +127,7 @@ app.post("/api/search", async (req, res) => {
   }
 
   try {
-    const result = await search(cfg, targets, query, topN, mode, { fileGlob, client, session });
+    const result = await search(cfg, targets, query, topN, mode, { fileGlob, client, session, snippetChars });
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : String(err) });

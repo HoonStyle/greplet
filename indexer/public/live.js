@@ -47,6 +47,7 @@
     kpiAvg: byId("kpiAvg"),
     kpiCache: byId("kpiCache"),
     kpiQps: byId("kpiQps"),
+    kpiApproxTokens: byId("kpiApproxTokens"),
     sparkCalls: byId("sparkCalls"),
     sparkMs: byId("sparkMs"),
     sparkCallsValue: byId("sparkCallsValue"),
@@ -115,6 +116,7 @@
     sumMs: 0,
     cacheHits: 0,
     qpsTimes: [],
+    approxTokensTotal: 0,
   };
 
   function sessionKey(client, session) {
@@ -382,6 +384,7 @@
       stage: "request",
       doneAt: 0,
       hits: 0,
+      approxTokens: 0,
       leaving: false,
     });
     const existingIndex = laneOrder.indexOf(search.id);
@@ -434,7 +437,7 @@
       }
       const elapsedMs = Math.max(0, (lane.doneAt || now()) - lane.startedAt);
       const progress = lane.doneAt ? 1 : Math.min(.94, Math.max(.06, elapsedMs / 3500));
-      const stageText = lane.doneAt ? `완료 · ${formatNumber(lane.hits)}건` : SEARCH_NODE_LABEL[lane.stage] || "진행 중";
+      const stageText = lane.doneAt ? `완료 · ${formatNumber(lane.hits)}건 · ≈${formatNumber(lane.approxTokens || 0)} tok` : SEARCH_NODE_LABEL[lane.stage] || "진행 중";
       row.classList.toggle("complete", Boolean(lane.doneAt));
       row.classList.toggle("leaving", lane.leaving);
       row.innerHTML = `
@@ -473,6 +476,7 @@
       ms: number(record.ms),
       cached: Boolean(record.cached),
       warnings: number(record.warnings),
+      approxTokens: number(record.approxTokens),
       error: record.error ? String(record.error) : "",
     };
   }
@@ -532,6 +536,7 @@
       <td class="activity-mode">${escapeHtml(record.mode)}</td>
       <td class="activity-workspaces" title="${escapeHtml(workspaces)}">${escapeHtml(workspaces)}</td>
       <td class="num">${formatNumber(record.hits)}</td>
+      <td class="num">${formatNumber(record.approxTokens)}</td>
       <td class="num">${formatNumber(Math.round(record.ms))}</td>
       <td><span class="feed-statuses">${statusBadges(record)}</span></td>
     `;
@@ -541,7 +546,7 @@
     const records = filteredFeedRecords();
     if (records.length === 0) {
       const message = sessionFilter ? "선택한 세션의 검색이 없습니다." : "아직 완료된 검색이 없습니다.";
-      elements.feed.innerHTML = `<tr class="feed-placeholder"><td colspan="9">${escapeHtml(message)}</td></tr>`;
+      elements.feed.innerHTML = `<tr class="feed-placeholder"><td colspan="10">${escapeHtml(message)}</td></tr>`;
       feedRows.clear();
       return;
     }
@@ -586,6 +591,7 @@
     statsState.total = total;
     statsState.sumMs = number(stats && stats.avgMs) * total;
     statsState.cacheHits = total * (rate <= 1 ? rate : rate / 100);
+    statsState.approxTokensTotal = number(stats && stats.approxTokensTotal);
     const timestampNow = now();
     const cutoff = timestampNow - 60000;
     const targetCount = Math.max(0, Math.round(number(stats && stats.qps1m) * 60));
@@ -615,10 +621,12 @@
       }).length;
       const average = total > 0 ? sumMs / total : 0;
       const cacheRate = total > 0 ? (cacheHits / total) * 100 : 0;
+      const approxTokensSum = records.reduce((sum, record) => sum + record.approxTokens, 0);
       elements.kpiTotal.textContent = formatNumber(total);
       elements.kpiAvg.textContent = formatNumber(Math.round(average));
       elements.kpiCache.textContent = `${cacheRate.toFixed(1)}%`;
       elements.kpiQps.textContent = (qpsCount / 60).toFixed(2);
+      elements.kpiApproxTokens.textContent = formatNumber(approxTokensSum);
       elements.activeCount.textContent = String(filteredActiveSearchCount());
       updateFilterBadge();
       return;
@@ -632,6 +640,7 @@
     elements.kpiAvg.textContent = formatNumber(Math.round(average));
     elements.kpiCache.textContent = `${cacheRate.toFixed(1)}%`;
     elements.kpiQps.textContent = qps.toFixed(2);
+    elements.kpiApproxTokens.textContent = formatNumber(statsState.approxTokensTotal);
     elements.activeCount.textContent = String(filteredActiveSearchCount());
     updateFilterBadge();
   }
@@ -803,6 +812,7 @@
       lane.stage = "result";
       lane.doneAt = now();
       lane.hits = number(event.hits);
+      lane.approxTokens = number(event.approxTokens);
       window.setTimeout(() => markLaneLeaving(id, 120), 1500);
     }
     const record = normalizeRecord({
@@ -817,6 +827,7 @@
       ms: event.ms,
       cached: event.cached,
       warnings: event.warnings,
+      approxTokens: event.approxTokens,
       error: event.error,
     }, id);
     prependFeed(record);
@@ -824,6 +835,7 @@
     statsState.total += 1;
     statsState.sumMs += record.ms;
     if (record.cached) statsState.cacheHits += 1;
+    statsState.approxTokensTotal += record.approxTokens;
     statsState.qpsTimes.push(now());
     addBucketRecord(record.ts, record.ms);
     announcement = `검색 완료: ${record.client} · ${formatNumber(record.hits)}건 · ${formatNumber(record.ms)}ms`;
@@ -994,11 +1006,11 @@
     const emit = demoEventFactory();
     const demoNow = now();
     handleHello({
-      stats: { total: 1284, avgMs: 86, p95Ms: 164, cacheHitRate: .347, qps1m: .22, active: 0, byClient: {}, errors: 2 },
+      stats: { total: 1284, avgMs: 86, p95Ms: 164, cacheHitRate: .347, qps1m: .22, active: 0, byClient: {}, errors: 2, approxTokensTotal: 187420 },
       recent: [
-        { id: "recent-a", ts: new Date(demoNow - 24000).toISOString(), client: "mcp:codex", query: "SearchStageEvent가 발생하는 위치", workspaces: ["greplet"], mode: "hybrid", hits: 8, ms: 74, cached: false, warnings: 0 },
-        { id: "recent-b", ts: new Date(demoNow - 51000).toISOString(), client: "cli", query: "LanceDB FTS 인덱스 생성", workspaces: ["greplet"], mode: "fts", hits: 6, ms: 42, cached: true, warnings: 0 },
-        { id: "recent-c", ts: new Date(demoNow - 86000).toISOString(), client: "mcp:claude", query: "PDF 암호 해제 후 페이지 청킹 로직", workspaces: ["greplet", "manuals"], mode: "hybrid", hits: 10, ms: 131, cached: false, warnings: 1 },
+        { id: "recent-a", ts: new Date(demoNow - 24000).toISOString(), client: "mcp:codex", query: "SearchStageEvent가 발생하는 위치", workspaces: ["greplet"], mode: "hybrid", hits: 8, ms: 74, cached: false, warnings: 0, approxTokens: 212 },
+        { id: "recent-b", ts: new Date(demoNow - 51000).toISOString(), client: "cli", query: "LanceDB FTS 인덱스 생성", workspaces: ["greplet"], mode: "fts", hits: 6, ms: 42, cached: true, warnings: 0, approxTokens: 156 },
+        { id: "recent-c", ts: new Date(demoNow - 86000).toISOString(), client: "mcp:claude", query: "PDF 암호 해제 후 페이지 청킹 로직", workspaces: ["greplet", "manuals"], mode: "hybrid", hits: 10, ms: 131, cached: false, warnings: 1, approxTokens: 298 },
       ],
       jobs: [],
       seq: 0,
@@ -1028,6 +1040,7 @@
       window.setTimeout(() => emit({
         type: "search.done", id, client, hits: 6 + (index % 5), ms: 58 + ((index * 37) % 120),
         cached: index % 4 === 1, mode, warnings: index % 5 === 3 ? 1 : 0,
+        approxTokens: 140 + ((index * 53) % 260),
       }), 1540);
     };
     window.setTimeout(runSearch, 350);

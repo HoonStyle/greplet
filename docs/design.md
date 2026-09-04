@@ -246,6 +246,10 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 
 `search.ts` 는 캐시·임베딩·벡터·FTS·RRF(`rerank`)·글롭(`glob`)·정렬 단계에서 이벤트를 발행하고, `indexJob.ts` 는 위 9단계를 순서대로 발행한다. `index.progress` 는 `max(16, total/100)` 단위와 마지막 완료 시점에만 발행한다. SSE 연결이 백프레셔 상태이면 `search.stage` 와 `index.progress` 를 드롭하고, 그 외 이벤트는 유지한다. 검색 질의는 발행 시 120자로 절단하며 `GREPLET_ACTIVITY_QUERY=hidden` 이면 `(hidden)` 으로 대체한다. 검색 결과 캐시 키에는 클라이언트 이름을 넣지 않는다.
 
+#### 5.7.1 `X-Greplet-Snippet` 과 `approxTokens`
+
+`POST /api/search` 는 선택 헤더 `X-Greplet-Snippet` 을 받는다. 값이 `full`(대소문자 무관)이면 전문 기준, `1`~`100000` 범위의 정수 문자열이면 그 스니펫 문자 수 기준, 그 외/미지정이면 기본값 `300`(모든 클라이언트의 기본 스니펫 길이와 동일) 기준으로 서버가 이번 검색 응답의 **근사 토큰 수**(`approxTokens`)를 계산한다. 계산은 정확한 토크나이저가 아닌 근사치다: ASCII 문자는 4자당 1토큰, 비 ASCII(한글·CJK 등)는 1자당 1토큰으로 세고, 히트당 파일:라인 등 헤더 출력 비용으로 약 12토큰을 더한다. `approxTokens` 는 `search.done` 이벤트와 `SearchRecord`(→ `/api/activity`·`hello.recent`)에 실려 나가며, `ActivityStats.approxTokensTotal` 과 `byClient[client].approxTokens` 에 누적된다. 결과 캐시 키에는 `X-Greplet-Snippet`(`snippetChars`)을 넣지 않는다 — 캐시 적중 시에도 이번 요청의 스니펫 길이로 `approxTokens` 를 다시 계산한다.
+
 ### 5.6 기동
 
 - `npm run build` → `npm start`(`node dist/server.js`). 개발 시 `npm run dev`(tsx).
