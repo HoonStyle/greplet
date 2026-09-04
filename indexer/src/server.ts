@@ -12,7 +12,8 @@ import { openOrCreateTable, tableExists, manifestPathFor, VECTOR_DIM } from "./d
 import { loadManifest } from "./scan.js";
 import { search, type SearchMode } from "./search.js";
 import { JobManager } from "./indexJob.js";
-import { subscribeActivity, getRecentEvents, getRecentSearches, getStats, listenerCount, type ActivityEvent } from "./activity.js";
+import { subscribeActivity, getRecentEvents, getRecentSearches, getStats, listenerCount, seedSearchHistory, type ActivityEvent } from "./activity.js";
+import { initActivityLog, restoreRecent, readUsage } from "./activityLog.js";
 
 const cfg = loadConfig();
 fs.mkdirSync(cfg.dbDir, { recursive: true });
@@ -302,7 +303,17 @@ app.get("/api/activity", (req, res) => {
   res.json({ stats: getStats(), recent: getRecentSearches(limit) });
 });
 
+app.get("/api/usage", async (req, res) => {
+  const days = Math.min(366, Math.max(1, Number(req.query.days) || 7));
+  res.json(readUsage(cfg, days));
+});
+
 app.use(express.static(path.join(cfg.indexerRoot, "public")));
+
+const restored = await restoreRecent(cfg, 200);
+seedSearchHistory(restored);
+console.log(`[greplet] 활동 로그 복원 — ${restored.length}건 (${path.join(cfg.logsDir, "activity")})`);
+initActivityLog(cfg);
 
 const server = app.listen(cfg.port, "127.0.0.1", async () => {
   console.log(`[greplet] 인덱서 서버 기동 — http://127.0.0.1:${cfg.port} (dbDir=${cfg.dbDir}, vectorDim=${VECTOR_DIM})`);

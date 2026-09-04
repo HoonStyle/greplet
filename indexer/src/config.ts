@@ -11,6 +11,8 @@
     GREPLET_WORKSPACES   workspaces.json 경로, 기본 이 폴더의 workspaces.json
     GREPLET_EXTRACTOR    Extractor 실행 파일 경로, 기본 ../Extractor/bin/Release/net8.0/Extractor(.exe)
                            (Windows: Extractor.exe, 그 외: Extractor)
+    GREPLET_ACTIVITY_LOG              "off" 로 설정하면 검색 활동 로그 기록/조회를 끈다. 기본 on.
+    GREPLET_ACTIVITY_RETENTION_DAYS   활동 로그 보존 일수(정수), 기본 90.
 */
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -41,6 +43,8 @@ export interface AppConfig {
   extractorPath: string;
   extractorProjectDir: string;
   indexerRoot: string;
+  activityLog: boolean;
+  activityRetentionDays: number;
 }
 
 // 이 파일(config.ts)이 dist/ 또는 src/ 어디서 실행되든 indexer 루트를 일관되게 구한다.
@@ -81,6 +85,8 @@ export function loadConfig(): AppConfig {
     extractorPath: process.env.GREPLET_EXTRACTOR ?? defaultExtractorPath,
     extractorProjectDir,
     indexerRoot: INDEXER_ROOT,
+    activityLog: process.env.GREPLET_ACTIVITY_LOG !== "off",
+    activityRetentionDays: Number(process.env.GREPLET_ACTIVITY_RETENTION_DAYS ?? 90) || 90,
   };
 }
 

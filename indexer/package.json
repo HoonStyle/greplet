@@ -10,7 +10,8 @@
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
     "test:incremental": "node tests/incremental.mjs",
-    "test:activity": "node tests/activity.mjs"
+    "test:activity": "node tests/activity.mjs",
+    "test:activity-log": "node tests/activityLog.mjs"
   },
   "dependencies": {
     "@lancedb/lancedb": "^0.38.0",

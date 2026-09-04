@@ -154,6 +154,34 @@ const byClientCounts: Record<string, { count: number; approxTokens: number }> = 
 // 완료 타임스탬프(ms epoch) — qps1m 계산용, 최근 60초 넘는 건 정리
 const completionTimestamps: number[] = [];
 
+// activityLog.ts 가 완료된 SearchRecord 를 파일에 append 하기 위해 거는 훅. 리스너는 하나면 충분하다.
+let sink: ((r: SearchRecord) => void) | null = null;
+
+export function onSearchRecord(fn: (r: SearchRecord) => void): void {
+  sink = fn;
+}
+
+/**
+ * 서버 시작 시 디스크에 저장된 최근 검색 이력을 메모리 상태로 복원한다.
+ * completionTimestamps(qps1m 계산용, 최근 60초 실시간 활동 전용)는 건드리지 않는다.
+ * 실제 활동이 발생하기 전, 서버 기동 시 단 한 번만 호출해야 한다.
+ */
+export function seedSearchHistory(records: SearchRecord[]): void {
+  for (const record of records) {
+    searchHistory.push(record);
+    if (searchHistory.length > SEARCH_HISTORY_MAX) searchHistory.shift();
+
+    totalCompleted += 1;
+    if (record.cached) cachedCompleted += 1;
+    if (record.error) totalErrors += 1;
+    approxTokensTotal += record.approxTokens;
+    const clientEntry = byClientCounts[record.client] ?? { count: 0, approxTokens: 0 };
+    clientEntry.count += 1;
+    clientEntry.approxTokens += record.approxTokens;
+    byClientCounts[record.client] = clientEntry;
+  }
+}
+
 function truncateQuery(q: string): string {
   if (process.env.GREPLET_ACTIVITY_QUERY === "hidden") return "(hidden)";
   return q.length > QUERY_MAX_LEN ? q.slice(0, QUERY_MAX_LEN) : q;
@@ -196,6 +224,7 @@ export function emitActivity(ev: DistributiveOmit<ActivityEvent, "seq" | "ts">):
 
     searchHistory.push(record);
     if (searchHistory.length > SEARCH_HISTORY_MAX) searchHistory.shift();
+    sink?.(record);
 
     totalCompleted += 1;
     if (e.cached) cachedCompleted += 1;

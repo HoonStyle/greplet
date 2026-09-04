@@ -57,6 +57,10 @@
     indexProgress: byId("indexProgress"),
     indexProgressStage: byId("indexProgressStage"),
     indexProgressText: byId("indexProgressText"),
+    usageToggle: byId("usageToggle"),
+    usageBody: byId("usageBody"),
+    usageDays: byId("usageDays"),
+    usageFeed: byId("usageFeed"),
   };
 
   const searchNodeElements = new Map(
@@ -111,6 +115,93 @@
   } catch (_) {
     sessionFilter = "";
   }
+  const USAGE_DAYS_STORAGE_KEY = "greplet.live.usageDays";
+  const USAGE_FETCH_THROTTLE_MS = 10000;
+  let usageDays = 7;
+  try {
+    const stored = Number(window.localStorage.getItem(USAGE_DAYS_STORAGE_KEY));
+    if (stored === 7 || stored === 30 || stored === 90) usageDays = stored;
+  } catch (_) {
+    usageDays = 7;
+  }
+  let lastUsageFetchTs = 0;
+
+  function abbreviateNumber(value) {
+    const n = number(value);
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+    return String(n);
+  }
+
+  function usageClientsText(byClient) {
+    const entries = Object.entries(byClient || {}).sort((a, b) => b[1].approxTokens - a[1].approxTokens);
+    if (entries.length === 0) return "—";
+    return entries.map(([client, usage]) => `${client} ${abbreviateNumber(usage.approxTokens)}`).join(" · ");
+  }
+
+  function renderUsage(usageData) {
+    if (!elements.usageFeed) return;
+    const days = (usageData && Array.isArray(usageData.days)) ? usageData.days : [];
+    if (usageData && usageData.disabled) {
+      elements.usageFeed.innerHTML = '<tr class="feed-placeholder"><td colspan="8">활동 로그가 꺼져 있습니다(GREPLET_ACTIVITY_LOG=off).</td></tr>';
+      return;
+    }
+    if (days.length === 0) {
+      elements.usageFeed.innerHTML = '<tr class="feed-placeholder"><td colspan="8">사용량 데이터가 없습니다.</td></tr>';
+      return;
+    }
+    elements.usageFeed.innerHTML = days
+      .slice()
+      .reverse()
+      .map((day) => `
+        <tr>
+          <td>${escapeHtml(day.date)}</td>
+          <td class="num">${formatNumber(day.searches)}</td>
+          <td class="num">${formatNumber(day.hits)}</td>
+          <td class="num">${formatNumber(day.approxTokens)}</td>
+          <td class="num">${formatNumber(day.avgMs)}</td>
+          <td class="num">${formatNumber(day.cached)}</td>
+          <td class="num">${formatNumber(day.errors)}</td>
+          <td class="usage-clients" title="${escapeHtml(usageClientsText(day.byClient))}">${escapeHtml(usageClientsText(day.byClient))}</td>
+        </tr>
+      `)
+      .join("");
+  }
+
+  async function fetchUsage(force) {
+    const nowTs = now();
+    if (!force && nowTs - lastUsageFetchTs < USAGE_FETCH_THROTTLE_MS) return;
+    lastUsageFetchTs = nowTs;
+    try {
+      const res = await fetch(`/api/usage?days=${usageDays}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      renderUsage(data);
+    } catch (_) {
+      // 네트워크 실패는 조용히 무시(다음 인터벌에서 재시도)
+    }
+  }
+
+  if (elements.usageDays) {
+    elements.usageDays.value = String(usageDays);
+    elements.usageDays.addEventListener("change", () => {
+      usageDays = Number(elements.usageDays.value) || 7;
+      try {
+        window.localStorage.setItem(USAGE_DAYS_STORAGE_KEY, String(usageDays));
+      } catch (_) {
+        // localStorage 사용 불가 환경은 무시
+      }
+      fetchUsage(true);
+    });
+  }
+
+  if (elements.usageToggle && elements.usageBody) {
+    elements.usageToggle.addEventListener("click", () => {
+      const expanded = elements.usageToggle.getAttribute("aria-expanded") === "true";
+      elements.usageToggle.setAttribute("aria-expanded", String(!expanded));
+      elements.usageBody.hidden = expanded;
+    });
+  }
+
   const statsState = {
     total: 0,
     sumMs: 0,
@@ -915,7 +1006,7 @@
     switch (event.type) {
       case "search.start": handleSearchStart(event); break;
       case "search.stage": handleSearchStage(event); break;
-      case "search.done": handleSearchDone(event); break;
+      case "search.done": handleSearchDone(event); fetchUsage(false); break;
       case "index.start": handleIndexStart(event); break;
       case "index.stage": handleIndexStage(event); break;
       case "index.progress": handleIndexProgress(event); break;
@@ -1016,6 +1107,33 @@
       seq: 0,
     });
 
+    const demoUsageDays = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(demoNow - (6 - i) * 86400000);
+      const searches = 120 + i * 34 + (i % 3) * 10;
+      const approxTokens = searches * (140 + i * 6);
+      return {
+        date: d.toISOString().slice(0, 10),
+        searches,
+        hits: searches * 5,
+        approxTokens,
+        avgMs: 70 + (i % 4) * 12,
+        cached: Math.round(searches * 0.35),
+        errors: i % 5 === 0 ? 1 : 0,
+        byClient: {
+          "cli:codex": { searches: Math.round(searches * 0.4), approxTokens: Math.round(approxTokens * 0.4) },
+          "mcp:claude": { searches: Math.round(searches * 0.35), approxTokens: Math.round(approxTokens * 0.35) },
+          "mcp:codex": { searches: Math.round(searches * 0.25), approxTokens: Math.round(approxTokens * 0.25) },
+        },
+      };
+    });
+    renderUsage({
+      days: demoUsageDays,
+      total: demoUsageDays.reduce(
+        (acc, day) => ({ searches: acc.searches + day.searches, approxTokens: acc.approxTokens + day.approxTokens, byClient: {} }),
+        { searches: 0, approxTokens: 0, byClient: {} },
+      ),
+    });
+
     const clients = ["mcp:claude", "mcp:codex", "cli"];
     const queries = [
       "검색 결과 캐시 무효화 조건을 찾아줘",
@@ -1103,5 +1221,9 @@
   document.body.classList.toggle("live-hidden", hidden);
   scheduleRender("all");
   if (new URLSearchParams(window.location.search).get("demo") === "1") startDemo();
-  else connect();
+  else {
+    connect();
+    fetchUsage(true);
+    window.setInterval(() => fetchUsage(true), 60000);
+  }
 })();

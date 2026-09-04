@@ -250,6 +250,31 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 
 `POST /api/search` 는 선택 헤더 `X-Greplet-Snippet` 을 받는다. 값이 `full`(대소문자 무관)이면 전문 기준, `1`~`100000` 범위의 정수 문자열이면 그 스니펫 문자 수 기준, 그 외/미지정이면 기본값 `300`(모든 클라이언트의 기본 스니펫 길이와 동일) 기준으로 서버가 이번 검색 응답의 **근사 토큰 수**(`approxTokens`)를 계산한다. 계산은 정확한 토크나이저가 아닌 근사치다: ASCII 문자는 4자당 1토큰, 비 ASCII(한글·CJK 등)는 1자당 1토큰으로 세고, 히트당 파일:라인 등 헤더 출력 비용으로 약 12토큰을 더한다. `approxTokens` 는 `search.done` 이벤트와 `SearchRecord`(→ `/api/activity`·`hello.recent`)에 실려 나가며, `ActivityStats.approxTokensTotal` 과 `byClient[client].approxTokens` 에 누적된다. 결과 캐시 키에는 `X-Greplet-Snippet`(`snippetChars`)을 넣지 않는다 — 캐시 적중 시에도 이번 요청의 스니펫 길이로 `approxTokens` 를 다시 계산한다.
 
+#### 5.7.2 활동 로그 영속화 (`activityLog.ts`)
+
+검색이 완료될 때마다(`activity.ts` 의 `onSearchRecord` 훅) 해당 `SearchRecord` 를 `<dataDir>/logs/activity/search-YYYY-MM-DD.jsonl` 에 한 줄(JSON)로 append 한다(`fs.appendFile` 비동기, 실패해도 요청 경로에 영향 없이 1회 `console.error`). 파일명의 날짜는 UTC 기준이다. 필드는 `SearchRecord` 와 동일: `id`, `ts`, `client`, `query`, `workspaces`, `mode`, `hits`, `ms`, `cached`, `warnings`, `approxTokens`, `error?`, `session?`.
+
+환경변수:
+- `GREPLET_ACTIVITY_LOG` — `off` 로 설정하면 기록/조회를 모두 끈다(기본 on).
+- `GREPLET_ACTIVITY_RETENTION_DAYS` — 보존 일수(정수, 기본 90). 서버 기동 시 1회, 이후 24시간마다 파일명 날짜 기준으로 만료 파일을 삭제한다.
+
+서버 기동 시 `restoreRecent(cfg, 200)` 로 최신 파일부터 역순으로 읽어 최근 최대 200건을 모으고(oldest→newest), `seedSearchHistory()` 로 `activity.ts` 의 `searchHistory` 링과 누적 카운터(`totalCompleted`, `cachedCompleted`, `totalErrors`, `approxTokensTotal`, `byClientCounts`)를 복원한다. 단, 최근 1분 QPS 계산용 `completionTimestamps` 는 복원하지 않는다(과거 이력이 실시간 QPS 를 왜곡하지 않도록).
+
+`GET /api/usage?days=N`(기본 7, 1~366 로 clamp)은 오늘을 포함한 최근 N일의 일별 사용량을 반환한다:
+
+```json
+{
+  "days": [
+    { "date": "2026-09-04", "searches": 12, "hits": 60, "approxTokens": 3400,
+      "avgMs": 82, "cached": 4, "errors": 0,
+      "byClient": { "cli:codex": { "searches": 5, "approxTokens": 1200 } } }
+  ],
+  "total": { "searches": 12, "approxTokens": 3400, "byClient": { "cli:codex": { "searches": 5, "approxTokens": 1200 } } }
+}
+```
+
+기록이 없는 날짜도 0으로 채운 행이 나온다. `GREPLET_ACTIVITY_LOG=off` 이면 `{ "days": [], "total": { "searches": 0, "approxTokens": 0, "byClient": {} }, "disabled": true }` 를 반환한다.
+
 ### 5.6 기동
 
 - `npm run build` → `npm start`(`node dist/server.js`). 개발 시 `npm run dev`(tsx).
@@ -266,6 +291,7 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 - 총 검색 수·평균 지연·캐시 적중률·최근 1분 QPS KPI 및 호출/지연 스파크라인
 - 인덱스 파이프(스캔·추출·임베딩·저장·FTS)와 현재 단계·진행률
 - 클라이언트별 검색 활동 피드(완료 검색·히트 수·지연·경고·오류)
+- 접이식 "사용량 (일별)" 표(`/api/usage`): 날짜별 검색·hits·≈토큰·평균 ms·캐시·오류·클라이언트별(≈토큰). 기간 선택(7/30/90일)은 `localStorage` 에 저장하고, 페이지 로드·60초 주기·`search.done` 수신 시(최소 10초 간격으로 스로틀) 갱신한다.
 
 동적 동작은 `public/live.js`, 전용 스타일은 `public/live.css` 로 분리한다. UI는 5초 폴링으로 상태·잡을 보완하고 SSE `/api/events` 로 실시간 이벤트를 병행한다. 연결 직후 hello/replay 로 화면을 채우며 `index.done` 을 받으면 즉시 워크스페이스와 잡을 갱신한다. Pause 는 렌더링을 잠시 멈추고, 연결 끊김은 지수 백오프로 재연결한다. `prefers-reduced-motion` 을 존중하며 `?demo=1` 에서는 네트워크 없이 데모 이벤트를 재생한다. 기존 워크스페이스·업로드·검색 테스트·잡 로그 기능도 유지하며 외부 CDN은 사용하지 않는다.
 

@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- 검색 활동(`SearchRecord`, `approxTokens` 포함)을 `<dataDir>/logs/activity/search-YYYY-MM-DD.jsonl` 파일로 영속화해 서버 재시작 후에도 최근 이력·누적 통계를 복원하고, 일별 사용량 요약 API(`/api/usage`)와 관리 UI "사용량 (일별)" 표를 추가.
+
 ## [0.8.0] - 2026-09-04
 
 ### Added
