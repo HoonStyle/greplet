@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-04
+
 ### Added
 - CLI(`greplet.mjs`/`greplet.ps1`) 가 Claude Code·Codex 셸 툴 환경변수로 세션과 호출자(`cli:claude`/`cli:codex`)를 자동 감지한다. Codex 의 MCP 서버 경로는 환경변수가 전달되지 않아 `GREPLET_SESSION` 지정이 필요하다.
 - 검색 응답 근사 토큰 수(`approxTokens`) 서버 계산: 클라이언트가 `X-Greplet-Snippet` 헤더로 실제 출력할 스니펫 길이를 알리면, `search.done` 이벤트·`/api/activity`·`ActivityStats.approxTokensTotal`·`byClient` 에 근사치를 기록.
@@ -66,7 +68,8 @@
 
 Windows 에서 개발·검증된 초기 상태. Extractor(Roslyn/PdfPig), LanceDB 하이브리드 인덱서, PowerShell CLI, Claude Desktop `.mcpb`, 원격 MCP 서버, post-commit 훅, Claude Code 스킬 예제.
 
-[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/HoonStyle/greplet/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/HoonStyle/greplet/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/HoonStyle/greplet/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/HoonStyle/greplet/compare/3a3e05b...v0.5.0

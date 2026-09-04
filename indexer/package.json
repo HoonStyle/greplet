@@ -1,6 +1,6 @@
 {
   "name": "greplet-indexer",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "license": "MIT",
   "description": "greplet 인덱서 — Roslyn/PdfPig 청크 + Ollama bge-m3 임베딩 + LanceDB 하이브리드 검색 서비스.",

@@ -1,6 +1,6 @@
 {
   "name": "greplet-mcp-server",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "license": "MIT",
   "description": "greplet 인덱서 /api 를 감싸는 원격(Streamable HTTP) MCP 서버. Bearer 인증.",
