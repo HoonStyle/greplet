@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-04
+
 ### Added
 - 관리 UI 의 Live Pipeline: 검색·인덱싱 파이프라인, 요청 레인, KPI·스파크라인, 클라이언트별 활동 피드를 실시간으로 표시.
 - `/api/events` SSE, `/api/activity` 요약 API, 검색·인덱싱 활동 이벤트와 `JobRecord.stage`·`progress`.
@@ -60,7 +62,8 @@
 
 Windows 에서 개발·검증된 초기 상태. Extractor(Roslyn/PdfPig), LanceDB 하이브리드 인덱서, PowerShell CLI, Claude Desktop `.mcpb`, 원격 MCP 서버, post-commit 훅, Claude Code 스킬 예제.
 
-[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/HoonStyle/greplet/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/HoonStyle/greplet/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/HoonStyle/greplet/compare/3a3e05b...v0.5.0
 [0.0.0]: https://github.com/HoonStyle/greplet/commit/3a3e05b

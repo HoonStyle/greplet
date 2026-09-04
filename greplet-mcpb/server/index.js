@@ -127,7 +127,7 @@ async function runGreplet({ query, workspace, all, topN, full, mode, fileGlob })
 }
 
 // ---------- MCP 서버 (stdio) ----------
-const server = new McpServer({ name: "greplet", version: "0.6.0" });
+const server = new McpServer({ name: "greplet", version: "0.7.0" });
 
 server.registerTool(
   "greplet",
