@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- CLI(`greplet.mjs`/`greplet.ps1`) 가 Claude Code·Codex 셸 툴 환경변수로 세션과 호출자(`cli:claude`/`cli:codex`)를 자동 감지한다. Codex 의 MCP 서버 경로는 환경변수가 전달되지 않아 `GREPLET_SESSION` 지정이 필요하다.
 - 검색 응답 근사 토큰 수(`approxTokens`) 서버 계산: 클라이언트가 `X-Greplet-Snippet` 헤더로 실제 출력할 스니펫 길이를 알리면, `search.done` 이벤트·`/api/activity`·`ActivityStats.approxTokensTotal`·`byClient` 에 근사치를 기록.
 
 ## [0.7.0] - 2026-09-04
@@ -13,7 +14,7 @@
 - 관리 UI 의 Live Pipeline: 검색·인덱싱 파이프라인, 요청 레인, KPI·스파크라인, 클라이언트별 활동 피드를 실시간으로 표시.
 - `/api/events` SSE, `/api/activity` 요약 API, 검색·인덱싱 활동 이벤트와 `JobRecord.stage`·`progress`.
 - `X-Greplet-Client` 및 `GREPLET_CLIENT_NAME` 기반 클라이언트별 활동 기록과 `GREPLET_ACTIVITY_QUERY=hidden` 질의 비공개 옵션.
-- 관리 UI 세션 선택기: `X-Greplet-Session` 헤더(`GREPLET_SESSION` → `CLAUDE_CODE_SESSION_ID` 순으로 자동 설정)로 활동 레코드에 세션을 기록하고, Live Pipeline 의 요청 레인·활동 피드·KPI·스파크라인을 세션별로 필터한다.
+- 관리 UI 세션 선택기: `X-Greplet-Session` 헤더(`GREPLET_SESSION` → `CODEX_THREAD_ID`/`CODEX_SESSION_ID` → `CLAUDE_CODE_SESSION_ID` 순으로 자동 설정)로 활동 레코드에 세션을 기록하고, Live Pipeline 의 요청 레인·활동 피드·KPI·스파크라인을 세션별로 필터한다.
 
 ### Changed
 - 관리 UI 를 다크 테마와 `public/live.js`·`live.css` 분리 구조로 개편하고 5초 폴링과 SSE를 병행한다.

@@ -47,8 +47,12 @@ $body = @{
   mode       = $Mode
 } | ConvertTo-Json
 
-$headers = @{ "Content-Type" = "application/json"; "X-Greplet-Client" = "cli"; "X-Greplet-Snippet" = $(if ($Full) { "full" } else { "300" }) }
-$session = if ($env:GREPLET_SESSION) { $env:GREPLET_SESSION } else { $env:CLAUDE_CODE_SESSION_ID }
+# 호출 세션·클라이언트 자동 감지: GREPLET_SESSION → CODEX_THREAD_ID/CODEX_SESSION_ID(Codex 셸 툴 환경) → CLAUDE_CODE_SESSION_ID
+# Codex 우선: Claude Code 가 Codex 에 위임하면 두 변수가 모두 상속되는데, 출력을 읽는 쪽은 Codex 이기 때문
+$codexId = if ($env:CODEX_THREAD_ID) { $env:CODEX_THREAD_ID } else { $env:CODEX_SESSION_ID }
+$session = if ($env:GREPLET_SESSION) { $env:GREPLET_SESSION } elseif ($codexId) { $codexId } else { $env:CLAUDE_CODE_SESSION_ID }
+$client = if ($env:GREPLET_CLIENT_NAME) { $env:GREPLET_CLIENT_NAME } elseif ($codexId) { "cli:codex" } elseif ($env:CLAUDE_CODE_SESSION_ID) { "cli:claude" } else { "cli" }
+$headers = @{ "Content-Type" = "application/json"; "X-Greplet-Client" = $client; "X-Greplet-Snippet" = $(if ($Full) { "full" } else { "300" }) }
 if ($session) { $headers["X-Greplet-Session"] = $session }
 
 try {

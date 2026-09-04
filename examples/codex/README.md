@@ -57,6 +57,7 @@ sed -i '' 's#<GREPLET>#/Users/me/git/greplet#g' ~/.codex/skills/greplet/SKILL.md
 
 ## 참고
 
+- 세션 구분: Codex 의 셸 툴에서 `greplet.mjs`/`greplet.ps1` 을 실행하면 `CODEX_THREAD_ID` 를 자동 감지해 대시보드에 `cli:codex` + 세션으로 기록된다(확인: codex-cli 0.152.1). MCP 서버 경로에는 Codex 가 세션 환경변수를 넘기지 않으므로 세션 필터가 필요하면 `[mcp_servers.greplet.env]` 에 `GREPLET_SESSION` 을 지정한다.
 - CLI 스크립트: 리포 루트의 `greplet.mjs` (Node, 크로스플랫폼). 인자: 위치인자 `query`, `--workspace/-w`, `--all`, `--top-n`, `--full`, `--mode hybrid|vector|fts`, `--base-url`.
 - 워크스페이스 목록의 단일 소스는 `indexer/workspaces.json`.
 - 자세한 사용 패턴은 `examples/codex/skills/greplet/SKILL.md` 참고.

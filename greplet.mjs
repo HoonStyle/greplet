@@ -152,9 +152,14 @@ function serverDown(baseUrl, e) {
   process.exit(1);
 }
 
-function sessionHeader() {
-  const session = process.env.GREPLET_SESSION || process.env.CLAUDE_CODE_SESSION_ID;
-  return session ? { "X-Greplet-Session": session } : {};
+/** 호출 세션·클라이언트 자동 감지: GREPLET_SESSION → CODEX_THREAD_ID/CODEX_SESSION_ID(Codex 셸 툴 환경) → CLAUDE_CODE_SESSION_ID.
+ *  Codex 를 우선하는 이유: Claude Code 가 Codex 에 위임하면 두 변수가 모두 상속되는데, 출력을 읽는 쪽은 Codex 이기 때문. */
+function callerHeaders() {
+  const env = process.env;
+  const codexId = env.CODEX_THREAD_ID || env.CODEX_SESSION_ID;
+  const session = env.GREPLET_SESSION || codexId || env.CLAUDE_CODE_SESSION_ID;
+  const client = env.GREPLET_CLIENT_NAME || (codexId ? "cli:codex" : env.CLAUDE_CODE_SESSION_ID ? "cli:claude" : "cli");
+  return { "X-Greplet-Client": client, ...(session ? { "X-Greplet-Session": session } : {}) };
 }
 
 async function api(baseUrl, path, init = {}, timeoutMs = 120000) {
@@ -162,7 +167,7 @@ async function api(baseUrl, path, init = {}, timeoutMs = 120000) {
   try {
     resp = await fetch(`${baseUrl}${path}`, {
       ...init,
-      headers: { "X-Greplet-Client": "cli", ...sessionHeader(), ...(init.headers ?? {}) },
+      headers: { ...callerHeaders(), ...(init.headers ?? {}) },
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (e) {
