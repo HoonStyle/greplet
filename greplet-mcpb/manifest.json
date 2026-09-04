@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "greplet",
   "display_name": "greplet",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "코드/문서 하이브리드 검색 — 자체 인덱서(Roslyn/PdfPig 청크 + Ollama bge-m3 + LanceDB 벡터+FTS RRF)에서 소스코드·PDF·문서 청크를 검색. 로컬 stdio, Claude Desktop/Cowork 브릿지용.",
   "license": "MIT",
   "author": {

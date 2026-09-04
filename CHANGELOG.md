@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-04
+
 ### Added
 - 검색 활동(`SearchRecord`, `approxTokens` 포함)을 `<dataDir>/logs/activity/search-YYYY-MM-DD.jsonl` 파일로 영속화해 서버 재시작 후에도 최근 이력·누적 통계를 복원하고, 일별 사용량 요약 API(`/api/usage`)와 관리 UI "사용량 (일별)" 표를 추가.
 
@@ -71,7 +73,8 @@
 
 Windows 에서 개발·검증된 초기 상태. Extractor(Roslyn/PdfPig), LanceDB 하이브리드 인덱서, PowerShell CLI, Claude Desktop `.mcpb`, 원격 MCP 서버, post-commit 훅, Claude Code 스킬 예제.
 
-[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/HoonStyle/greplet/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/HoonStyle/greplet/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/HoonStyle/greplet/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/HoonStyle/greplet/compare/v0.5.0...v0.6.0

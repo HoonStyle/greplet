@@ -32,7 +32,7 @@ if (!AUTH_TOKEN) {
 
 // ---------- MCP 서버 (요청마다 새 인스턴스 — stateless) ----------
 function buildMcpServer(): McpServer {
-  const server = new McpServer({ name: "greplet", version: "0.8.0" });
+  const server = new McpServer({ name: "greplet", version: "0.9.0" });
 
   server.registerTool(
     "greplet",
