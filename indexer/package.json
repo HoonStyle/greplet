@@ -10,6 +10,7 @@
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
     "test:incremental": "node tests/incremental.mjs",
+    "test:evidence": "node tests/evidence.mjs",
     "test:activity": "node tests/activity.mjs",
     "test:activity-log": "node tests/activityLog.mjs"
   },

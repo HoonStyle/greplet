@@ -14,6 +14,7 @@ import { approxResponseTokens } from "./tokens.js";
 export type SearchMode = "hybrid" | "vector" | "fts";
 
 export interface SearchHit {
+  id: string;
   workspace: string;
   file: string;
   abs: string;
@@ -23,6 +24,15 @@ export interface SearchHit {
   endLine: number;
   score: number;
   text: string;
+  root: string;
+  fileHash: string;
+  indexedAt: string;
+}
+
+export interface WorkspaceSearchOutcome {
+  workspace: string;
+  effectiveMode: SearchMode;
+  failed: boolean;
 }
 
 export interface SearchResponse {
@@ -30,6 +40,7 @@ export interface SearchResponse {
   mode: SearchMode;
   warnings: string[];
   cached?: boolean;
+  workspaceResults: WorkspaceSearchOutcome[];
 }
 
 export interface SearchOptions {
@@ -41,6 +52,7 @@ export interface SearchOptions {
   session?: string;
   // 응답 근사 토큰 수 계산용 스니펫 길이(문자). undefined=전문. 캐시 키에는 포함하지 않는다.
   snippetChars?: number;
+  bypassCache?: boolean;
 }
 
 /** 파일 글롭 → 정규식. scan.ts 의 파일명 글롭과 달리 경로 전체를 대상으로 하며 `**` 를 지원한다. */
@@ -70,7 +82,7 @@ export function fileGlobToRegex(glob: string): RegExp {
 /** 하이브리드 융합 전 하위 질의(벡터·FTS)별 최소 후보 수 */
 const HYBRID_MIN_POOL = 50;
 
-const SELECT_COLS = ["file", "abs", "symbol", "kind", "start_line", "end_line", "text"];
+const SELECT_COLS = ["id", "file", "abs", "root", "file_hash", "indexed_at", "symbol", "kind", "start_line", "end_line", "text"];
 
 /** 파일 글롭 필터가 있을 때 후보를 넉넉히 뽑기 위한 배수 */
 const GLOB_POOL_FACTOR = 10;
@@ -121,7 +133,12 @@ async function searchOneWorkspace(
   warnings: string[],
   fileRe: RegExp | null,
   searchId: string,
+  outcome: WorkspaceSearchOutcome,
 ): Promise<SearchHit[]> {
+  const finish = (hits: SearchHit[], actualMode: SearchMode): SearchHit[] => {
+    outcome.effectiveMode = actualMode;
+    return hits;
+  };
   const stage = (
     s: "cache" | "embed" | "vector" | "fts" | "rerank" | "glob" | "sort",
     status: "enter" | "fallback" | "skip",
@@ -156,7 +173,7 @@ async function searchOneWorkspace(
     if (effectiveMode === "fts") {
       stage("fts", "enter");
       const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
-      return applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0))));
+      return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)))), "fts");
     }
 
     let qvec: number[];
@@ -170,7 +187,7 @@ async function searchOneWorkspace(
       stage("embed", "fallback", msg.slice(0, 80));
       stage("fts", "enter");
       const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
-      return applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0))));
+      return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)))), "fts");
     }
     let q = table.query().nearestTo(qvec).distanceType("cosine");
 
@@ -184,7 +201,7 @@ async function searchOneWorkspace(
         const rr = await rerankers.RRFReranker.create();
         const poolSize = Math.max(limit * 10, HYBRID_MIN_POOL);
         const rows = await q.fullTextSearch(query).rerank(rr).select(SELECT_COLS).limit(poolSize).toArray();
-        return applyGlob(rows.slice(0, limit).map((r: any) => toHit(ws.slug, r, Number(r._relevance_score ?? 0))));
+        return finish(applyGlob(rows.slice(0, limit).map((r: any) => toHit(ws.slug, r, Number(r._relevance_score ?? 0)))), "hybrid");
       } catch (ftsErr) {
         // FTS 구문 오류 등 → vector 로 폴백(§5.3)
         const msg = errMsg(ftsErr);
@@ -197,7 +214,7 @@ async function searchOneWorkspace(
     try {
       if (effectiveMode === "vector") stage("vector", "enter");
       const rows = await table.query().nearestTo(qvec).distanceType("cosine").select(SELECT_COLS).limit(limit).toArray();
-      return applyGlob(rows.map((r: any) => toHit(ws.slug, r, 1 - Number(r._distance ?? 0))));
+      return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, 1 - Number(r._distance ?? 0)))), "vector");
     } catch (vecErr) {
       // Ollama 가 잡 중간에 죽는 등 vector 경로 실패 시 fts 로 폴백해 결과가 비지 않게 한다.
       const msg = errMsg(vecErr);
@@ -205,9 +222,11 @@ async function searchOneWorkspace(
       stage("vector", "fallback", msg.slice(0, 80));
       stage("fts", "enter");
       const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
-      return applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0))));
+      return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)))), "fts");
     }
   } catch (err) {
+    outcome.failed = true;
+    outcome.effectiveMode = effectiveMode;
     warnings.push(`[${ws.slug}] 검색 실패(mode=${effectiveMode}): ${errMsg(err)}`);
     return [];
   }
@@ -215,6 +234,7 @@ async function searchOneWorkspace(
 
 function toHit(workspace: string, row: any, score: number): SearchHit {
   return {
+    id: row.id,
     workspace,
     file: row.file,
     abs: row.abs ?? "",
@@ -224,6 +244,9 @@ function toHit(workspace: string, row: any, score: number): SearchHit {
     endLine: row.end_line,
     score,
     text: row.text,
+    root: row.root,
+    fileHash: row.file_hash,
+    indexedAt: row.indexed_at,
   };
 }
 
@@ -258,7 +281,7 @@ export async function search(
 
   try {
     const key = cacheKey(cfg, workspaces, query, topN, mode, opts);
-    const cached = cacheGet(key);
+    const cached = opts.bypassCache ? undefined : cacheGet(key);
     if (cached) {
       emitActivity({ type: "search.stage", id, workspace: "*", stage: "cache", status: "enter" });
       emitActivity({
@@ -279,14 +302,15 @@ export async function search(
 
     const fileRe = opts.fileGlob ? fileGlobToRegex(opts.fileGlob) : null;
     const warnings: string[] = [];
+    const workspaceResults = workspaces.map((ws): WorkspaceSearchOutcome => ({ workspace: ws.slug, effectiveMode: mode, failed: false }));
     const perWs = await Promise.all(
-      workspaces.map((ws) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, id)),
+      workspaces.map((ws, i) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, id, workspaceResults[i])),
     );
     emitActivity({ type: "search.stage", id, workspace: "*", stage: "sort", status: "enter" });
     const hits = perWs.flat().sort((a, b) => b.score - a.score);
-    const result: SearchResponse = { hits, mode, warnings };
+    const result: SearchResponse = { hits, mode, warnings, workspaceResults };
     // 경고(폴백·실패)가 있는 응답은 일시적일 수 있으니 캐시하지 않는다
-    if (warnings.length === 0) cacheSet(key, result);
+    if (!opts.bypassCache && warnings.length === 0) cacheSet(key, result);
 
     emitActivity({
       type: "search.done",
