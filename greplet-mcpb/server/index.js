@@ -3,7 +3,7 @@
 
   Claude Desktop 이 이 서버를 사용자 PC 에서 로컬 실행 → Cowork 세션으로 프록시.
   로컬 실행이라 localhost:7802(greplet 인덱서)에 직결하며, 네트워크 리스너가 없어 인증 불필요.
-  검색 로직은 mcp-server/src/greplet.ts 와 동치 (인덱서 /api/search 1회 호출 → 정규화·점수순·중복제거·출력 포맷).
+  검색 로직은 mcp-server/src/greplet.ts 와 동치 (인덱서 /api/search 1회 호출 → 정규화·점수순·출력 포맷, 클라이언트 중복제거 없음).
   워크스페이스 목록은 인덱서 GET /api/workspaces 에서 받아 온다(60초 캐시) — 단일 소스는 indexer/workspaces.json.
 
   환경변수(매니페스트 user_config 에서 주입):
@@ -109,12 +109,7 @@ async function runGreplet({ query, workspace, all, topN, full, mode, fileGlob })
   const lines = [`[${label}] "${query}"${filterTag} -> 총 ${data.hits.length}건 (점수순)`, "=".repeat(70)];
 
   let rank = 1;
-  const seen = new Set();
   for (const h of data.hits) {
-    const key = `${h.file}|${h.text.slice(0, 80)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-
     const wsTag = all ? `[${h.workspace}] ` : "";
     lines.push(`#${rank}  score ${h.score.toFixed(4)}  |  ${wsTag}${h.file} :: ${h.symbol}${locationSuffix(h)}`);
     if (full) {
@@ -129,6 +124,50 @@ async function runGreplet({ query, workspace, all, topN, full, mode, fileGlob })
   }
   if (data.warnings.length > 0) lines.push(`(경고: ${data.warnings.join(" · ")})`);
   return lines.join("\n");
+}
+
+/** POST /api/evidence/search — 백엔드 JSON 그대로 반환 */
+async function callEvidenceSearchApi(query, workspaces, topN, mode, fileGlob) {
+  const resp = await fetch(`${BASE_URL}/api/evidence/search`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Greplet-Client": CLIENT_NAME,
+      ...SESSION_HEADERS,
+    },
+    body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
+    signal: AbortSignal.timeout(120_000),
+  });
+  const text = await resp.text();
+  let body;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = { raw: text };
+  }
+  return { ok: resp.ok, status: resp.status, body };
+}
+
+/** POST /api/evidence/get — 백엔드 JSON 그대로 반환 (404/409 포함) */
+async function callEvidenceGetApi(evidenceRef) {
+  const resp = await fetch(`${BASE_URL}/api/evidence/get`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Greplet-Client": CLIENT_NAME,
+      ...SESSION_HEADERS,
+    },
+    body: JSON.stringify({ evidenceRef }),
+    signal: AbortSignal.timeout(120_000),
+  });
+  const text = await resp.text();
+  let body;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = { raw: text };
+  }
+  return { ok: resp.ok, status: resp.status, body };
 }
 
 // ---------- MCP 서버 (stdio) ----------
@@ -188,6 +227,72 @@ server.registerTool(
   async () => {
     try {
       return { content: [{ type: "text", text: await listWorkspacesText() }] };
+    } catch (e) {
+      return { isError: true, content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }] };
+    }
+  },
+);
+
+server.registerTool(
+  "greplet_search_evidence",
+  {
+    title: "근거용 코드/문서 검색 (evidenceRef 포함)",
+    description:
+      "인덱스된 워크스페이스에서 관련 청크를 검색하고, 각 히트에 대해 재조회·신선도 검증에 쓸 evidenceRef(workspace/chunkId/fileHash/startLine/endLine/contentHash)를 함께 반환한다. " +
+      "백엔드 JSON(schemaVersion, query, mode, targets[])을 그대로 반환. 읽기 전용. 청크 전문은 greplet_get_evidence 로 별도 조회.",
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    inputSchema: {
+      query: z.string().min(1).describe("검색어 (자연어/키워드)"),
+      workspaces: z
+        .union([z.array(z.string()), z.literal("all")])
+        .default("all")
+        .describe('검색 대상 워크스페이스 slug 배열, 또는 "all"(기본, 전체 워크스페이스)'),
+      topN: z.number().int().min(1).max(20).default(3).describe("워크스페이스당 결과 개수 (기본 3, 최대 20)"),
+      mode: z
+        .enum(["hybrid", "vector", "fts"])
+        .default("hybrid")
+        .describe("검색 방식: hybrid(기본) · vector(의미) · fts(정확 토큰)"),
+      fileGlob: z
+        .string()
+        .optional()
+        .describe('결과를 파일 상대경로 글롭으로 필터. 예: "Lib/**/*.cs", "*.pdf"'),
+    },
+  },
+  async ({ query, workspaces, topN, mode, fileGlob }) => {
+    try {
+      const { ok, body } = await callEvidenceSearchApi(query, workspaces, topN, mode, fileGlob);
+      return { isError: !ok, content: [{ type: "text", text: JSON.stringify(body) }] };
+    } catch (e) {
+      return { isError: true, content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }] };
+    }
+  },
+);
+
+server.registerTool(
+  "greplet_get_evidence",
+  {
+    title: "근거 청크 전문 조회 (신선도 검증)",
+    description:
+      "greplet_search_evidence 가 반환한 evidenceRef 로 청크 전문을 다시 조회하고, 원본 파일 해시를 재검증한다. " +
+      "참조가 인덱스에 없으면 404, 원본이 바뀌었거나(stale) 워크스페이스가 인덱싱 중이면 409를 백엔드 그대로 isError 로 반환한다. 읽기 전용.",
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    inputSchema: {
+      evidenceRef: z
+        .object({
+          workspace: z.string().min(1),
+          chunkId: z.string().min(1),
+          fileHash: z.string().regex(/^[a-f0-9]{64}$/),
+          startLine: z.number().int().min(1),
+          endLine: z.number().int().min(1),
+          contentHash: z.string().regex(/^[a-f0-9]{64}$/),
+        })
+        .describe("greplet_search_evidence 히트의 evidenceRef 를 그대로 전달"),
+    },
+  },
+  async ({ evidenceRef }) => {
+    try {
+      const { ok, body } = await callEvidenceGetApi(evidenceRef);
+      return { isError: !ok, content: [{ type: "text", text: JSON.stringify(body) }] };
     } catch (e) {
       return { isError: true, content: [{ type: "text", text: e instanceof Error ? e.message : String(e) }] };
     }

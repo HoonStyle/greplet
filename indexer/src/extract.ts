@@ -36,7 +36,7 @@ export function extractorAvailable(cfg: AppConfig): boolean {
 function buildArgs(ws: WorkspaceConfig, roots: string[], filesListPath: string, outPath: string): string[] {
   const args: string[] = [];
   for (const root of roots) {
-    args.push("--root", root);
+    args.push("--root", path.resolve(root)); // same normalisation as relativeFileKey (no 8.3 expansion)
   }
   args.push("--ext", ws.includeExt.join(","));
   if (ws.excludeDirs.length > 0) args.push("--exclude-dir", ws.excludeDirs.join(","));

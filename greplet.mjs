@@ -40,6 +40,10 @@ greplet.mjs - greplet 인덱서 CLI
   node greplet.mjs workspaces              워크스페이스 목록과 인덱스 통계
   node greplet.mjs index <slug> [--force] [--wait]
                                            증분 인덱스 잡 등록(--force: 전체 재인덱스, --wait: 완료까지 로그 출력)
+  node greplet.mjs evidence-search <query> [-w slug|--all] [--top-n n] [--mode m] [--file glob]
+                                           버전 있는 근거 검색(항상 JSON 출력)
+  node greplet.mjs evidence-get --ref-file <파일> [--base-url url]
+                                           evidenceRef JSON 파일로 저장된 청크 전문 조회(항상 JSON 출력)
 
 검색 옵션:
   -q, --query <query>     검색어 (위치 인자로도 지정 가능)
@@ -70,7 +74,7 @@ greplet.mjs - greplet 인덱서 CLI
 
 function parseArgs(argv) {
   const args = {
-    command: "search", // search | status | workspaces | index
+    command: "search", // search | status | workspaces | index | evidence-search | evidence-get
     slug: null,        // index 대상
     query: null,
     workspace: "",
@@ -82,12 +86,17 @@ function parseArgs(argv) {
     force: false,
     wait: false,
     json: false,
+    refFile: null,
     baseUrl: process.env.GREPLET_BASE_URL || "http://localhost:7802",
     help: false,
   };
   const positional = [];
 
-  for (let i = 0; i < argv.length; i++) {
+  const isEvidenceSearch = argv[0] === "evidence-search";
+  const isEvidenceGet = argv[0] === "evidence-get";
+  if (isEvidenceSearch || isEvidenceGet) args.topN = 3;
+
+  for (let i = isEvidenceSearch || isEvidenceGet ? 1 : 0; i < argv.length; i++) {
     const a = argv[i];
     switch (a) {
       case "-h": case "--help": args.help = true; break;
@@ -101,6 +110,7 @@ function parseArgs(argv) {
       case "--force": args.force = true; break;
       case "--wait": args.wait = true; break;
       case "--json": args.json = true; break;
+      case "--ref-file": args.refFile = argv[++i]; break;
       case "--base-url": args.baseUrl = argv[++i]; break;
       default:
         if (a.startsWith("-")) {
@@ -110,6 +120,16 @@ function parseArgs(argv) {
         positional.push(a);
         break;
     }
+  }
+
+  if (isEvidenceSearch) {
+    args.command = "evidence-search";
+    if (!args.query && positional.length > 0) args.query = positional[0];
+    return args;
+  }
+  if (isEvidenceGet) {
+    args.command = "evidence-get";
+    return args;
   }
 
   if (positional[0] === "status" || positional[0] === "workspaces") {
@@ -182,6 +202,24 @@ async function api(baseUrl, path, init = {}, timeoutMs = 120000) {
     process.exit(1);
   }
   return data;
+}
+
+/** evidence-search/get: 서버가 준 상태 코드·본문을 그대로 보존한다(비2xx가 "서버 미가동"으로 오인되지 않도록). */
+async function apiPreserving(baseUrl, path, init, timeoutMs = 120000) {
+  let resp;
+  try {
+    resp = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: { ...callerHeaders(), ...(init.headers ?? {}) },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (e) {
+    serverDown(baseUrl, e);
+  }
+  const text = await resp.text();
+  let data;
+  try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
+  return { ok: resp.ok, status: resp.status, data };
 }
 
 function emitJson(obj) {
@@ -323,16 +361,13 @@ async function cmdSearch(args) {
 
   if (hits.length === 0) {
     process.stdout.write(`결과 없음 (targets=${args.all ? "all" : workspace}${filterTag}, query="${args.query}")\n`);
+    if (data.warnings && data.warnings.length > 0) process.stdout.write(`(경고: ${data.warnings.join(" · ")})\n`);
     return;
   }
 
   const lines = [`[${label}] "${args.query}"${filterTag} -> 총 ${hits.length}건 (점수순${data.cached ? ", 캐시" : ""})`, "=".repeat(70)];
   let rank = 1;
-  const seen = new Set();
   for (const h of hits) {
-    const key = `${h.file}|${h.text.slice(0, 80)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
     const wsTag = args.all ? `[${h.workspace}] ` : "";
     lines.push(`#${rank}  score ${h.score.toFixed(4)}  |  ${wsTag}${h.file} :: ${h.symbol}${locationSuffix(h)}`);
     if (args.full) {
@@ -349,6 +384,71 @@ async function cmdSearch(args) {
   process.stdout.write(lines.join("\n") + "\n");
 }
 
+// ---------- 근거 조회 ----------
+async function cmdEvidenceSearch(args) {
+  if (!args.query) {
+    printUsage();
+    process.exit(1);
+  }
+  if (!VALID_MODES.includes(args.mode)) {
+    process.stderr.write(`잘못된 --mode 값: "${args.mode}" (사용 가능: ${VALID_MODES.join(", ")})\n`);
+    process.exit(1);
+  }
+  if (args.topN > 20) {
+    process.stderr.write("--top-n 은 최대 20입니다\n");
+    process.exit(1);
+  }
+
+  let workspace = args.workspace;
+  if (!workspace) {
+    workspace = getDefaultWorkspace();
+    if (!workspace && !args.all) {
+      process.stderr.write("워크스페이스가 없습니다 - indexer/workspaces.json 을 확인하세요\n");
+      process.exit(1);
+    }
+  }
+
+  const data = await api(args.baseUrl, "/api/evidence/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: args.query,
+      workspaces: args.all ? "all" : [workspace],
+      topN: args.topN,
+      mode: args.mode,
+      ...(args.fileGlob ? { fileGlob: args.fileGlob } : {}),
+    }),
+  });
+  emitJson(data);
+}
+
+async function cmdEvidenceGet(args) {
+  if (!args.refFile) {
+    process.stderr.write("evidence-get --ref-file <파일> 형식으로 참조 파일을 지정하세요\n");
+    process.exit(2);
+  }
+  let evidenceRef;
+  try {
+    const raw = readFileSync(args.refFile, "utf8");
+    evidenceRef = JSON.parse(raw);
+  } catch (e) {
+    process.stderr.write(`참조 파일을 읽을 수 없습니다: ${args.refFile}\n상세: ${e instanceof Error ? e.message : String(e)}\n`);
+    process.exit(1);
+  }
+  if (!evidenceRef || typeof evidenceRef !== "object" || Array.isArray(evidenceRef)) {
+    process.stderr.write(`참조 파일 내용이 올바르지 않습니다: ${args.refFile}\n`);
+    process.exit(1);
+  }
+
+  const result = await apiPreserving(args.baseUrl, "/api/evidence/get", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ evidenceRef }),
+  });
+  emitJson(result.data);
+  if (!result.ok) process.exit(1);
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
@@ -359,6 +459,8 @@ async function main() {
     case "status": return cmdStatus(args);
     case "workspaces": return cmdWorkspaces(args);
     case "index": return cmdIndex(args);
+    case "evidence-search": return cmdEvidenceSearch(args);
+    case "evidence-get": return cmdEvidenceGet(args);
     default: return cmdSearch(args);
   }
 }
