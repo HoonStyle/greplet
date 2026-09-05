@@ -3,7 +3,7 @@
 
   ps1 대비 동치 보장 지점:
     - 점수 내림차순 통합 정렬 (all) — 서버가 이미 병합·정렬해 돌려주므로 그대로 사용
-    - "파일명|선두 80자" 키로 중복 제거
+    - 클라이언트 측 중복 제거 없음 — 서버가 이미 건수를 집계하므로 모든 히트를 그대로 표시
     - 스니펫: 공백 정규화 후 300자 + " ..."
     - 출력 포맷: "#rank  score x.xxxx  |  [ws] file :: symbol (L{start}-{end})" (PDF 는 :: p.N)
 
@@ -134,6 +134,84 @@ export async function listWorkspacesText(cfg: BackendConfig): Promise<string> {
   return lines.join("\n");
 }
 
+export interface EvidenceRef {
+  workspace: string;
+  chunkId: string;
+  fileHash: string;
+  startLine: number;
+  endLine: number;
+  contentHash: string;
+}
+
+export interface EvidenceApiError {
+  status: number;
+  body: unknown;
+}
+
+/** POST /api/evidence/search — 백엔드 JSON을 그대로 반환 (isError 판정은 호출부에서 status 로 함) */
+export async function callEvidenceSearchApi(
+  cfg: BackendConfig,
+  query: string,
+  workspaces: string[] | "all",
+  topN: number,
+  mode: SearchMode,
+  fileGlob?: string,
+): Promise<{ ok: boolean; status: number; body: unknown }> {
+  let resp: Response;
+  try {
+    resp = await fetch(`${cfg.baseUrl}/api/evidence/search`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Greplet-Client": cfg.clientName,
+        ...sessionHeaders(),
+      },
+      body: JSON.stringify({ query, workspaces, topN, mode, ...(fileGlob ? { fileGlob } : {}) }),
+      signal: AbortSignal.timeout(120_000),
+    });
+  } catch (e) {
+    throw new Error(backendDownMessage(cfg, e));
+  }
+  const text = await resp.text();
+  let body: unknown;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = { raw: text };
+  }
+  return { ok: resp.ok, status: resp.status, body };
+}
+
+/** POST /api/evidence/get — 백엔드 JSON을 그대로 반환 (404/409 등 비2xx 포함) */
+export async function callEvidenceGetApi(
+  cfg: BackendConfig,
+  evidenceRef: EvidenceRef,
+): Promise<{ ok: boolean; status: number; body: unknown }> {
+  let resp: Response;
+  try {
+    resp = await fetch(`${cfg.baseUrl}/api/evidence/get`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Greplet-Client": cfg.clientName,
+        ...sessionHeaders(),
+      },
+      body: JSON.stringify({ evidenceRef }),
+      signal: AbortSignal.timeout(120_000),
+    });
+  } catch (e) {
+    throw new Error(backendDownMessage(cfg, e));
+  }
+  const text = await resp.text();
+  let body: unknown;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = { raw: text };
+  }
+  return { ok: resp.ok, status: resp.status, body };
+}
+
 /** greplet 본체 — 인덱서 서버 1회 호출 → 포맷팅해 텍스트로 반환 */
 export async function runGreplet(cfg: BackendConfig, p: GrepletParams): Promise<string> {
   let slugs: string[];
@@ -170,12 +248,7 @@ export async function runGreplet(cfg: BackendConfig, p: GrepletParams): Promise<
   lines.push("=".repeat(70));
 
   let rank = 1;
-  const seen = new Set<string>();
   for (const h of data.hits) {
-    const key = `${h.file}|${h.text.slice(0, 80)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-
     const wsTag = p.all ? `[${h.workspace}] ` : "";
     lines.push(`#${rank}  score ${h.score.toFixed(4)}  |  ${wsTag}${h.file} :: ${h.symbol}${locationSuffix(h)}`);
     if (p.full) {
