@@ -26,7 +26,7 @@ param(
   [switch]$Full,                                   # 지정 시 청크 전문 출력(기본은 300자 스니펫)
   [ValidateSet("hybrid", "vector", "fts")]
   [string]$Mode = "hybrid",
-  [string]$BaseUrl = "http://localhost:7802",
+  [string]$BaseUrl = $(if ($env:GREPLET_BASE_URL) { $env:GREPLET_BASE_URL } else { "http://localhost:7802" }),
   [ValidateSet("Search", "EvidenceSearch", "EvidenceGet")]
   [string]$Command = "Search",                    # EvidenceSearch/EvidenceGet 는 Node CLI(greplet.mjs)로 위임
   [string]$RefFile,
