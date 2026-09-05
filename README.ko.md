@@ -66,6 +66,19 @@ Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(Pow
 
 ## 주요 기능
 
+### 마이그레이션 근거 조회 (선택 기능)
+
+제품·고객별 레거시를 별도 워크스페이스로 구분한다. `greplet_search_evidence`는 출처별 발췌와 버전이 포함된 참조를, `greplet_get_evidence`는 현재 원본 파일 해시를 확인한 청크 전문을 반환한다. 기존 검색도 다른 출처의 유사 결과를 생략하지 않는다.
+
+```bash
+node greplet.mjs evidence-search "재시도" --all
+node greplet.mjs evidence-get --ref-file evidence-ref.json
+```
+
+`evidence-ref.json`에는 검색 hit의 `evidenceRef` 객체만 저장한다. 검색 결과는 인덱스 기준(`unchecked`)이고, 상세 조회의 `verified`는 조회 시점의 파일 해시 일치만 뜻한다. 의미적 정확성이나 테스트 통과를 보증하지 않는다. 원본 변경·삭제·인덱싱 중에는 정상 근거를 반환하지 않는다.
+
+[전체 로드맵](docs/migration-roadmap.md) · [인터페이스·회귀 검증 계획](docs/greplet-evidence-v1.md). 실제 5세트 파일럿은 자동 검증과 별도 단계다.
+
 - **하이브리드 검색** — `hybrid`(기본) · `vector` · `fts` 세 모드.
 - **Ollama 없이도 동작** — Ollama 가 없으면 영벡터로 인덱싱하고 검색은 `fts` 로 자동 강등한다. Ollama 가 생기면 다음 인덱스 잡이 전체 재인덱스로 승격돼 벡터를 채운다.
 - **구문 단위 청킹** — C# 멤버 단위, PDF 페이지 단위, 그 외 텍스트는 줄 윈도우. 암호 PDF 지원.

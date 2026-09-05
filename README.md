@@ -1,5 +1,7 @@
 # greplet
 
+Migration evidence retrieval is opt-in: `greplet_search_evidence` returns per-workspace excerpts and version-bound references; `greplet_get_evidence` fetches the exact indexed chunk after checking the source file hash. Use `node greplet.mjs evidence-search "query" --all` and `evidence-get --ref-file evidence-ref.json` (save only a hit's `evidenceRef` object). `verified` means a source hash matched at retrieval time, not semantic correctness. Legacy search keeps all source variants. See the [migration roadmap](docs/migration-roadmap.md) and [release contract](docs/greplet-evidence-v1.md); the real migration pilot is a separate completion gate.
+
 <p align="center">
   <a href="README.md"><img alt="Language: English" src="https://img.shields.io/badge/lang-English-blue"></a>
   <a href="README.ko.md"><img alt="Language: Korean" src="https://img.shields.io/badge/lang-%ED%95%9C%EA%B5%AD%EC%96%B4-blue"></a>
