@@ -199,7 +199,7 @@ export async function getEvidence(cfg: AppConfig, workspaces: WorkspaceConfig[],
     const realFile = fs.realpathSync(row.abs);
     const allowed = roots.some(root => fs.existsSync(root) && inside(realFile, fs.realpathSync(root)));
     if (!allowed || relativeFileKey(row.abs, roots) !== row.file) {
-      throw new EvidenceError(409, "stale_evidence", `근거의 원본 경로가 현재 워크스페이스에 속하지 않습니다 [DEBUG abs=${row.abs} real=${realFile} roots=${roots.join(";")} realRoots=${roots.map(r => fs.existsSync(r) ? fs.realpathSync(r) : "MISSING").join(";")} key=${relativeFileKey(row.abs, roots)} file=${row.file}]`);
+      throw new EvidenceError(409, "stale_evidence", "근거의 원본 경로가 현재 워크스페이스에 속하지 않습니다");
     }
     currentHash = sha256File(realFile);
   } catch (error) {
