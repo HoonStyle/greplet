@@ -18,7 +18,7 @@
   -Workspace 미지정 시 GREPLET_DEFAULT_WORKSPACE → workspaces.json 첫 항목.
 #>
 param(
-  [Parameter(Mandatory = $true)]
+  [Parameter(Position = 0)]
   [string]$Query,
   [string]$Workspace = "",                        # 미지정 시 Get-GrepletDefaultWorkspace
   [switch]$All,                                    # 지정 시 모든 워크스페이스 통합 검색(서버가 병합·정렬)
@@ -26,8 +26,34 @@ param(
   [switch]$Full,                                   # 지정 시 청크 전문 출력(기본은 300자 스니펫)
   [ValidateSet("hybrid", "vector", "fts")]
   [string]$Mode = "hybrid",
-  [string]$BaseUrl = "http://localhost:7802"
+  [string]$BaseUrl = "http://localhost:7802",
+  [ValidateSet("Search", "EvidenceSearch", "EvidenceGet")]
+  [string]$Command = "Search",                    # EvidenceSearch/EvidenceGet 는 Node CLI(greplet.mjs)로 위임
+  [string]$RefFile,
+  [string]$FileGlob
 )
+
+if ($Command -eq "EvidenceSearch" -or $Command -eq "EvidenceGet") {
+  $nodeScript = Join-Path $PSScriptRoot "greplet.mjs"
+  $nodeArgs = @()
+  if ($Command -eq "EvidenceSearch") {
+    $nodeArgs += "evidence-search"
+    if ($Query) { $nodeArgs += $Query }
+    if ($Workspace) { $nodeArgs += @("-w", $Workspace) }
+    if ($All) { $nodeArgs += "--all" }
+    $nodeArgs += @("--top-n", $TopN)
+    $nodeArgs += @("--mode", $Mode)
+    if ($FileGlob) { $nodeArgs += @("--file", $FileGlob) }
+  } else {
+    $nodeArgs += "evidence-get"
+    if ($RefFile) { $nodeArgs += @("--ref-file", $RefFile) }
+  }
+  $nodeArgs += @("--base-url", $BaseUrl)
+  & node $nodeScript @nodeArgs
+  exit $LASTEXITCODE
+}
+
+if (-not $Query) { Write-Error "-Query 가 필요합니다"; exit 2 }
 
 . (Join-Path $PSScriptRoot "greplet-shared.ps1")
 
@@ -68,20 +94,18 @@ $label = if ($All) { "ALL(" + ($AllWorkspaces -join ",") + ")" } else { $Workspa
 
 if ($hits.Count -eq 0) {
   Write-Output "결과 없음 (targets=$(if ($All) { 'all' } else { $Workspace }), query=`"$Query`")"
+  if ($resp.warnings -and $resp.warnings.Count -gt 0) {
+    Write-Output "(경고: $($resp.warnings -join ' · '))"
+  }
   exit 0
 }
 
 Write-Output "[$label] `"$Query`" -> 총 $($hits.Count)건 (점수순)"
 Write-Output ("=" * 70)
 
-# 출력 (파일+앞부분 중복 제거) — 서버가 이미 점수순 정렬해 돌려준다
+# 출력 (서버가 이미 점수순 정렬해 돌려준다) — 출처가 다르면 본문이 같아도 모두 보존한다
 $rank = 1
-$seen = @{}
 foreach ($r in $hits) {
-  $key = "$($r.file)|" + ($r.text.Substring(0, [math]::Min(80, $r.text.Length)))
-  if ($seen.ContainsKey($key)) { continue }
-  $seen[$key] = $true
-
   $wsTag = if ($All) { "[$($r.workspace)] " } else { "" }
   $loc = if ($r.kind -eq "page") { "" } else { " (L$($r.startLine)-$($r.endLine))" }
   Write-Output ("#{0}  score {1}  |  {2}{3} :: {4}{5}" -f $rank, [math]::Round($r.score, 4), $wsTag, $r.file, $r.symbol, $loc)
