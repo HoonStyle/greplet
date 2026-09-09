@@ -88,11 +88,12 @@ Extractor --root <dir> [--root <dir2> ...]
           --ext .cs,.xaml --exclude-dir bin,obj --exclude-file "*.Designer.cs,AssemblyInfo.cs"
           [--files <list.txt>]            # 지정 시 이 파일들만(절대경로, 줄 단위) — 증분용
           [--pdf-password-file <path>]
+          [--failed-out <failures.jsonl>] # 실패별 {abs,message,kind}; 지정하지 않으면 기존 직접 호출과 호환
           --out <chunks.jsonl>
 ```
 
 - 파일 열거 규칙은 `indexer/src/scan.ts` 와 동일해야 한다(ext 소문자 비교, 경로 세그먼트 중 하나라도 exclude-dir 이면 제외, 파일명 글롭).
-- stdout 진행 로그(`[n/N] file → k chunks`), stderr 오류. 종료 코드 0 = 전체 성공, 2 = 일부 파일 실패(계속 진행).
+- stdout 진행 로그(`[n/N] file → k chunks`), stderr 사람용 오류. 종료 코드 0 = 전체 성공, 2 = 일부 파일 실패(계속 진행). 인덱서는 stderr를 파싱하지 않고 `--failed-out`만 기계 계약으로 사용하며, 종료 코드와 실패 레코드가 모순되면 계약 오류로 잡을 실패시킨다.
 
 ### 4.2 JSONL 레코드
 
@@ -167,13 +168,13 @@ await table.createIndex("text", {
 
 ### 5.2 매니페스트 · 증분
 
-`db/<slug>.manifest.json`: `{ lastRun, files: { "<file>": { hash, chunks, indexedAt } }, embeddings }`. `embeddings` 는 임베딩 모델명 또는 `"none"`(벡터 없이 인덱싱됨). 필드가 없는 구버전 매니페스트는 임베딩 있음으로 간주한다. 쓰기는 임시 파일 + `renameSync` 로 원자적으로 한다(검색이 매니페스트를 읽으므로 잡 도중 부분 쓰기를 막는다).
+`db/<slug>.manifest.json`: `{ lastRun, files: { "<file>": { hash, chunks, indexedAt } }, embeddings, coverage }`. `embeddings` 는 임베딩 모델명 또는 `"none"`(벡터 없이 인덱싱됨). `coverage`는 마지막 스캔의 `status`, 스캔·인덱싱·시도·성공 파일 수, 실패 상대경로, 갱신 시각을 가진다. PDF 스킵 페이지가 아직 구조화 집계되지 않으면 `skippedPages`는 `null`이다. 필드가 없는 구버전 매니페스트는 API에서 `unknown` 커버리지로 노출한다. 쓰기는 임시 파일 + `renameSync` 로 원자적으로 한다(검색이 매니페스트를 읽으므로 잡 도중 부분 쓰기를 막는다).
 
 1. roots(+uploads) 스캔, SHA256 → 매니페스트와 비교해 `added / changed / deleted`. `force` 면 전부 changed.
 2. `deleted ∪ changed` 행 삭제: `table.delete("file IN ('a','b',…)")`, 작은따옴표 `''` 이스케이프, 500개 단위.
-3. `added ∪ changed` 만 `--files` 로 Extractor 호출 → JSONL 스트리밍 파싱.
-4. 임베딩: Ollama 가 준비돼 있으면 16건 배치, 동시 2배치, `POST {OLLAMA_URL}/api/embed { model, input: string[] }`. 실패 시 1s→2s→4s 재시도 3회, 그래도 실패면 잡 실패. 부분 반영 파일은 매니페스트에 안 남겨 다음 실행에 재시도된다. Ollama 가 준비돼 있지 않으면 이 단계를 건너뛰고 각 청크의 벡터를 영벡터(`zeroVector()`, `db.ts`)로 채운다.
-5. 200행 단위 `table.add` → 매니페스트 갱신(성공 파일만, `embeddings` 필드에 임베딩 여부 기록) → FTS 인덱스 재생성 → `optimize`.
+3. `added ∪ changed` 만 `--files` 로 Extractor 호출 → 성공 청크 JSONL과 실패 JSONL을 분리 파싱한다. 실패 파일에서 쓰다 만 청크는 폐기한다.
+4. 임베딩: Ollama 가 준비돼 있으면 16건 배치, 동시 2배치, `POST {OLLAMA_URL}/api/embed { model, input: string[] }`. 실패 시 1s→2s→4s 재시도 3회, 그래도 실패면 잡 실패. Ollama 가 준비돼 있지 않으면 이 단계를 건너뛰고 각 청크의 벡터를 영벡터(`zeroVector()`, `db.ts`)로 채운다.
+5. 200행 단위 `table.add` → 성공 파일만 매니페스트에 기록하고 실패 파일의 이전 항목은 제거 → coverage 저장 → FTS 인덱스 재생성 → `optimize`. 부분 성공은 여기까지 반영한 다음 잡을 `failed`로 끝내므로 다음 증분 실행이 실패 파일을 다시 시도한다. 0청크 성공 파일은 `chunks: 0` 항목으로 남겨 실패와 구분한다.
 6. 잡 로그: 메모리 링버퍼(잡당 2000줄) + `logs/<slug>-<jobId>.log`.
 
 전역 큐로 **한 번에 잡 1개**. 같은 slug 가 대기 중이면 중복 등록하지 않는다. Ollama 준비 상태는 매니페스트 로드 직후 `GET /api/tags` 로 확인하되, 미가동·모델 없음이어도 잡을 실패시키지 않고 경고 로그 후 벡터 없이(영벡터) 계속 진행한다 — 매니페스트가 `"none"` 이었는데 Ollama 가 준비된 경우에만 전체 재인덱스로 승격한다.
@@ -314,3 +315,4 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 4. `greplet.ps1 -Mode fts` 로 실제 존재하는 상수 리터럴 검색 → 그 상수를 담은 청크가 1위. `-All` 이 빈 워크스페이스가 있어도 오류 없이 동작.
 5. `mcp-server` `npm run smoke`, `greplet-mcpb` `npm run smoke`.
 6. `npm run test:activity` — 활동 이벤트 버스, 인덱스 진행 이벤트, SSE/API 계약 검증.
+7. `npm run test:partial-failure` — 구조화 실패 경로, 부분 성공 보존, 실패 잡과 persistent coverage, 증분 재시도, 0청크 성공을 검증한다.

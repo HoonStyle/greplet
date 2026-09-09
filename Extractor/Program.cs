@@ -7,14 +7,15 @@ using Extractor;
 //   Extractor --root <dir> [--root <dir2> ...]
 //             --ext .cs,.xaml --exclude-dir bin,obj --exclude-file "*.Designer.cs,AssemblyInfo.cs"
 //             [--files <list.txt>] [--pdf-password-file <path>]
-//             --out <chunks.jsonl>
+//             [--failed-out <failures.jsonl>] --out <chunks.jsonl>
 //
-// 종료 코드: 0 = 전체 성공, 2 = 일부 파일 실패(계속 진행, 실패 목록은 stderr).
+// 종료 코드: 0 = 전체 성공, 2 = 일부 파일 실패(계속 진행).
+// --failed-out 지정 시 실패 계약은 JSONL이고 stderr 는 사람용 진단에만 사용한다.
 
 var opts = CliOptions.Parse(args);
 if (opts == null)
 {
-    Console.Error.WriteLine("사용법: Extractor --root <dir> [--root <dir2> ...] --ext .cs,.xaml [--exclude-dir bin,obj] [--exclude-file glob1,glob2] [--files list.txt] [--pdf-password-file pw.txt] --out chunks.jsonl");
+    Console.Error.WriteLine("사용법: Extractor --root <dir> [--root <dir2> ...] --ext .cs,.xaml [--exclude-dir bin,obj] [--exclude-file glob1,glob2] [--files list.txt] [--pdf-password-file pw.txt] [--failed-out failures.jsonl] --out chunks.jsonl");
     return 1;
 }
 
@@ -40,6 +41,13 @@ else
 
 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(opts.Out))!);
 using var outStream = new StreamWriter(opts.Out, append: false, new System.Text.UTF8Encoding(false));
+if (opts.FailedOut != null)
+{
+    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(opts.FailedOut))!);
+}
+using var failedStream = opts.FailedOut == null
+    ? null
+    : new StreamWriter(opts.FailedOut, append: false, new System.Text.UTF8Encoding(false));
 
 int total = targetFiles.Count;
 int n = 0;
@@ -52,17 +60,18 @@ foreach (var absPath in targetFiles)
     n++;
     try
     {
-        string root = FindContainingRoot(absPath, opts.Roots) ?? Path.GetDirectoryName(absPath) ?? absPath;
-        string relFile = Path.GetRelativePath(root, absPath).Replace('\\', '/');
-        string ext = Path.GetExtension(absPath).ToLowerInvariant();
+        string normalizedPath = Path.GetFullPath(absPath);
+        string root = FindContainingRoot(normalizedPath, opts.Roots) ?? Path.GetDirectoryName(normalizedPath) ?? normalizedPath;
+        string relFile = Path.GetRelativePath(root, normalizedPath).Replace('\\', '/');
+        string ext = Path.GetExtension(normalizedPath).ToLowerInvariant();
 
         List<RawChunk> rawChunks;
         byte[] originalBytes;
 
         if (ext == ".pdf")
         {
-            originalBytes = File.ReadAllBytes(absPath);
-            var result = PdfChunker.Chunk(relFile, absPath, passwords);
+            originalBytes = File.ReadAllBytes(normalizedPath);
+            var result = PdfChunker.Chunk(relFile, normalizedPath, passwords);
             if (result.Error != null)
             {
                 throw new InvalidOperationException($"PDF 열기 실패: {result.Error}");
@@ -72,7 +81,7 @@ foreach (var absPath in targetFiles)
         }
         else
         {
-            var (bytes, text) = TextEncodingHelper.ReadFile(absPath);
+            var (bytes, text) = TextEncodingHelper.ReadFile(normalizedPath);
             originalBytes = bytes;
             if (ext == ".cs")
             {
@@ -95,7 +104,7 @@ foreach (var absPath in targetFiles)
             var record = new ChunkRecord
             {
                 File = relFile,
-                Abs = absPath,
+                Abs = normalizedPath,
                 Root = root,
                 Hash = hash,
                 Symbol = c.Symbol,
@@ -111,13 +120,21 @@ foreach (var absPath in targetFiles)
     }
     catch (Exception ex)
     {
+        string normalizedPath = Path.GetFullPath(absPath);
         failCount++;
-        failedFiles.Add(absPath);
-        Console.Error.WriteLine($"[실패] {absPath}: {ex.Message}");
+        failedFiles.Add(normalizedPath);
+        failedStream?.WriteLine(JsonSerializer.Serialize(new
+        {
+            abs = normalizedPath,
+            message = ex.Message,
+            kind = FailureKind(ex),
+        }));
+        Console.Error.WriteLine($"[실패] {normalizedPath}: {ex.Message}");
     }
 }
 
 outStream.Flush();
+failedStream?.Flush();
 
 if (pdfSkippedTotal > 0)
 {
@@ -132,6 +149,15 @@ if (failCount > 0)
 }
 
 return 0;
+
+static string FailureKind(Exception ex) => ex switch
+{
+    FileNotFoundException or DirectoryNotFoundException => "not_found",
+    UnauthorizedAccessException => "permission",
+    IOException => "io",
+    InvalidOperationException => "extract",
+    _ => "unknown",
+};
 
 static string? FindContainingRoot(string absPath, IReadOnlyList<string> roots)
 {
@@ -160,6 +186,7 @@ internal sealed class CliOptions
     public List<string> ExcludeFiles { get; } = new();
     public string? FilesListPath { get; set; }
     public string? PdfPasswordFile { get; set; }
+    public string? FailedOut { get; set; }
     public string Out { get; set; } = "";
 
     public static CliOptions? Parse(string[] args)
@@ -177,6 +204,7 @@ internal sealed class CliOptions
                 case "--exclude-file": opts.ExcludeFiles.AddRange(SplitCsv(Next())); break;
                 case "--files": opts.FilesListPath = Next(); break;
                 case "--pdf-password-file": opts.PdfPasswordFile = Next(); break;
+                case "--failed-out": opts.FailedOut = Next(); break;
                 case "--out": opts.Out = Next(); break;
                 default:
                     Console.Error.WriteLine($"알 수 없는 인자: {a}");

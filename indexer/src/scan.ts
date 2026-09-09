@@ -14,11 +14,27 @@ export interface ManifestFileEntry {
   indexedAt: string;
 }
 
+export type CoverageStatus = "complete" | "partial" | "unknown";
+
+export interface ManifestCoverage {
+  status: CoverageStatus;
+  scannedFiles: number | null;
+  indexedFiles: number | null;
+  attemptedFiles: number | null;
+  succeededFiles: number | null;
+  failedFiles: string[];
+  /** 아직 Extractor가 구조화 집계하지 않는 PDF 스킵 페이지는 null이다. */
+  skippedPages: number | null;
+  updatedAt: string | null;
+}
+
 export interface Manifest {
   lastRun: string;
   files: Record<string, ManifestFileEntry>;
   /** 이 워크스페이스의 임베딩 모델명, 또는 벡터 없음("none"). 미정(구버전 매니페스트)이면 임베딩 있음("bge-m3")으로 간주한다. */
   embeddings?: string;
+  /** 구버전 매니페스트에는 없으며, 그 경우 API에서는 unknown으로 노출한다. */
+  coverage?: ManifestCoverage;
 }
 
 export function emptyManifest(): Manifest {
@@ -32,6 +48,17 @@ export function loadManifest(manifestPath: string): Manifest {
   } catch {
     return emptyManifest();
   }
+}
+
+export function manifestCoverage(manifest: Manifest): ManifestCoverage {
+  const c = manifest.coverage;
+  if (c && (c.status === "complete" || c.status === "partial" || c.status === "unknown") && Array.isArray(c.failedFiles)) {
+    return c;
+  }
+  return {
+    status: "unknown", scannedFiles: null, indexedFiles: null, attemptedFiles: null,
+    succeededFiles: null, failedFiles: [], skippedPages: null, updatedAt: null,
+  };
 }
 
 /** 임시 파일에 쓴 뒤 rename 으로 원자적으로 반영한다. 검색이 매니페스트를 읽으므로 잡 도중 부분 쓰기를 읽지 않게 한다. */

@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Added
+- 인덱스 매니페스트와 workspace/evidence API에 `complete`·`partial`·`unknown` 커버리지 메타데이터를 추가했다. 구버전 매니페스트는 완전 성공으로 추정하지 않는다.
+
+### Changed
+- Extractor가 `--failed-out` JSONL로 파일별 실패를 구조화해 전달한다. 부분 성공 데이터는 보존하지만 잡은 `failed`가 되며, 실패 파일은 다음 증분 실행에서 재시도한다.
+
+### Fixed
+- Windows 드라이브 문자의 콜론 때문에 stderr 기반 실패 경로가 잘려 실패 파일이 `chunks: 0` 성공으로 기록될 수 있던 문제를 수정했다.
+
 ## [0.10.0] - 2026-09-04
 
 ### Changed

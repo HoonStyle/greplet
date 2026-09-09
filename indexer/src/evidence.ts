@@ -5,7 +5,7 @@ import type { Express, Request } from "express";
 import type { AppConfig, WorkspaceConfig } from "./config.js";
 import { uploadsDirFor } from "./config.js";
 import { manifestPathFor, openOrCreateTable, tableExists, tableNameFor } from "./db.js";
-import { enumerateWorkspaceFiles, loadManifest, relativeFileKey, sha256File } from "./scan.js";
+import { enumerateWorkspaceFiles, loadManifest, manifestCoverage, relativeFileKey, sha256File, type ManifestCoverage } from "./scan.js";
 import { sha256Text } from "./extract.js";
 import { search, type SearchHit, type SearchMode, type SearchOptions } from "./search.js";
 
@@ -129,27 +129,37 @@ type TargetStatus = "ok" | "no_hits" | "not_indexed" | "indexing" | "search_erro
 type EvidenceHit = ReturnType<typeof hitMetadata> & { freshness: "unchecked"; excerpt: ReturnType<typeof excerpt> };
 interface EvidenceTarget {
   workspace: string; label: string; status: TargetStatus; effectiveMode: SearchMode | null;
-  warnings: string[]; hits: EvidenceHit[];
+  warnings: string[]; hits: EvidenceHit[]; coverage: ManifestCoverage;
 }
 type IsIndexing = (slug: string) => boolean;
+
+function coverageWarning(coverage: ManifestCoverage): string | undefined {
+  if (coverage.status === "partial") return `인덱스 커버리지가 부분 상태입니다. 실패 파일 ${coverage.failedFiles.length}건을 재인덱싱하세요.`;
+  if (coverage.status === "unknown") return "이 인덱스는 커버리지 메타데이터가 없는 구버전입니다. 완전성을 확인하려면 재인덱싱하세요.";
+  return undefined;
+}
 
 export async function searchEvidence(cfg: AppConfig, workspaces: WorkspaceConfig[], body: unknown,
   isIndexing: IsIndexing = () => false, options: SearchOptions = {}) {
   const p = parseSearch(body, workspaces);
   const targets = await Promise.all(p.targets.map(async ws => {
-    const target: EvidenceTarget = { workspace: ws.slug, label: ws.label, status: "no_hits", effectiveMode: null, warnings: [], hits: [] };
+    const manifest = loadManifest(manifestPathFor(cfg, ws.slug));
+    const coverage = manifestCoverage(manifest);
+    const warning = manifest.lastRun ? coverageWarning(coverage) : undefined;
+    const target: EvidenceTarget = { workspace: ws.slug, label: ws.label, status: "no_hits", effectiveMode: null,
+      warnings: warning ? [warning] : [], hits: [], coverage };
     try {
       const issue = sourceIssue(cfg, ws, workspaces);
       if (issue) return { ...target, status: "ambiguous_source" as const, warnings: [issue] };
       if (isIndexing(ws.slug)) return { ...target, status: "indexing" as const };
-      if (!loadManifest(manifestPathFor(cfg, ws.slug)).lastRun || !await tableExists(cfg, ws)) {
+      if (!manifest.lastRun || !await tableExists(cfg, ws)) {
         return { ...target, status: "not_indexed" as const };
       }
       const result = await search(cfg, [ws], p.query, p.topN, p.mode, { ...options, fileGlob: p.fileGlob, snippetChars: 300, bypassCache: true });
       if (isIndexing(ws.slug)) return { ...target, status: "indexing" as const };
       const outcome = result.workspaceResults[0];
       target.effectiveMode = outcome.effectiveMode;
-      target.warnings = result.warnings;
+      target.warnings.push(...result.warnings);
       if (outcome.failed) { target.status = "search_error"; return target; }
       target.hits = result.hits.map(h => ({ ...hitMetadata(h), freshness: "unchecked", excerpt: excerpt(h.text, p.query) }));
       target.status = target.hits.length ? "ok" : "no_hits";
@@ -175,6 +185,10 @@ export async function getEvidence(cfg: AppConfig, workspaces: WorkspaceConfig[],
   if (issue) throw new EvidenceError(409, "ambiguous_source", issue);
   const checkBusy = () => { if (isIndexing(ws.slug)) throw new EvidenceError(409, "indexing", "인덱싱 완료 후 다시 조회하세요"); };
   checkBusy();
+  const manifest = loadManifest(manifestPathFor(cfg, ws.slug));
+  const coverage = manifestCoverage(manifest);
+  const warning = coverageWarning(coverage);
+  const warnings = warning ? [warning] : [];
   if (!await tableExists(cfg, ws)) throw new EvidenceError(404, "not_found", "근거 인덱스를 찾을 수 없습니다");
   const table = await openOrCreateTable(cfg, ws);
   const condition = `id = ${sqlString(ref.chunkId)}`;
@@ -212,7 +226,7 @@ export async function getEvidence(cfg: AppConfig, workspaces: WorkspaceConfig[],
     symbol: row.symbol, kind: row.kind, startLine: row.start_line, endLine: row.end_line,
     fileHash: row.file_hash, indexedAt: row.indexed_at, text: row.text, score: 0 };
   return { schemaVersion: 1 as const, evidence: { ...hitMetadata(h), text: h.text,
-    freshness: "verified" as const, checkedAt: new Date().toISOString() } };
+    freshness: "verified" as const, checkedAt: new Date().toISOString() }, coverage, warnings };
 }
 
 export function registerEvidenceRoutes(app: Express, cfg: AppConfig, getWorkspaces: () => WorkspaceConfig[],

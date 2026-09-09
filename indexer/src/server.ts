@@ -9,7 +9,7 @@ import { loadConfig, loadWorkspaces, findWorkspace, uploadsDirFor, type Workspac
 import { extractorAvailable } from "./extract.js";
 import { checkOllama } from "./embed.js";
 import { openOrCreateTable, tableExists, manifestPathFor, VECTOR_DIM } from "./db.js";
-import { loadManifest } from "./scan.js";
+import { loadManifest, manifestCoverage } from "./scan.js";
 import { search, type SearchMode } from "./search.js";
 import { registerEvidenceRoutes } from "./evidence.js";
 import { JobManager } from "./indexJob.js";
@@ -104,6 +104,7 @@ app.get("/api/workspaces", async (_req, res) => {
       lastRun: manifest.lastRun || null,
       indexing: jobManager.isIndexing(ws.slug),
       embeddings: manifest.embeddings ?? cfg.ollamaModel,
+      coverage: manifestCoverage(manifest),
     });
   }
   res.json(out);

@@ -281,7 +281,7 @@ The indexer listens on `127.0.0.1:7802` without authentication. Put `mcp-server`
 |---|---|
 | `GET /healthz` | Liveness |
 | `GET /api/status` | Ollama, Extractor, and queue status |
-| `GET /api/workspaces` | Workspace list with index statistics |
+| `GET /api/workspaces` | Workspace list with index statistics and persistent coverage (`complete`, `partial`, or `unknown`) |
 | `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode, fileGlob? }`. `fileGlob` is a file-path glob (`*`, `**`, `?`). Hits include `abs` (absolute path); cached responses carry `cached: true` |
 | `POST /api/index/:slug` | Enqueue an incremental index job. `{ force: true }` for a full reindex |
 | `GET /api/jobs` · `GET /api/jobs/:id/events` | Job list, SSE log stream |

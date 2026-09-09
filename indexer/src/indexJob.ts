@@ -34,6 +34,8 @@ export interface JobRecord {
   changed: number;
   deleted: number;
   chunks: number;
+  succeededFiles?: number;
+  failedFiles?: string[];
   error?: string;
   stage?: IndexStage;
   progress?: { done: number; total: number };
@@ -50,6 +52,11 @@ interface QueueItem {
   force: boolean;
 }
 
+export interface JobDependencies {
+  runExtractor?: typeof runExtractor;
+  checkOllama?: typeof checkOllama;
+}
+
 export class JobManager {
   private cfg: AppConfig;
   private getWorkspace: (slug: string) => WorkspaceConfig | undefined;
@@ -57,6 +64,8 @@ export class JobManager {
   private pendingBySlug = new Map<string, string>();
   private activeSlug: string | null = null;
   private processing = false;
+  private runExtractorFn: typeof runExtractor;
+  private checkOllamaFn: typeof checkOllama;
 
   private jobs = new Map<string, JobRecord>();
   private jobOrder: string[] = [];
@@ -64,9 +73,11 @@ export class JobManager {
   private listeners = new Map<string, Set<LogListener>>();
   private doneListeners = new Map<string, Set<() => void>>();
 
-  constructor(cfg: AppConfig, getWorkspace: (slug: string) => WorkspaceConfig | undefined) {
+  constructor(cfg: AppConfig, getWorkspace: (slug: string) => WorkspaceConfig | undefined, dependencies: JobDependencies = {}) {
     this.cfg = cfg;
     this.getWorkspace = getWorkspace;
+    this.runExtractorFn = dependencies.runExtractor ?? runExtractor;
+    this.checkOllamaFn = dependencies.checkOllama ?? checkOllama;
   }
 
   getQueueSlugs(): string[] {
@@ -228,7 +239,7 @@ export class JobManager {
 
     // Ollama 준비 상태를 매니페스트 로드 직후, diff 계산 전에 확인한다 — not-ready 여도 예외 없이 fts 전용으로 진행한다.
     this.setStage(rec, "check");
-    const ollamaStatus = await checkOllama(this.cfg);
+    const ollamaStatus = await this.checkOllamaFn(this.cfg);
     const embedReady = ollamaStatus.ok && ollamaStatus.hasModel;
     if (!embedReady) {
       this.log(
@@ -272,21 +283,28 @@ export class JobManager {
     }
 
     if (targetAbs.length === 0) {
-      saveManifest(manifestPath, { ...manifest, lastRun: new Date().toISOString() });
+      const now = new Date().toISOString();
+      manifest.coverage = {
+        status: "complete", scannedFiles: files.length, indexedFiles: Object.keys(manifest.files).length,
+        attemptedFiles: 0, succeededFiles: 0, failedFiles: [], skippedPages: null, updatedAt: now,
+      };
+      saveManifest(manifestPath, { ...manifest, lastRun: now });
       this.log(jobId, "info", `[${ws.slug}] 변경분 없음 — 삭제만 반영하고 종료`);
       return;
     }
 
     this.setStage(rec, "extract");
     this.log(jobId, "info", `[${ws.slug}] Extractor 호출 중 (${targetAbs.length}개 파일)...`);
-    const result = await runExtractor(this.cfg, ws, roots, targetAbs, (line) => this.log(jobId, "info", `  ${line}`));
+    const result = await this.runExtractorFn(this.cfg, ws, roots, targetAbs, (line) => this.log(jobId, "info", `  ${line}`));
 
-    const failedAbs = new Set(
-      result.stderr
-        .split(/\r?\n/)
-        .filter((l) => l.startsWith("[실패] "))
-        .map((l) => l.slice("[실패] ".length).split(":")[0].trim()),
-    );
+    const pathKey = (value: string) => process.platform === "win32" ? path.resolve(value).toLowerCase() : path.resolve(value);
+    const failedAbs = new Set(result.failedFiles.map((failure) => pathKey(failure.abs)));
+    const failedKeys = result.failedFiles.map((failure) => relativeFileKey(failure.abs, roots));
+    rec.failedFiles = failedKeys;
+    rec.succeededFiles = targetAbs.length - failedKeys.length;
+    for (const failure of result.failedFiles) {
+      this.log(jobId, "warn", `[${ws.slug}] 추출 실패 ${failure.abs} (${failure.kind ?? "unknown"}): ${failure.message}`);
+    }
 
     const chunksByFileKey = new Map<string, number>();
     for (const c of result.chunks) {
@@ -341,7 +359,10 @@ export class JobManager {
 
     for (const abs of targetAbs) {
       const key = relativeFileKey(abs, roots);
-      if (failedAbs.has(abs)) continue; // 추출 실패 — 매니페스트 기록 안 함(다음 실행에 재시도)
+      if (failedAbs.has(pathKey(abs))) {
+        delete manifest.files[key]; // 성공처럼 보이는 이전 항목도 제거해 다음 증분 실행에서 반드시 재시도한다.
+        continue;
+      }
       manifest.files[key] = {
         hash: diff.hashOf.get(abs) ?? "",
         chunks: chunksByFileKey.get(key) ?? 0,
@@ -350,6 +371,16 @@ export class JobManager {
     }
     manifest.lastRun = now;
     manifest.embeddings = embedReady ? this.cfg.ollamaModel : "none";
+    manifest.coverage = {
+      status: failedKeys.length ? "partial" : "complete",
+      scannedFiles: files.length,
+      indexedFiles: Object.keys(manifest.files).length,
+      attemptedFiles: targetAbs.length,
+      succeededFiles: targetAbs.length - failedKeys.length,
+      failedFiles: failedKeys,
+      skippedPages: null,
+      updatedAt: now,
+    };
     this.setStage(rec, "manifest");
     saveManifest(manifestPath, manifest);
 
@@ -369,5 +400,8 @@ export class JobManager {
       "info",
       `[${ws.slug}] 완료 — 청크 ${rows.length}개 반영 (임베딩: ${embedReady ? this.cfg.ollamaModel : "없음 → fts 전용"})`,
     );
+    if (failedKeys.length > 0) {
+      throw new Error(`부분 추출 실패 ${failedKeys.length}/${targetAbs.length}건: ${failedKeys.join(", ")}`);
+    }
   }
 }
