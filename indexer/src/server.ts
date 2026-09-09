@@ -15,6 +15,7 @@ import { registerEvidenceRoutes } from "./evidence.js";
 import { JobManager } from "./indexJob.js";
 import { subscribeActivity, getRecentEvents, getRecentSearches, getStats, listenerCount, seedSearchHistory, type ActivityEvent } from "./activity.js";
 import { initActivityLog, restoreRecent, readUsage } from "./activityLog.js";
+import { invalidateSourceValidation } from "./sourceValidation.js";
 
 const cfg = loadConfig();
 fs.mkdirSync(cfg.dbDir, { recursive: true });
@@ -105,6 +106,7 @@ app.get("/api/workspaces", async (_req, res) => {
       indexing: jobManager.isIndexing(ws.slug),
       embeddings: manifest.embeddings ?? cfg.ollamaModel,
       coverage: manifestCoverage(manifest),
+      sourceValidation: manifest.sourceValidation ?? { status: "unknown", checkedAt: null },
     });
   }
   res.json(out);
@@ -213,6 +215,7 @@ app.post("/api/upload/:slug", upload.array("files"), (req, res) => {
     if (!extSet.has(ext)) continue;
     const dest = path.join(uploadsDir, base);
     fs.writeFileSync(dest, f.buffer);
+    invalidateSourceValidation(slug);
     saved.push(base);
   }
 
@@ -240,6 +243,7 @@ app.delete("/api/workspaces/:slug/files", (req, res) => {
     return;
   }
   if (fs.existsSync(target)) fs.unlinkSync(target);
+  invalidateSourceValidation(slug);
 
   const { jobId } = jobManager.enqueue(slug, false);
   res.json({ deleted: base, jobId });

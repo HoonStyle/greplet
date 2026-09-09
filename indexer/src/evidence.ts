@@ -4,10 +4,11 @@ import path from "node:path";
 import type { Express, Request } from "express";
 import type { AppConfig, WorkspaceConfig } from "./config.js";
 import { uploadsDirFor } from "./config.js";
-import { manifestPathFor, openOrCreateTable, tableExists, tableNameFor } from "./db.js";
-import { enumerateWorkspaceFiles, loadManifest, manifestCoverage, relativeFileKey, sha256File, type ManifestCoverage } from "./scan.js";
+import { manifestPathFor, openOrCreateTable, tableExists } from "./db.js";
+import { loadManifest, manifestCoverage, relativeFileKey, sha256File, type ManifestCoverage } from "./scan.js";
 import { sha256Text } from "./extract.js";
 import { search, type SearchHit, type SearchMode, type SearchOptions } from "./search.js";
+import { sourceIssue } from "./sourceValidation.js";
 
 export interface EvidenceRef {
   workspace: string;
@@ -105,26 +106,6 @@ function hitMetadata(h: SearchHit) {
     location: location(h), fileHash: h.fileHash, contentHash, indexedAt: h.indexedAt, evidenceRef };
 }
 
-/** Detect relative-key collisions before trusting an index that cannot distinguish roots. */
-function sourceIssue(cfg: AppConfig, ws: WorkspaceConfig, all: WorkspaceConfig[]): string | undefined {
-  if (all.filter(w => tableNameFor(w.slug) === tableNameFor(ws.slug)).length !== 1) {
-    return "워크스페이스 저장 이름이 충돌합니다. 출처 이름을 분리하고 재인덱싱하세요.";
-  }
-  const uploads = uploadsDirFor(cfg, ws.slug);
-  const roots = [...ws.roots, uploads];
-  if (roots.filter(r => fs.existsSync(r)).length < 2) return undefined;
-  const seen = new Map<string, string>();
-  for (const abs of enumerateWorkspaceFiles(ws, uploads)) {
-    const file = relativeFileKey(abs, roots);
-    const previous = seen.get(file);
-    if (previous && path.resolve(previous) !== path.resolve(abs)) {
-      return `여러 루트의 상대경로가 충돌합니다: ${file}. 워크스페이스 분리 후 재인덱싱하세요.`;
-    }
-    seen.set(file, abs);
-  }
-  return undefined;
-}
-
 type TargetStatus = "ok" | "no_hits" | "not_indexed" | "indexing" | "search_error" | "ambiguous_source";
 type EvidenceHit = ReturnType<typeof hitMetadata> & { freshness: "unchecked"; excerpt: ReturnType<typeof excerpt> };
 interface EvidenceTarget {
@@ -149,7 +130,7 @@ export async function searchEvidence(cfg: AppConfig, workspaces: WorkspaceConfig
     const target: EvidenceTarget = { workspace: ws.slug, label: ws.label, status: "no_hits", effectiveMode: null,
       warnings: warning ? [warning] : [], hits: [], coverage };
     try {
-      const issue = sourceIssue(cfg, ws, workspaces);
+      const issue = await sourceIssue(cfg, ws, workspaces);
       if (issue) return { ...target, status: "ambiguous_source" as const, warnings: [issue] };
       if (isIndexing(ws.slug)) return { ...target, status: "indexing" as const };
       if (!manifest.lastRun || !await tableExists(cfg, ws)) {
@@ -181,7 +162,7 @@ export async function getEvidence(cfg: AppConfig, workspaces: WorkspaceConfig[],
   const ref = parseEvidenceRef(object(body).evidenceRef);
   const ws = workspaces.find(w => w.slug === ref.workspace);
   if (!ws) throw new EvidenceError(404, "not_found", "워크스페이스를 찾을 수 없습니다");
-  const issue = sourceIssue(cfg, ws, workspaces);
+  const issue = await sourceIssue(cfg, ws, workspaces);
   if (issue) throw new EvidenceError(409, "ambiguous_source", issue);
   const checkBusy = () => { if (isIndexing(ws.slug)) throw new EvidenceError(409, "indexing", "인덱싱 완료 후 다시 조회하세요"); };
   checkBusy();

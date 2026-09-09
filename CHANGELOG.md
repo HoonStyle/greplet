@@ -6,6 +6,7 @@
 
 ### Added
 - 인덱스 매니페스트와 workspace/evidence API에 `complete`·`partial`·`unknown` 커버리지 메타데이터를 추가했다. 구버전 매니페스트는 완전 성공으로 추정하지 않는다.
+- 인덱싱 시 상대키 출처 충돌 상태를 매니페스트에 기록하고, evidence 조회의 충돌 검사는 recursive watcher로 무효화되는 짧은 수명 캐시를 사용한다. 감시 불가·오류·설정 변경·TTL 만료 시에는 전체 스캔으로 복귀한다.
 
 ### Changed
 - Extractor가 `--failed-out` JSONL로 파일별 실패를 구조화해 전달한다. 부분 성공 데이터는 보존하지만 잡은 `failed`가 되며, 실패 파일은 다음 증분 실행에서 재시도한다.

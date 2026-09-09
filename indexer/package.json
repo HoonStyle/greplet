@@ -14,7 +14,8 @@
     "test:activity": "node tests/activity.mjs",
     "test:activity-log": "node tests/activityLog.mjs",
     "test:partial-failure": "node tests/partialFailure.mjs",
-    "test:file-glob": "node tests/fileGlob.mjs"
+    "test:file-glob": "node tests/fileGlob.mjs",
+    "test:source-validation": "node tests/sourceValidation.mjs"
   },
   "dependencies": {
     "@lancedb/lancedb": "^0.38.0",

@@ -10,11 +10,12 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import type { AppConfig, WorkspaceConfig } from "./config.js";
 import { uploadsDirFor } from "./config.js";
-import { enumerateWorkspaceFiles, diffAgainstManifest, loadManifest, saveManifest, relativeFileKey, type Manifest } from "./scan.js";
+import { enumerateWorkspaceFiles, diffAgainstManifest, findRelativeKeyCollision, loadManifest, saveManifest, relativeFileKey, type Manifest } from "./scan.js";
 import { runExtractor, rowId } from "./extract.js";
 import { embedAll, checkOllama } from "./embed.js";
 import { openOrCreateTable, deleteByFiles, rebuildFtsIndex, manifestPathFor, zeroVector } from "./db.js";
 import { emitActivity, type IndexStage } from "./activity.js";
+import { invalidateSourceValidation } from "./sourceValidation.js";
 
 export type JobState = "queued" | "running" | "done" | "failed";
 
@@ -229,6 +230,7 @@ export class JobManager {
     if (!ws) throw new Error(`알 수 없는 워크스페이스: ${item.slug}`);
 
     this.log(jobId, "info", `[${ws.slug}] 인덱스 잡 시작 (force=${item.force})`);
+    invalidateSourceValidation(ws.slug);
 
     const uploadsDir = uploadsDirFor(this.cfg, ws.slug);
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -258,6 +260,15 @@ export class JobManager {
     this.setStage(rec, "scan");
     this.log(jobId, "info", `[${ws.slug}] 파일 스캔 중...`);
     const files = enumerateWorkspaceFiles(ws, uploadsDir);
+    const checkedAt = new Date().toISOString();
+    const collisionKey = findRelativeKeyCollision(files, roots);
+    manifest.sourceValidation = collisionKey
+      ? { status: "collision", collisionKey, checkedAt }
+      : { status: "clear", checkedAt };
+    if (collisionKey) {
+      saveManifest(manifestPath, manifest);
+      throw new Error(`여러 루트의 상대경로가 충돌합니다: ${collisionKey}. 워크스페이스 분리 후 재인덱싱하세요.`);
+    }
     const diff = diffAgainstManifest(files, roots, manifest, item.force || promoteFullReindex);
     rec.added = diff.added.length;
     rec.changed = diff.changed.length;

@@ -168,7 +168,7 @@ await table.createIndex("text", {
 
 ### 5.2 매니페스트 · 증분
 
-`db/<slug>.manifest.json`: `{ lastRun, files: { "<file>": { hash, chunks, indexedAt } }, embeddings, coverage }`. `embeddings` 는 임베딩 모델명 또는 `"none"`(벡터 없이 인덱싱됨). `coverage`는 마지막 스캔의 `status`, 스캔·인덱싱·시도·성공 파일 수, 실패 상대경로, 갱신 시각을 가진다. PDF 스킵 페이지가 아직 구조화 집계되지 않으면 `skippedPages`는 `null`이다. 필드가 없는 구버전 매니페스트는 API에서 `unknown` 커버리지로 노출한다. 쓰기는 임시 파일 + `renameSync` 로 원자적으로 한다(검색이 매니페스트를 읽으므로 잡 도중 부분 쓰기를 막는다).
+`db/<slug>.manifest.json`: `{ lastRun, files: { "<file>": { hash, chunks, indexedAt } }, embeddings, coverage, sourceValidation }`. `embeddings` 는 임베딩 모델명 또는 `"none"`(벡터 없이 인덱싱됨). `coverage`는 마지막 스캔의 `status`, 스캔·인덱싱·시도·성공 파일 수, 실패 상대경로, 갱신 시각을 가진다. PDF 스킵 페이지가 아직 구조화 집계되지 않으면 `skippedPages`는 `null`이다. `sourceValidation`은 인덱싱 스캔에서 관측한 상대키 충돌 상태다. 필드가 없는 구버전 매니페스트는 API에서 `unknown`으로 노출한다. 쓰기는 임시 파일 + `renameSync` 로 원자적으로 한다(검색이 매니페스트를 읽으므로 잡 도중 부분 쓰기를 막는다).
 
 1. roots(+uploads) 스캔, SHA256 → 매니페스트와 비교해 `added / changed / deleted`. `force` 면 전부 changed.
 2. `deleted ∪ changed` 행 삭제: `table.delete("file IN ('a','b',…)")`, 작은따옴표 `''` 이스케이프, 500개 단위.
@@ -178,6 +178,8 @@ await table.createIndex("text", {
 6. 잡 로그: 메모리 링버퍼(잡당 2000줄) + `logs/<slug>-<jobId>.log`.
 
 전역 큐로 **한 번에 잡 1개**. 같은 slug 가 대기 중이면 중복 등록하지 않는다. Ollama 준비 상태는 매니페스트 로드 직후 `GET /api/tags` 로 확인하되, 미가동·모델 없음이어도 잡을 실패시키지 않고 경고 로그 후 벡터 없이(영벡터) 계속 진행한다 — 매니페스트가 `"none"` 이었는데 Ollama 가 준비된 경우에만 전체 재인덱스로 승격한다.
+
+다중 root의 같은 상대키는 하나의 row id로 합쳐질 수 있으므로 인덱싱과 evidence search/get 모두에서 전역 차단한다. evidence 검사는 첫 전체 열거 뒤 각 root의 recursive watcher가 관측한 변경으로 즉시 무효화되는 30초 캐시를 사용한다. watcher 생성 실패·오류·존재하지 않는 root·TTL 만료·설정 변경에서는 매 호출 전체 열거로 복귀한다. watcher 이벤트 전달 전의 동기식 조회를 피하려고 캐시 판단 전에 이벤트 루프를 한 번 양보한다. 원본 해시와 허용 root 검증은 별도로 유지한다.
 
 ### 5.3 검색
 
@@ -318,3 +320,4 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 6. `npm run test:activity` — 활동 이벤트 버스, 인덱스 진행 이벤트, SSE/API 계약 검증.
 7. `npm run test:partial-failure` — 구조화 실패 경로, 부분 성공 보존, 실패 잡과 persistent coverage, 증분 재시도, 0청크 성공을 검증한다.
 8. `npm run test:file-glob` — 고득점 비일치 후보 뒤의 파일도 찾는지, JS/DB 글롭 의미와 SQL escaping이 일치하는지 검증한다.
+9. `npm run test:source-validation` — warm 충돌 검사의 전체 열거 감소, 파일 생성/삭제 watcher 무효화, 감시 불가 시 안전한 재스캔을 검증한다.

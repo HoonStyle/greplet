@@ -28,6 +28,12 @@ export interface ManifestCoverage {
   updatedAt: string | null;
 }
 
+export interface ManifestSourceValidation {
+  status: "clear" | "collision" | "unknown";
+  checkedAt: string | null;
+  collisionKey?: string;
+}
+
 export interface Manifest {
   lastRun: string;
   files: Record<string, ManifestFileEntry>;
@@ -35,6 +41,8 @@ export interface Manifest {
   embeddings?: string;
   /** 구버전 매니페스트에는 없으며, 그 경우 API에서는 unknown으로 노출한다. */
   coverage?: ManifestCoverage;
+  /** 마지막 인덱싱 스캔에서 관측한 상대키 충돌 상태. 검색 시에는 watcher 기반 신선도 검증을 별도로 수행한다. */
+  sourceValidation?: ManifestSourceValidation;
 }
 
 export function emptyManifest(): Manifest {
@@ -130,6 +138,17 @@ export function relativeFileKey(absPath: string, roots: string[]): string {
   }
   const root = best ?? path.dirname(absPath);
   return path.relative(root, absPath).replace(/\\/g, "/");
+}
+
+export function findRelativeKeyCollision(files: string[], roots: string[]): string | undefined {
+  const seen = new Map<string, string>();
+  for (const abs of files) {
+    const key = relativeFileKey(abs, roots);
+    const previous = seen.get(key);
+    if (previous && path.resolve(previous) !== path.resolve(abs)) return key;
+    seen.set(key, abs);
+  }
+  return undefined;
 }
 
 export function sha256File(filePath: string): string {
