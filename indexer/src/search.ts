@@ -55,8 +55,8 @@ export interface SearchOptions {
   bypassCache?: boolean;
 }
 
-/** 파일 글롭 → 정규식. scan.ts 의 파일명 글롭과 달리 경로 전체를 대상으로 하며 `**` 를 지원한다. */
-export function fileGlobToRegex(glob: string): RegExp {
+/** 파일 글롭 → 정규식 패턴. scan.ts 의 파일명 글롭과 달리 경로 전체를 대상으로 하며 `**` 를 지원한다. */
+function fileGlobPattern(glob: string): string {
   const g = glob.replace(/\\/g, "/");
   let re = "";
   for (let i = 0; i < g.length; i++) {
@@ -76,16 +76,23 @@ export function fileGlobToRegex(glob: string): RegExp {
     }
   }
   // 앞에 경로가 더 있어도 되게(부분 일치) — "*.cs" 가 "a/b/c.cs" 에도 맞도록
-  return new RegExp("(^|/)" + re + "$", "i");
+  return "(^|/)" + re + "$";
+}
+
+export function fileGlobToRegex(glob: string): RegExp {
+  return new RegExp(fileGlobPattern(glob), "i");
+}
+
+/** LanceDB/DataFusion의 prefilter용 SQL. JS 후처리와 같은 정규식에 대소문자 무시 플래그를 붙인다. */
+export function fileGlobToSqlPredicate(glob: string): string {
+  const pattern = `(?i)${fileGlobPattern(glob)}`.replace(/'/g, "''");
+  return `regexp_like(file, '${pattern}')`;
 }
 
 /** 하이브리드 융합 전 하위 질의(벡터·FTS)별 최소 후보 수 */
 const HYBRID_MIN_POOL = 50;
 
 const SELECT_COLS = ["id", "file", "abs", "root", "file_hash", "indexed_at", "symbol", "kind", "start_line", "end_line", "text"];
-
-/** 파일 글롭 필터가 있을 때 후보를 넉넉히 뽑기 위한 배수 */
-const GLOB_POOL_FACTOR = 10;
 
 // ---------- 결과 캐시(§8) ----------
 // 키: 질의 파라미터 + 대상 워크스페이스별 매니페스트 lastRun. 인덱스가 갱신되면 lastRun 이 바뀌어 자연히 무효화된다.
@@ -132,6 +139,7 @@ async function searchOneWorkspace(
   mode: SearchMode,
   warnings: string[],
   fileRe: RegExp | null,
+  filePredicate: string | null,
   searchId: string,
   outcome: WorkspaceSearchOutcome,
 ): Promise<SearchHit[]> {
@@ -150,8 +158,10 @@ async function searchOneWorkspace(
 
   const table = await openOrCreateTable(cfg, ws);
   let effectiveMode = mode;
-  // 글롭 필터는 검색 후 적용하므로 후보를 더 뽑는다
-  const limit = fileRe ? topN * GLOB_POOL_FACTOR : topN;
+  const baseQuery = () => {
+    const q = table.query();
+    return filePredicate ? q.where(filePredicate) : q;
+  };
   const applyGlob = (hits: SearchHit[]) => {
     if (!fileRe) return hits;
     stage("glob", "enter");
@@ -172,7 +182,7 @@ async function searchOneWorkspace(
   try {
     if (effectiveMode === "fts") {
       stage("fts", "enter");
-      const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
+      const rows = await baseQuery().fullTextSearch(query).select(SELECT_COLS).limit(topN).toArray();
       return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)))), "fts");
     }
 
@@ -186,10 +196,10 @@ async function searchOneWorkspace(
       warnings.push(`[${ws.slug}] 질의 임베딩 실패 → fts 로 폴백: ${msg}`);
       stage("embed", "fallback", msg.slice(0, 80));
       stage("fts", "enter");
-      const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
+      const rows = await baseQuery().fullTextSearch(query).select(SELECT_COLS).limit(topN).toArray();
       return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)))), "fts");
     }
-    let q = table.query().nearestTo(qvec).distanceType("cosine");
+    let q = baseQuery().nearestTo(qvec).distanceType("cosine");
 
     if (effectiveMode === "hybrid") {
       try {
@@ -199,9 +209,9 @@ async function searchOneWorkspace(
         stage("fts", "enter");
         stage("rerank", "enter");
         const rr = await rerankers.RRFReranker.create();
-        const poolSize = Math.max(limit * 10, HYBRID_MIN_POOL);
+        const poolSize = Math.max(topN * 10, HYBRID_MIN_POOL);
         const rows = await q.fullTextSearch(query).rerank(rr).select(SELECT_COLS).limit(poolSize).toArray();
-        return finish(applyGlob(rows.slice(0, limit).map((r: any) => toHit(ws.slug, r, Number(r._relevance_score ?? 0)))), "hybrid");
+        return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._relevance_score ?? 0)))), "hybrid");
       } catch (ftsErr) {
         // FTS 구문 오류 등 → vector 로 폴백(§5.3)
         const msg = errMsg(ftsErr);
@@ -213,7 +223,7 @@ async function searchOneWorkspace(
 
     try {
       if (effectiveMode === "vector") stage("vector", "enter");
-      const rows = await table.query().nearestTo(qvec).distanceType("cosine").select(SELECT_COLS).limit(limit).toArray();
+      const rows = await baseQuery().nearestTo(qvec).distanceType("cosine").select(SELECT_COLS).limit(topN).toArray();
       return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, 1 - Number(r._distance ?? 0)))), "vector");
     } catch (vecErr) {
       // Ollama 가 잡 중간에 죽는 등 vector 경로 실패 시 fts 로 폴백해 결과가 비지 않게 한다.
@@ -221,7 +231,7 @@ async function searchOneWorkspace(
       warnings.push(`[${ws.slug}] vector 검색 실패 → fts 로 폴백: ${msg}`);
       stage("vector", "fallback", msg.slice(0, 80));
       stage("fts", "enter");
-      const rows = await table.query().fullTextSearch(query).select(SELECT_COLS).limit(limit).toArray();
+      const rows = await baseQuery().fullTextSearch(query).select(SELECT_COLS).limit(topN).toArray();
       return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._score ?? 0)))), "fts");
     }
   } catch (err) {
@@ -301,10 +311,11 @@ export async function search(
     emitActivity({ type: "search.stage", id, workspace: "*", stage: "cache", status: "skip" });
 
     const fileRe = opts.fileGlob ? fileGlobToRegex(opts.fileGlob) : null;
+    const filePredicate = opts.fileGlob ? fileGlobToSqlPredicate(opts.fileGlob) : null;
     const warnings: string[] = [];
     const workspaceResults = workspaces.map((ws): WorkspaceSearchOutcome => ({ workspace: ws.slug, effectiveMode: mode, failed: false }));
     const perWs = await Promise.all(
-      workspaces.map((ws, i) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, id, workspaceResults[i])),
+      workspaces.map((ws, i) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, filePredicate, id, workspaceResults[i])),
     );
     emitActivity({ type: "search.stage", id, workspace: "*", stage: "sort", status: "enter" });
     const hits = perWs.flat().sort((a, b) => b.score - a.score);

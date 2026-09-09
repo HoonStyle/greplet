@@ -47,6 +47,12 @@ jobs:
       - name: Indexer incremental test (fts-only path)
         run: npm run test:incremental
         working-directory: indexer
+      - name: Indexer partial failure contract test
+        run: npm run test:partial-failure
+        working-directory: indexer
+      - name: Indexer file glob completeness test
+        run: npm run test:file-glob
+        working-directory: indexer
       - name: Indexer activity event test (fts-only path)
         run: npm run test:activity
         working-directory: indexer

@@ -194,6 +194,7 @@ const rows = await q.select(cols).limit(poolSize).toArray();   // 융합 후 top
 - 임베딩 없는 워크스페이스(매니페스트 `embeddings === "none"`) 는 `hybrid`/`vector` 요청이 와도 검색 시작 시 `fts` 로 강등한다. 영벡터에 cosine 을 적용하면 결과가 전부 NaN 이 되므로 이 강등이 유일한 보호막이다. `warnings` 에 강등 사실을 남긴다.
 - 다중 워크스페이스는 병렬 조회 후 점수 내림차순 병합. RRF 점수는 `1/(k+rank)` 합이라 테이블 간 비교 가능.
 - **후보 풀**: LanceDB 의 `limit` 은 벡터·FTS 하위 질의 각각에 걸린다. topN 만 주면 두 목록이 거의 겹치지 않아 RRF 점수가 전부 동점이 되고 순위가 사실상 무작위가 된다. 하위 질의마다 최소 50건(`HYBRID_MIN_POOL`)을 뽑아 융합한 뒤 topN 만 남긴다.
+- **파일 글롭 완전성**: `fileGlob`의 `*`·`**`·`?`, 구분자 정규화, 대소문자 무시 의미를 하나의 정규식으로 만들고 SQL 문자열을 이스케이프해 `regexp_like(file, ...)` prefilter로 모든 FTS/vector/hybrid 질의에 적용한다. 랭킹과 `limit`은 이 필터 뒤에 실행되므로 고정 후보 배수 밖의 일치 파일을 잃지 않는다. 같은 JS 정규식 후처리를 방어적으로 한 번 더 적용한다.
 
 ### 5.4 LanceDB API 형태 (0.38 에서 확인)
 
@@ -316,3 +317,4 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 5. `mcp-server` `npm run smoke`, `greplet-mcpb` `npm run smoke`.
 6. `npm run test:activity` — 활동 이벤트 버스, 인덱스 진행 이벤트, SSE/API 계약 검증.
 7. `npm run test:partial-failure` — 구조화 실패 경로, 부분 성공 보존, 실패 잡과 persistent coverage, 증분 재시도, 0청크 성공을 검증한다.
+8. `npm run test:file-glob` — 고득점 비일치 후보 뒤의 파일도 찾는지, JS/DB 글롭 의미와 SQL escaping이 일치하는지 검증한다.
