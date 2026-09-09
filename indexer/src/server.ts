@@ -11,6 +11,7 @@ import { checkOllama } from "./embed.js";
 import { openOrCreateTable, tableExists, manifestPathFor, VECTOR_DIM } from "./db.js";
 import { loadManifest } from "./scan.js";
 import { search, type SearchMode } from "./search.js";
+import { registerEvidenceRoutes } from "./evidence.js";
 import { JobManager } from "./indexJob.js";
 import { subscribeActivity, getRecentEvents, getRecentSearches, getStats, listenerCount, seedSearchHistory, type ActivityEvent } from "./activity.js";
 import { initActivityLog, restoreRecent, readUsage } from "./activityLog.js";
@@ -64,6 +65,10 @@ function sanitizeSnippet(raw: string | undefined): number | undefined {
 }
 
 const activeSse = new Set<express.Response>();
+
+registerEvidenceRoutes(app, cfg, () => workspaces, slug => jobManager.isIndexing(slug), req => ({
+  client: sanitizeClient(req.get("X-Greplet-Client")), session: sanitizeSession(req.get("X-Greplet-Session")),
+}));
 
 app.get("/healthz", (_req, res) => {
   res.status(200).send("ok");

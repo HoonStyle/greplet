@@ -50,6 +50,15 @@ jobs:
       - name: Indexer activity event test (fts-only path)
         run: npm run test:activity
         working-directory: indexer
+      - name: Indexer evidence regression test (fts-only path)
+        run: npm run test:evidence
+        working-directory: indexer
+
+      # CLI evidence regression test: spins up its own mock HTTP server, so it
+      # only needs greplet.mjs/greplet.ps1 at the repo root (no indexer/Ollama).
+      - name: CLI evidence regression test
+        shell: bash
+        run: node scripts/test-cli-evidence.mjs
 
       # Remote MCP server: build only (smoke needs a running indexer + token)
       - name: mcp-server install + build
@@ -71,7 +80,7 @@ jobs:
             await c.connect(new StdioClientTransport({ command: "node", args: ["server/index.js"] }));
             const { tools } = await c.listTools();
             const names = tools.map(t => t.name).sort().join(",");
-            if (names !== "greplet,greplet_workspaces") throw new Error("unexpected tools: " + names);
+            if (names !== "greplet,greplet_get_evidence,greplet_search_evidence,greplet_workspaces") throw new Error("unexpected tools: " + names);
             for (const t of tools) if (!t.annotations?.readOnlyHint) throw new Error(t.name + " lacks readOnlyHint");
             console.log("tools ok:", names);
             await c.close();

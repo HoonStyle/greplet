@@ -138,10 +138,14 @@ static string? FindContainingRoot(string absPath, IReadOnlyList<string> roots)
     string? best = null;
     foreach (var r in roots)
     {
-        string full = Path.GetFullPath(r);
-        if (absPath.StartsWith(full, StringComparison.OrdinalIgnoreCase))
+        // Path.GetFullPath expands Windows 8.3 short names (e.g. RUNNER~1) but the target
+        // paths from the indexer do not, so also try the root exactly as the indexer passed it.
+        foreach (var candidate in new[] { Path.GetFullPath(r), r.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) })
         {
-            if (best == null || full.Length > best.Length) best = full;
+            if (absPath.StartsWith(candidate, StringComparison.OrdinalIgnoreCase))
+            {
+                if (best == null || candidate.Length > best.Length) best = candidate;
+            }
         }
     }
     return best;
