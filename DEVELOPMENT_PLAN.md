@@ -2,7 +2,7 @@
 
 - 기준선: `368b301e331349b6feda355805cb7fbc7ff3e0ff`
 - 작성일: 2026-09-09
-- 상태: **진행 중**. WP1~WP4는 2026-09-09에 구현·검증했고, WP5 문서 정리를 남겼다. 실제 유료 파일럿은 별도 단계다.
+- 상태: **M1 구현·자동 검증 완료 / 실제 파일럿 대기**. WP1~WP5와 Gate A는 2026-09-09 완료했다. 실제 데이터 선정·유료 모델 실행·Gate B는 수행하지 않았다.
 - 상위 기준: [마이그레이션 로드맵](docs/migration-roadmap.md), [실제 파일럿 기록](docs/migration-pilot.md)
 
 ## 1. 목표와 범위
@@ -177,6 +177,10 @@ npm run test:incremental
 npm run test:evidence
 npm run test:activity
 npm run test:activity-log
+npm run test:partial-failure
+npm run test:file-glob
+npm run test:source-validation
+npm run test:hybrid
 ```
 
 ## 6. 릴리스 게이트
