@@ -321,3 +321,4 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 7. `npm run test:partial-failure` — 구조화 실패 경로, 부분 성공 보존, 실패 잡과 persistent coverage, 증분 재시도, 0청크 성공을 검증한다.
 8. `npm run test:file-glob` — 고득점 비일치 후보 뒤의 파일도 찾는지, JS/DB 글롭 의미와 SQL escaping이 일치하는지 검증한다.
 9. `npm run test:source-validation` — warm 충돌 검사의 전체 열거 감소, 파일 생성/삭제 watcher 무효화, 감시 불가 시 안전한 재스캔을 검증한다.
+10. `npm run test:hybrid` — loopback fake Ollama(`/api/tags`, `/api/embed`)의 고정 1024차원 벡터와 실제 LanceDB로 hybrid·vector·fallback 분기 및 순위 재현성을 검증한다. HTTP 실패, 응답 개수 불일치, 짧은 벡터 모드를 외부 서비스 없이 선택할 수 있다.
