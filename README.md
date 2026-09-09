@@ -23,15 +23,17 @@ Migration evidence retrieval is opt-in: `greplet_search_evidence` returns per-wo
   <img alt="Linux" src="https://img.shields.io/badge/Linux-CI-FCC624?logo=linux&logoColor=black">
 </p>
 
-> A local search server that indexes several legacy codebases, the current code, and spec PDFs at once and answers with **file · symbol · line range**. Built for AI coding agents to use instead of grep.
+Local hybrid search for code and documents. Query multiple workspaces and get ranked results with **file, symbol, and line range**.
 
-greplet indexes repositories, folders, and PDFs as **workspaces**. Given a natural-language or keyword query, it returns only the relevant **chunks** (C# members, PDF pages, and so on), ranked by score. Vector search (Ollama `bge-m3`) and full-text search (BM25) are fused with RRF. There is no LLM generation and no outbound network call.
+greplet combines vector search (Ollama `bge-m3`) with BM25 full-text search using RRF. It retrieves source chunks; it does not generate answers. The default search setup runs locally. Downloads and optional remote integrations have their own network requirements.
 
-Three things set it apart from a generic RAG setup:
+**Start here:** [Install and run](#install-and-run) → [Usage](#usage) → [Agent clients](#clients). Node 22+ and .NET 8 are required for a source build; Ollama is optional for keyword-only search.
+
+## Overview
 
 1. **The index follows the code.** A file-hash manifest applies additions, changes, and deletions incrementally. A post-commit hook drives it, so chunks of deleted files do not linger in search results.
 2. **It answers with locations.** C# is chunked by type and member with Roslyn; PDFs by page. Results come back as `file :: symbol (Lstart-end)`, so the agent opens only that spot.
-3. **It only finds.** No summarizing, interpreting, or verifying. Structure belongs to an LSP tool (Serena), and spec writing with citation checks belongs to legacy-spec-agent. That [division of labor](#division-of-labor-among-agent-tools) is a design assumption. If search is wrong, the next stage catches it.
+3. **It only finds.** No summarizing, interpreting, or verifying. Structure belongs to an LSP tool (Serena), and spec writing with citation checks belongs to legacy-spec-agent. That [division of labor](#division-of-labor-among-agent-tools) is a design assumption. Retrieved results still need to be checked against the source; downstream tools do not guarantee correctness.
 
 It plugs in as a Claude Code skill, a Codex MCP server, a Claude Desktop MCP bundle, a remote MCP server, a CLI (PowerShell or Node), and a git hook. The goal is one thing: let an agent answer "where is this feature implemented?" or "how does the spec define this value?" without reading the whole folder.
 
@@ -58,10 +60,10 @@ It plugs in as a Claude Code skill, a Codex MCP server, a Claude Desktop MCP bun
 
 | Situation | Limit of existing tools | greplet |
 |---|---|---|
-| Several legacy codebases, plus current code and spec PDFs kept elsewhere | IDE and agent built-in search sees only the open repo. Serena sees only the active project | Any roots anywhere become workspaces. `--all` compares across codebases in one query |
+| Several legacy codebases, plus current code and spec PDFs kept elsewhere | Search is often scoped to the open repo or active project | Any roots anywhere become workspaces. `--all` compares across codebases in one query |
 | Searching by constant, error code, or method name | Pure vector search is weak on exact tokens | Vector + BM25 hybrid. `fts` mode works without Ollama |
 | The result must point at a place to open | Fixed-length chunking cuts methods in half and gives no location | Roslyn member-level and PDF page-level chunks. Every hit has file, symbol, and line range |
-| The code keeps changing | Upload-style RAG never sees deletions, so stale chunks pile up | Hash manifest applies adds, changes, and deletes incrementally. Hooked into commits |
+| The code keeps changing | Manually uploaded snapshots can retain deleted or outdated content | Hash manifest applies adds, changes, and deletes incrementally. Hooked into commits |
 | Source cannot leave the machine | Cloud search assumes upload | Fully local. The indexer binds to `127.0.0.1` only. External exposure goes through the Bearer-authenticated MCP server |
 
 Conversely, with one repo and a handful of documents there is little reason to use greplet. Built-in search or grep is enough.
@@ -114,6 +116,13 @@ Conversely, with one repo and a handful of documents there is little reason to u
 | OS | Windows · macOS · Linux. Intel Macs have a LanceDB version constraint ([Known limitations](#known-limitations)) |
 
 ## Install and run
+
+Clone the repository and run the commands below from its root:
+
+```bash
+git clone https://github.com/HoonStyle/greplet.git
+cd greplet
+```
 
 The order is the same on every OS: build the Extractor → build the indexer → define workspaces → start.
 
@@ -271,7 +280,7 @@ Full rules in [docs/design.md §3](docs/design.md) (Korean).
 | Remote MCP | `mcp-server/` | Streamable HTTP + Bearer, `127.0.0.1:7801`. Expose only through a tunnel. [README](mcp-server/README.md) (Korean) |
 | git hook | `git-hooks/post-commit` | `git config greplet.slug <slug>`, then copy into `.git/hooks/` |
 
-The MCP tools are `greplet` (search) and `greplet_workspaces` (list). Both carry `readOnlyHint`, so clients call them without an approval prompt.
+The MCP tools are `greplet` (search) and `greplet_workspaces` (list). Both carry `readOnlyHint`. This is a tool annotation, not authorization; approval behavior is controlled by the client.
 
 ## HTTP API
 
@@ -296,7 +305,7 @@ greplet answers "where is what". Everything else goes to other tools.
 
 | Question | Tool | Why |
 |---|---|---|
-| Where is this feature implemented, how does the doc define it | **greplet** | Faster and far cheaper in tokens than grep/read over whole folders |
+| Where is this feature implemented, how does the doc define it | **greplet** | Returns ranked source locations without requiring a whole-folder read; actual latency and token use depend on the task |
 | Who calls this method, inheritance and reference chains | **LSP symbol tool** ([Serena](https://github.com/oraios/serena) etc.) | greplet only knows chunk text, not references |
 | Write a citation-backed spec for undocumented legacy code | **[legacy-spec-agent](https://github.com/HoonStyle/legacy-spec-agent)** | greplet does not interpret, summarize, or verify |
 | Find a file by name or path, check a file just edited | **Glob / Grep / Read** | The index may not have caught up yet |
