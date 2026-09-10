@@ -13,7 +13,9 @@
     "entry_point": "server/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.js"],
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
       "env": {
         "GREPLET_BASE_URL": "${user_config.base_url}",
         "GREPLET_DEFAULT_WORKSPACE": "${user_config.default_workspace}",
@@ -29,6 +31,14 @@
     {
       "name": "greplet_workspaces",
       "description": "인덱스된 워크스페이스 목록 (읽기 전용)"
+    },
+    {
+      "name": "greplet_search_evidence",
+      "description": "근거용 검색 — 히트마다 재조회·신선도 검증용 evidenceRef 반환 (읽기 전용)"
+    },
+    {
+      "name": "greplet_get_evidence",
+      "description": "evidenceRef 로 청크 전문 재조회 + 원본 해시 검증 (읽기 전용)"
     }
   ],
   "user_config": {
