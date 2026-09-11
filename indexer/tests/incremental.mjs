@@ -153,7 +153,18 @@ async function main() {
     console.log(`[incremental] 4) embeddings=none 확인, hybrid→fts 강등 검색 히트=${searchResult.hits.length}건`);
   }
 
-  console.log("[incremental] 전체 통과");
+  // Prefix rename must delete previously indexed chunks and restore on opt-in.
+  fs.renameSync(path.join(srcDir, "a.txt"), path.join(srcDir, "!a.txt"));
+  rec = await runIndex();
+  assert.equal(rec.deleted, 1);
+  assert.equal((await rowsFor("a.txt")).length, 0);
+  assert.equal((await rowsFor("!a.txt")).length, 0);
+  assert.ok(!("a.txt" in JSON.parse(fs.readFileSync(manifestPath, "utf8")).files));
+  fs.renameSync(path.join(srcDir, "!a.txt"), path.join(srcDir, "a.txt"));
+  rec = await runIndex();
+  assert.equal(rec.added, 1);
+  assert.ok((await rowsFor("a.txt")).length > 0);
+  console.log("[incremental] 전체 통과 (접두사 제외·복원 포함)");
 }
 
 main()

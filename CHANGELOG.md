@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- 파일·폴더 이름이 `!`로 시작하면 인덱싱에서 제외한다. 하위 트리를 탐색하지 않으며 명시적으로 지정한 루트·파일과 업로드에도 적용한다. 기존 인덱스는 다음 성공한 인덱싱에서 제거되고 접두사를 제거하면 다시 포함된다.
 - 인덱스 매니페스트와 workspace/evidence API에 `complete`·`partial`·`unknown` 커버리지 메타데이터를 추가했다. 구버전 매니페스트는 완전 성공으로 추정하지 않는다.
 - 인덱싱 시 상대키 출처 충돌 상태를 매니페스트에 기록하고, evidence 조회의 충돌 검사는 recursive watcher로 무효화되는 짧은 수명 캐시를 사용한다. 감시 불가·오류·설정 변경·TTL 만료 시에는 전체 스캔으로 복귀한다.
 - loopback fake Ollama와 실제 LanceDB를 사용하는 결정적 hybrid 테스트 하네스를 추가했다. 정상 hybrid, hybrid→vector, vector→FTS, embed 실패→FTS, fileGlob vector prefilter를 CI에서 조건 없이 검증한다.

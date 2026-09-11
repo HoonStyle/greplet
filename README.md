@@ -1,5 +1,16 @@
 # greplet
 
+### Exclude by name
+
+Prefix a file or folder name with `!` to omit it from indexing: `!draft.pdf`
+excludes one file and `!reference/` excludes its entire subtree. This also
+applies to uploads and explicit roots/files inside excluded folders. A `!`
+in the middle of a name, or a leading `#`, has no special meaning.
+Run indexing after renaming: old chunks are removed on the next successful
+index run. Remove the prefix and reindex to include the content again.
+Existing `excludeDirs`/`excludeFiles` rules still apply. Prefer those settings
+when renaming source paths would break code references.
+
 Migration evidence retrieval is opt-in: `greplet_search_evidence` returns per-workspace excerpts and version-bound references; `greplet_get_evidence` fetches the exact indexed chunk after checking the source file hash. Use `node greplet.mjs evidence-search "query" --all` and `evidence-get --ref-file evidence-ref.json` (save only a hit's `evidenceRef` object). `verified` means a source hash matched at retrieval time, not semantic correctness. Legacy search keeps all source variants. See the [migration roadmap](docs/migration-roadmap.md) and [release contract](docs/greplet-evidence-v1.md); the real migration pilot is a separate completion gate.
 
 <p align="center">

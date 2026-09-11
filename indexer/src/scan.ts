@@ -82,7 +82,13 @@ function matchesGlob(name: string, glob: string): boolean {
   return new RegExp(pattern, "i").test(name);
 }
 
+/** A literal leading ! opts out a file/directory, including explicit roots. */
+export function hasExcludedPrefix(filePath: string): boolean {
+  return path.resolve(filePath).split(/[\\/]/).some(segment => segment.startsWith("!"));
+}
+
 function walk(root: string, out: string[]): void {
+  if (hasExcludedPrefix(root)) return;
   let entries: fs.Dirent[];
   try {
     entries = fs.readdirSync(root, { withFileTypes: true });
@@ -90,6 +96,7 @@ function walk(root: string, out: string[]): void {
     return;
   }
   for (const entry of entries) {
+    if (entry.name.startsWith("!")) continue;
     const full = path.join(root, entry.name);
     if (entry.isDirectory()) {
       walk(full, out);

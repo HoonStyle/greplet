@@ -32,6 +32,7 @@ if (opts.FilesListPath != null)
     targetFiles = File.ReadAllLines(opts.FilesListPath)
         .Select(l => l.Trim())
         .Where(l => l.Length > 0)
+        .Where(l => !FileScanner.IsBangExcludedPath(l))
         .ToList();
 }
 else
