@@ -1,0 +1,4824 @@
+{
+  "date": "2026-09-11",
+  "schemaVersion": 1,
+  "scope": "T10 retrieval-only evaluation of a vector-prefix hybrid reranker",
+  "sourceCommit": "1722a3c",
+  "implementationCommit": "ce2062369dfbb9df19a9ab25a927544655e2bdfb",
+  "status": "production_verified",
+  "policy": {
+    "protectedVectorPrefix": 3,
+    "tail": {
+      "kind": "weighted_rrf",
+      "vectorWeight": 4,
+      "ftsWeight": 1,
+      "k": 60
+    },
+    "tieOrder": "vector prefix order, then existing weighted-RRF tail order",
+    "scoreEncoding": "float32(0.5 * (unionLength - zeroBasedPosition) / unionLength)",
+    "scoreMaximum": 0.5,
+    "finalScope": {
+      "requestedWorkspaceCount": 1,
+      "multipleWorkspacePolicy": "existing_weighted_rrf"
+    }
+  },
+  "protocol": {
+    "developmentQuestions": 100,
+    "heldoutQuestions": 15,
+    "mixedRegressionQuestions": 40,
+    "modes": ["fts", "vector", "hybrid"],
+    "rounds": 5,
+    "versions": 2,
+    "actualSearches": 4650,
+    "alternatingOrder": true,
+    "pool": 50,
+    "topN": 5,
+    "candidateFrozenBeforeHeldout": true,
+    "noRetuningAfterUnblinding": true,
+    "allRepeatedRanksStable": true,
+    "pureModePairsIdentical": 1550,
+    "developmentGoldSha256": "269cd9cfddf2e647d5722b1b8275e631aaaed382325d3f1412e9393ad867b5cf",
+    "heldoutGoldSha256": "7f737e005249716989804d5782be4503db93879666e10eb4d2b13d7bf810429c"
+  },
+  "selection": {
+    "registeredGate": {
+      "minimumHitGain": 3,
+      "maximumHitLoss": 0,
+      "mrrMustNotDecrease": true,
+      "tieBreak": ["hit5", "mrr5", "registered_policy_order"]
+    },
+    "candidates": [
+      {"id": "current", "hit5": 57, "mrr5": 0.3261666666666666, "gains": [], "losses": [], "eligible": false},
+      {"id": "rrf-k20", "hit5": 62, "mrr5": 0.41233333333333333, "gains": ["E011", "E013", "E015", "E022", "E028", "E084", "E102"], "losses": ["E027", "E041"], "eligible": false},
+      {"id": "rrf-k10", "hit5": 62, "mrr5": 0.43866666666666676, "gains": ["E011", "E013", "E015", "E022", "E028", "E084", "E102"], "losses": ["E027", "E041"], "eligible": false},
+      {"id": "rrf-w8", "hit5": 61, "mrr5": 0.3863333333333333, "gains": ["E011", "E013", "E015", "E022", "E028", "E102"], "losses": ["E027", "E041"], "eligible": false},
+      {"id": "protect-vector3", "hit5": 63, "mrr5": 0.4776666666666667, "gains": ["E011", "E013", "E015", "E022", "E084", "E102"], "losses": [], "rankWorse": ["E005", "E016", "E027", "E042"], "eligible": true}
+    ],
+    "selected": "protect-vector3"
+  },
+  "results": {
+    "development": {
+      "questions": 100,
+      "independentN": 100,
+      "vector": {"hit5": 64, "mrr5": 0.48066666666666663},
+      "current": {"hit5": 57, "mrr5": 0.3261666666666666, "hybridMedianMs": 61.6838000000007, "hybridP95Ms": 70.16509999999835},
+      "protected": {"hit5": 63, "mrr5": 0.4776666666666667, "hybridMedianMs": 63.017699999996694, "hybridP95Ms": 71.13000000000466},
+      "hybridLatencyDeltaMs": {"median": 1.3338999999959944, "p95": 0.9649000000063095},
+      "gains": ["E011", "E013", "E015", "E022", "E084", "E102"],
+      "losses": [],
+      "rankWorse": [
+        {"id": "E005", "before": 2, "after": 3},
+        {"id": "E016", "before": 2, "after": 3},
+        {"id": "E027", "before": 3, "after": 5},
+        {"id": "E042", "before": 1, "after": 3}
+      ]
+    },
+    "heldout": {
+      "questions": 15,
+      "independentN": 15,
+      "firstOpenedAfterSelection": true,
+      "registeredGate": {"minimumHitGain": 1, "maximumHitLoss": 0},
+      "vector": {"hit5": 10, "mrr5": 0.43222222222222223},
+      "current": {"hit5": 8, "mrr5": 0.3022222222222223, "hybridMedianMs": 58.690099999977974, "hybridP95Ms": 66.2436999999918},
+      "protected": {"hit5": 9, "mrr5": 0.41555555555555557, "hybridMedianMs": 59.990200000000186, "hybridP95Ms": 67.51469999999972},
+      "hybridLatencyDeltaMs": {"median": 1.300100000022212, "p95": 1.2710000000079162},
+      "gains": [{"id": "E078", "before": 0, "after": 3}],
+      "losses": [],
+      "rankWorse": [{"id": "E061", "before": 4, "after": 5}],
+      "futureFreshHoldout": false,
+      "generalizationLimit": "independent_n_15"
+    },
+    "mixedRegression": {
+      "questions": 40,
+      "independentN": 40,
+      "idConvention": "gold array order mapped to M001 through M040",
+      "vector": {"hit5": 30, "mrr5": 0.5183333333333333},
+      "current": {"hit5": 31, "mrr5": 0.6391666666666667, "hybridMedianMs": 58.25109999999404, "hybridP95Ms": 70.14929999999003},
+      "protected": {"hit5": 32, "mrr5": 0.6379166666666667, "hybridMedianMs": 59.36939999999595, "hybridP95Ms": 72.40020000000368},
+      "hybridLatencyDeltaMs": {"median": 1.1183000000019092, "p95": 2.250900000013644},
+      "gains": [{"id": "M016", "before": 0, "after": 3}],
+      "losses": [],
+      "rankWorse": [
+        {"id": "M006", "before": 1, "after": 2},
+        {"id": "M012", "before": 2, "after": 3},
+        {"id": "M029", "before": 1, "after": 2},
+        {"id": "M034", "before": 4, "after": 5}
+      ],
+      "mrrDecreased": true
+    },
+    "priorVectorOnly": {
+      "total": 9,
+      "recovered": ["E011", "E013", "E015", "E022", "E084", "E102"],
+      "remaining": ["E018", "E019", "E028"]
+    }
+  },
+  "cases": [
+  {
+    "id": "E001",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E002",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E005",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E006",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E007",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E009",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E010",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E011",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E012",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E013",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E014",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E015",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E016",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E017",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E018",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E019",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E020",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E021",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E022",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E024",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E025",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E027",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 3,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E028",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E029",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E030",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E031",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E032",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E033",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E034",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E035",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E037",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E038",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E039",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E040",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E041",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E042",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E043",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E045",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E046",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E047",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E048",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E049",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E051",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E052",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E053",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E054",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E056",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E057",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E058",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E059",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E060",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E062",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E063",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E064",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E065",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E066",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E067",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E068",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E069",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E070",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E071",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E072",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E073",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E074",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E075",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E076",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E077",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E079",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E080",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E081",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E082",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E083",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E084",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E085",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E086",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E087",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E088",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E089",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E090",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E091",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E092",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E094",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E095",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E096",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E097",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E098",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E099",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E100",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E101",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E102",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E103",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 3,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E104",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E105",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E106",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E107",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E109",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E110",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E111",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E112",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E113",
+    "cohort": "development",
+    "ranks": {
+      "fts": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E003",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E004",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E008",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E023",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E026",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E036",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E044",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E050",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 3,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E055",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E061",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E078",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E093",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E108",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E114",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "E115",
+    "cohort": "heldout",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M001",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M002",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M003",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M004",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M005",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M006",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M007",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M008",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M009",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M010",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M011",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M012",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 2,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M013",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M014",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M015",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M016",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M017",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 3,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M018",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M019",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M020",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M021",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M022",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M023",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M024",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M025",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M026",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M027",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M028",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M029",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M030",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M031",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M032",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M033",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M034",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 5,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 4,
+        "after": 5,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M035",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 3,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M036",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M037",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 0,
+        "after": 0,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M038",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 3,
+        "after": 3,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M039",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  },
+  {
+    "id": "M040",
+    "cohort": "mixedRegression",
+    "ranks": {
+      "fts": {
+        "before": 2,
+        "after": 2,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "vector": {
+        "before": 4,
+        "after": 4,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      },
+      "hybrid": {
+        "before": 1,
+        "after": 1,
+        "stable": {
+          "before": true,
+          "after": true
+        }
+      }
+    }
+  }
+],
+  "globalScreen": {
+    "questions": 100,
+    "workspaces": 10,
+    "orders": 2,
+    "actualSearches": 400,
+    "current": {"normalHit5": 18, "reversedHit5": 18, "orderSensitiveTop5": 20, "orderSensitiveFullReturn": 100},
+    "unconditionalProtected": {"normalHit5": 23, "reversedHit5": 15, "orderSensitiveTop5": 100, "orderSensitiveFullReturn": 100},
+    "warnings": 0,
+    "errors": 0,
+    "decision": "reject_unconditional_multi_workspace_rollout"
+  },
+  "verification": {
+    "engineeringChecks": {
+      "build": "passed",
+      "testFusionProtection": "passed",
+      "testHybrid": "passed",
+      "testFileGlob": "passed",
+      "ciCoverageAdded": true
+    },
+    "developmentOriginalBaselineIdentical": 1500,
+    "developmentOfflineCandidateIdentical": 500,
+    "sourceAndManifestsUnchangedDuringPairedReplay": true,
+    "tableVersionsUnchangedDuringPairedReplay": true,
+    "candidateNotRetuned": true,
+    "finalScopeSearches": 774,
+    "finalSingleWorkspaceFullResponsePairs": 155,
+    "finalSingleWorkspaceFullResponse": "identical_to_frozen_candidate",
+    "finalMultipleWorkspaceFullResponsePairs": 200,
+    "finalMultipleWorkspaceFullResponse": "identical_to_existing_weighted_rrf_in_normal_and_reversed_order",
+    "otherTopNAndFileGlobPairs": 32,
+    "otherTopN": [1, 3, 10, 20],
+    "otherTopNAndFileGlobFullResponse": "identical_to_frozen_candidate",
+    "finalScopeWarnings": 0,
+    "indexAndManifestsUnchangedDuringFinalScopeCheck": true,
+    "sourceFilesChangedSincePairedReplay": 2,
+    "finalScopeEvidenceLimit": "frozen_index_equivalence_only; no refreshed-source accuracy claim",
+    "productionDeployment": {
+      "deployedAtLocal": "2026-09-11 14:23 KST",
+      "compiledFilesBackedUp": 2,
+      "healthCheck": "passed",
+      "workspaces": 10,
+      "apiVerification": {
+        "status": "passed",
+        "requests": 665,
+        "singleWorkspaceRequests": 465,
+        "singleTop5IdScoreMetadataMatch": true,
+        "multipleWorkspaceRequests": 200,
+        "multipleFullIdScoreOrderMatch": true,
+        "warnings": 0,
+        "healthy": true
+      }
+    }
+  },
+  "stageInterpretation": {
+    "recoveredCases": "previously observed fusion-stage top-5 losses recovered by protecting the vector prefix",
+    "remainingCases": "vector candidates below the protected prefix remained outside the final top 5",
+    "agentPlanningAnswersAndSafety": "not_observed"
+  }
+}

@@ -234,7 +234,7 @@ The CLI prints its labels in Korean. The layout above is what to expect.
 
 In `hybrid`, a query consisting only of a case-sensitive qualified identifier such as `ExampleType.ExampleMethod` returns matching symbol definitions without an embedding call. This includes overloads, split method chunks, and merged member chunks. File filters still apply. If no definition matches in a workspace, that workspace uses the normal hybrid search. Prose queries and explicit `fts` / `vector` modes retain their normal behavior; use prose when looking for usages rather than definitions.
 
-Hybrid fusion weights vector ranks 4:1 against FTS ranks (RRF k=60). This favors semantic candidates while retaining lexical evidence. See the [fusion comparison](docs/tuning/2026-09-11-weighted-rrf.md) for measured gains, ranking tradeoffs, and latency.
+For one workspace, hybrid fusion places the top three vector candidates first, then fills from vector:FTS 4:1 weighted RRF (k=60), removing duplicates. Searches across multiple workspaces retain weighted RRF throughout. Single-workspace fusion scores express ordering, not confidence or scores comparable across workspaces. See the [prefix protection comparison](docs/tuning/2026-09-11-vector-prefix.md) for measured gains, ranking tradeoffs, and the reason for this scope.
 
 Requesting `hybrid` or `vector` on a workspace indexed without embeddings makes the server fall back to `fts` and say so in the response `warnings`, except when the hybrid definition lookup succeeds.
 
