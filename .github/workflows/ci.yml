@@ -47,6 +47,9 @@ jobs:
       - name: Indexer incremental test (fts-only path)
         run: npm run test:incremental
         working-directory: indexer
+      - name: Indexer prefix exclusion test
+        run: npm run test:exclusion-prefix
+        working-directory: indexer
       - name: Indexer partial failure contract test
         run: npm run test:partial-failure
         working-directory: indexer
