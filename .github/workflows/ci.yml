@@ -62,6 +62,9 @@ jobs:
       - name: Indexer deterministic hybrid test
         run: npm run test:hybrid
         working-directory: indexer
+      - name: Indexer scoped vector prefix fusion test
+        run: npm run test:fusion-protection
+        working-directory: indexer
       - name: Retrieval trajectory attribution and observer tests
         run: node scripts/test-retrieval-trace.mjs
       - name: Public retrieval report consistency

@@ -18,6 +18,7 @@
     "test:file-glob": "node tests/fileGlob.mjs",
     "test:source-validation": "node tests/sourceValidation.mjs",
     "test:hybrid": "node tests/hybridHarness.mjs",
+    "test:fusion-protection": "node tests/fusionProtection.mjs",
     "test:embed-keep-alive": "node tests/embedKeepAlive.mjs"
   },
   "dependencies": {

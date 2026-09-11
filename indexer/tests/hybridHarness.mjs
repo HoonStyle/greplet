@@ -81,6 +81,26 @@ try {
   assert.equal(fake.requests.length - calls, 1);
   assert.equal(shared.workspaceResults.every(ws => ws.effectiveMode === "hybrid" && !ws.failed), true);
   assert.deepEqual(shared.warnings, []);
+  // Protect the prefix only within a single requested workspace. Scores from
+  // different workspaces must retain the existing weighted-RRF scale, including
+  // when one of the requested workspaces has no table.
+  const normalTable = await openOrCreateTable(cfg, normal);
+  const reference = await normalTable.query().nearestTo(unit(0)).distanceType("cosine")
+    .fullTextSearch("needle").rerank(await createVectorWeightedReranker())
+    .select(["id", "file"]).limit(50).toArray();
+  const normalRanks = result => result.hits.filter(h => h.workspace === normal.slug).map(h => [h.id, h.score]);
+  const expectedRanks = reference.map(r => [r.id, r._relevance_score]);
+  assert.deepEqual(normalRanks(shared), expectedRanks);
+  const missing = workspace("not-indexed");
+  for (const selected of [[second, normal], [normal, missing]]) {
+    assert.deepEqual(normalRanks(await search(cfg, selected, "needle", 2, "hybrid", { bypassCache: true })), expectedRanks);
+  }
+  const singleCached = await search(cfg, [normal], "needle", 2, "hybrid");
+  assert.equal(singleCached.hits[0].score, 0.5);
+  const multipleCached = await search(cfg, [normal, second], "needle", 2, "hybrid");
+  assert.deepEqual(normalRanks(multipleCached), expectedRanks);
+  assert.equal((await search(cfg, [normal], "needle", 2, "hybrid")).cached, true);
+  assert.equal((await search(cfg, [normal, second], "needle", 2, "hybrid")).cached, true);
   calls = fake.requests.length;
   await search(cfg, [normal, second], "needle", 2, "fts", { bypassCache: true });
   assert.equal(fake.requests.length - calls, 0);

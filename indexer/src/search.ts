@@ -3,7 +3,7 @@
 */
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
-import { createVectorWeightedReranker } from "./rerank.js";
+import { createVectorWeightedReranker, createVectorProtectedReranker } from "./rerank.js";
 import type { AppConfig, WorkspaceConfig } from "./config.js";
 import { openOrCreateTable, tableExists, manifestPathFor } from "./db.js";
 import { embedQuery } from "./embed.js";
@@ -158,6 +158,7 @@ async function searchOneWorkspace(
   outcome: WorkspaceSearchOutcome,
   getQueryVector: () => Promise<number[]>,
   preferSymbols: boolean,
+  protectVectorPrefix: boolean,
 ): Promise<SearchHit[]> {
   const finish = (hits: SearchHit[], actualMode: SearchMode): SearchHit[] => {
     outcome.effectiveMode = actualMode;
@@ -238,8 +239,10 @@ async function searchOneWorkspace(
         // 전부 1/(60+rank) 동점이 되고 순위가 사실상 무작위가 된다 → 후보를 넉넉히 뽑아 융합한 뒤 topN 만 남긴다.
         stage("vector", "enter");
         stage("fts", "enter");
-        stage("rerank", "enter");
-        const rr = await createVectorWeightedReranker();
+        stage("rerank", "enter", protectVectorPrefix ? "vector-prefix:3; rrf:4:1,k60" : "rrf:4:1,k60");
+        const rr = protectVectorPrefix
+          ? await createVectorProtectedReranker()
+          : await createVectorWeightedReranker();
         const poolSize = Math.max(topN * 10, HYBRID_MIN_POOL);
         const rows = await q.fullTextSearch(query).rerank(rr).select(SELECT_COLS).limit(poolSize).toArray();
         return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._relevance_score ?? 0)))), "hybrid");
@@ -351,7 +354,9 @@ export async function search(
     let queryVector: Promise<number[]> | undefined;
     const getQueryVector = () => queryVector ??= embedQuery(cfg, query);
     const perWs = await Promise.all(
-      workspaces.map((ws, i) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, filePredicate, id, workspaceResults[i], getQueryVector, opts.symbolFirst !== false)),
+      // Prefix scores express order inside one workspace. Keep weighted RRF
+      // when merging workspaces, where these ordinal scores are not comparable.
+      workspaces.map((ws, i) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, filePredicate, id, workspaceResults[i], getQueryVector, opts.symbolFirst !== false, workspaces.length === 1)),
     );
     emitActivity({ type: "search.stage", id, workspace: "*", stage: "sort", status: "enter" });
     const hits = perWs.flat().sort((a, b) => b.score - a.score);
