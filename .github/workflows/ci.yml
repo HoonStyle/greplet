@@ -72,6 +72,8 @@ jobs:
         run: node scripts/test-retrieval-trace.mjs
       - name: Public retrieval report consistency
         run: node scripts/report-retrieval-results.mjs --check
+      - name: Public workspace routing report consistency
+        run: node scripts/report-workspace-routing.mjs --check
       - name: Indexer embedding keep-alive test
         run: npm run test:embed-keep-alive
         working-directory: indexer
