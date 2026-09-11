@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "greplet": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/plugin-bootstrap.mjs"
+      ]
+    }
+  }
+}

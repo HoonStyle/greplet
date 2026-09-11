@@ -1,0 +1,20 @@
+{
+  "name": "greplet-local",
+  "interface": {
+    "displayName": "greplet Local"
+  },
+  "plugins": [
+    {
+      "name": "greplet",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer tools"
+    }
+  ]
+}

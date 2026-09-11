@@ -1,0 +1,31 @@
+{
+  "name": "greplet",
+  "version": "0.11.2",
+  "description": "Search indexed code and documents with a local greplet backend.",
+  "author": {
+    "name": "HoonStyle"
+  },
+  "license": "MIT",
+  "skills": "./skills/",
+  "mcpServers": {
+    "greplet": {
+      "command": "node",
+      "args": [
+        "scripts/plugin-bootstrap.mjs"
+      ],
+      "cwd": "."
+    }
+  },
+  "interface": {
+    "displayName": "greplet",
+    "shortDescription": "Local code and document search.",
+    "developerName": "HoonStyle",
+    "category": "Developer tools",
+    "capabilities": [
+      "Read"
+    ],
+    "defaultPrompt": [
+      "Use greplet to find the implementation relevant to this task."
+    ]
+  }
+}

@@ -40,6 +40,8 @@ greplet combines vector search (Ollama `bge-m3`) with BM25 full-text search usin
 
 **Start here:** [Install and run](#install-and-run) → [Usage](#usage) → [Agent clients](#clients). Node 22+ and .NET 8 are required for a source build; Ollama is optional for keyword-only search.
 
+**Claude Code / Codex plugin:** See [self-hosted marketplace installation](docs/plugin-install.md). Uses your existing indexer; no central directory listing is implied.
+
 ## Overview
 
 1. **The index follows the code.** A file-hash manifest applies additions, changes, and deletions incrementally. A post-commit hook drives it, so chunks of deleted files do not linger in search results.
