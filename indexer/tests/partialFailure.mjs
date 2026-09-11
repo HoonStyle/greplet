@@ -20,7 +20,7 @@ process.env.GREPLET_WORKSPACES = workspacesPath;
 process.env.GREPLET_DATA_DIR = dataDir;
 
 const { loadConfig, loadWorkspaces, findWorkspace } = await import("../dist/config.js");
-const { runExtractor } = await import("../dist/extract.js");
+const { runExtractor, canonicalPath } = await import("../dist/extract.js");
 const { JobManager } = await import("../dist/indexJob.js");
 const { manifestPathFor, openOrCreateTable } = await import("../dist/db.js");
 const { loadManifest } = await import("../dist/scan.js");
@@ -65,6 +65,20 @@ async function assertStructuredExtractorContract() {
   assert.equal(result.chunks.some(c => path.resolve(c.abs) === path.resolve(ok)), true);
   assert.equal(result.chunks.some(c => path.resolve(c.abs) === path.resolve(missing)), false);
   fs.unlinkSync(ok);
+}
+
+function assertWindowsPathAliases() {
+  if (process.platform !== "win32") return;
+  // A junction exercises distinct path spellings without depending on 8.3
+  // name generation being enabled on the test machine's volume.
+  const actual = path.join(tmpRoot, "actual-directory");
+  const alias = path.join(tmpRoot, "alias-directory");
+  fs.mkdirSync(actual);
+  fs.symlinkSync(actual, alias, "junction");
+  fs.writeFileSync(path.join(actual, "ok.txt"), "alias fixture");
+  assert.equal(canonicalPath(path.join(alias, "ok.txt")), canonicalPath(path.join(actual, "ok.txt")));
+  assert.equal(canonicalPath(path.join(alias, "missing", "file.txt")), canonicalPath(path.join(actual, "missing", "file.txt")));
+  assert.notEqual(canonicalPath(path.join(alias, "missing.txt")), canonicalPath(path.join(tmpRoot, "outside.txt")));
 }
 
 async function assertPartialRetryAndZeroChunks() {
@@ -127,6 +141,7 @@ async function assertPartialRetryAndZeroChunks() {
 }
 
 try {
+  assertWindowsPathAliases();
   await assertStructuredExtractorContract();
   await assertPartialRetryAndZeroChunks();
   console.log("partial failure contract tests passed");
