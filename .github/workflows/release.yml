@@ -29,6 +29,8 @@ jobs:
           if [ "$v" != "$TAG" ]; then echo "::error::Extractor.csproj Version $v != tag $TAG"; fail=1; fi
           grep -q "## \[$TAG\]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no section for $TAG"; fail=1; }
           exit $fail
+      - name: Check package lock versions
+        run: node scripts/test-package-versions.mjs --metadata-only
 
   extractor:
     name: Extractor (${{ matrix.rid }})

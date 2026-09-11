@@ -1,0 +1,1099 @@
+{
+  "schemaVersion": 1,
+  "report": "2026-09-11 release validation",
+  "evaluation": {
+    "executionQuestions": 24,
+    "scorableQuestions": 22,
+    "unscorableQuestions": [
+      "U011",
+      "U023"
+    ],
+    "topN": 5,
+    "rounds": 3,
+    "modes": [
+      "fts",
+      "vector",
+      "hybrid"
+    ],
+    "scopes": [
+      "original",
+      "all"
+    ],
+    "versions": [
+      "baseline",
+      "candidate"
+    ],
+    "goldSha256": "0b5a68223b2e9b2eae253746b964ee1fb389700d6b2111cab17de63c27d8d54c",
+    "candidateFrozen": true,
+    "rankedSearchesBeforeFreeze": 0,
+    "policyNotRetuned": true,
+    "indexedVersionRankingOnly": true,
+    "sourceCommit": "3468ec55eb2fa49017c98ffbe7b96edaeab8dff4",
+    "implementationCommit": "ce2062369dfbb9df19a9ab25a927544655e2bdfb",
+    "baseline": "T06 vector:FTS 4:1 weighted RRF k60",
+    "registeredAt": "2026-09-11T06:05:48.131Z",
+    "goldFrozenAt": "2026-09-11T06:15:54.364Z"
+  },
+  "rankConvention": "0 means the frozen target was outside topN; null means unscorable. Each version was stable across the three rounds; [baseline, candidate] does not imply equality between versions.",
+  "cases": [
+    {
+      "id": "U001",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U002",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          3,
+          3
+        ],
+        "hybrid": [
+          2,
+          3
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          4,
+          4
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U003",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          1,
+          1
+        ],
+        "hybrid": [
+          1,
+          1
+        ]
+      },
+      "all": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "U004",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          2,
+          2
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          2,
+          2
+        ]
+      },
+      "all": {
+        "fts": [
+          4,
+          4
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U005",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          1,
+          2
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U006",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          2,
+          5
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U007",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          1,
+          2
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U008",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          1,
+          1
+        ],
+        "hybrid": [
+          1,
+          1
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          4,
+          4
+        ],
+        "hybrid": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "U009",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          5,
+          5
+        ]
+      },
+      "all": {
+        "fts": [
+          2,
+          2
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U010",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          5,
+          5
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          2,
+          2
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U011",
+      "scorable": false,
+      "stable": true,
+      "original": {
+        "fts": [
+          null,
+          null
+        ],
+        "vector": [
+          null,
+          null
+        ],
+        "hybrid": [
+          null,
+          null
+        ]
+      },
+      "all": {
+        "fts": [
+          null,
+          null
+        ],
+        "vector": [
+          null,
+          null
+        ],
+        "hybrid": [
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "id": "U012",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          2,
+          2
+        ]
+      },
+      "all": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          5,
+          5
+        ],
+        "hybrid": [
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "id": "U013",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          4,
+          4
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          2,
+          2
+        ]
+      },
+      "all": {
+        "fts": [
+          5,
+          5
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U014",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          4,
+          4
+        ],
+        "hybrid": [
+          4,
+          4
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U015",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          1,
+          1
+        ],
+        "vector": [
+          1,
+          1
+        ],
+        "hybrid": [
+          1,
+          1
+        ]
+      },
+      "all": {
+        "fts": [
+          4,
+          4
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "U016",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          3,
+          3
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U017",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          2,
+          2
+        ],
+        "vector": [
+          3,
+          3
+        ],
+        "hybrid": [
+          5,
+          3
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U018",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          2,
+          2
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U019",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          1,
+          1
+        ],
+        "hybrid": [
+          0,
+          1
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          1,
+          1
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U020",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          2,
+          2
+        ],
+        "hybrid": [
+          1,
+          2
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U021",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U022",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          1,
+          1
+        ],
+        "hybrid": [
+          0,
+          1
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          1,
+          1
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "U023",
+      "scorable": false,
+      "stable": true,
+      "original": {
+        "fts": [
+          null,
+          null
+        ],
+        "vector": [
+          null,
+          null
+        ],
+        "hybrid": [
+          null,
+          null
+        ]
+      },
+      "all": {
+        "fts": [
+          null,
+          null
+        ],
+        "vector": [
+          null,
+          null
+        ],
+        "hybrid": [
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "id": "U024",
+      "scorable": true,
+      "stable": true,
+      "original": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      },
+      "all": {
+        "fts": [
+          0,
+          0
+        ],
+        "vector": [
+          0,
+          0
+        ],
+        "hybrid": [
+          0,
+          0
+        ]
+      }
+    }
+  ],
+  "accuracy": {
+    "searches": 864,
+    "allCasesStable": 24,
+    "summary": [
+      {
+        "scope": "original",
+        "mode": "fts",
+        "baseline": {
+          "hit5": 12,
+          "mrr5": 0.39924242424242423,
+          "medianMs": 10.915399999998044,
+          "p95Ms": 15.974999999999454,
+          "stableQuestions": 24
+        },
+        "candidate": {
+          "hit5": 12,
+          "mrr5": 0.39924242424242423,
+          "medianMs": 11.172900000001391,
+          "p95Ms": 18.221900000000005,
+          "stableQuestions": 24
+        }
+      },
+      {
+        "scope": "original",
+        "mode": "vector",
+        "baseline": {
+          "hit5": 16,
+          "mrr5": 0.45075757575757575,
+          "medianMs": 56.41279999999824,
+          "p95Ms": 77.13079999999991,
+          "stableQuestions": 24
+        },
+        "candidate": {
+          "hit5": 16,
+          "mrr5": 0.45075757575757575,
+          "medianMs": 54.73919999999998,
+          "p95Ms": 66.57310000000143,
+          "stableQuestions": 24
+        }
+      },
+      {
+        "scope": "original",
+        "mode": "hybrid",
+        "baseline": {
+          "hit5": 16,
+          "mrr5": 0.4613636363636363,
+          "medianMs": 56.81399999999849,
+          "p95Ms": 69.69779999999992,
+          "stableQuestions": 24
+        },
+        "candidate": {
+          "hit5": 18,
+          "mrr5": 0.46893939393939393,
+          "medianMs": 58.46689999999944,
+          "p95Ms": 70.9947000000011,
+          "stableQuestions": 24
+        }
+      },
+      {
+        "scope": "all",
+        "mode": "fts",
+        "baseline": {
+          "hit5": 6,
+          "mrr5": 0.14545454545454548,
+          "medianMs": 29.01339999999982,
+          "p95Ms": 37.10740000000078,
+          "stableQuestions": 24
+        },
+        "candidate": {
+          "hit5": 6,
+          "mrr5": 0.14545454545454548,
+          "medianMs": 28.46539999999368,
+          "p95Ms": 36.81750000000466,
+          "stableQuestions": 24
+        }
+      },
+      {
+        "scope": "all",
+        "mode": "vector",
+        "baseline": {
+          "hit5": 9,
+          "mrr5": 0.21363636363636365,
+          "medianMs": 87.33689999999478,
+          "p95Ms": 101.0581000000002,
+          "stableQuestions": 24
+        },
+        "candidate": {
+          "hit5": 9,
+          "mrr5": 0.21363636363636365,
+          "medianMs": 89.78160000000025,
+          "p95Ms": 101.14750000000004,
+          "stableQuestions": 24
+        }
+      },
+      {
+        "scope": "all",
+        "mode": "hybrid",
+        "baseline": {
+          "hit5": 4,
+          "mrr5": 0.08333333333333333,
+          "medianMs": 127.80219999999827,
+          "p95Ms": 143.57110000000011,
+          "stableQuestions": 24
+        },
+        "candidate": {
+          "hit5": 4,
+          "mrr5": 0.08333333333333333,
+          "medianMs": 124.95110000000204,
+          "p95Ms": 141.15409999999974,
+          "stableQuestions": 24
+        }
+      }
+    ],
+    "hybridGains": {
+      "original": [
+        "U019",
+        "U022"
+      ],
+      "all": []
+    },
+    "hybridLosses": {
+      "original": [],
+      "all": []
+    },
+    "gatePassed": true,
+    "hybridRetainedHitRankLosses": [
+      {
+        "id": "U002",
+        "before": 2,
+        "after": 3
+      },
+      {
+        "id": "U005",
+        "before": 1,
+        "after": 2
+      },
+      {
+        "id": "U006",
+        "before": 2,
+        "after": 5
+      },
+      {
+        "id": "U007",
+        "before": 1,
+        "after": 2
+      },
+      {
+        "id": "U020",
+        "before": 1,
+        "after": 2
+      }
+    ]
+  },
+  "concurrency": {
+    "requests": 432,
+    "harness": "uncached loopback HTTP using the same frozen index and search behavior; not an operational API latency comparison",
+    "levels": [
+      {
+        "level": 1,
+        "requestsPerVersion": 72,
+        "baselineP95Ms": 152.20639999999548,
+        "candidateP95Ms": 150.13090000000375,
+        "errors": 0,
+        "warnings": 0,
+        "mismatches": 0,
+        "baselineMedianMs": 85.36130000000412,
+        "baselineMaxMs": 163.49990000000253,
+        "candidateMedianMs": 104.24209999998857,
+        "candidateMaxMs": 161.60740000000078
+      },
+      {
+        "level": 4,
+        "requestsPerVersion": 72,
+        "baselineP95Ms": 254.7086000000054,
+        "candidateP95Ms": 260.5313999999926,
+        "errors": 0,
+        "warnings": 0,
+        "mismatches": 0,
+        "baselineMedianMs": 206.01929999999993,
+        "baselineMaxMs": 275.9308000000019,
+        "candidateMedianMs": 204.94540000000416,
+        "candidateMaxMs": 281.4557000000059
+      },
+      {
+        "level": 8,
+        "requestsPerVersion": 72,
+        "baselineP95Ms": 480.52840000001015,
+        "candidateP95Ms": 483.32810000001336,
+        "errors": 0,
+        "warnings": 0,
+        "mismatches": 0,
+        "baselineMedianMs": 352.74900000000343,
+        "baselineMaxMs": 487.17439999999624,
+        "candidateMedianMs": 359.15359999999055,
+        "candidateMaxMs": 498.8891000000003
+      }
+    ],
+    "gatePassed": true
+  },
+  "operationalApi": {
+    "requests": 216,
+    "cached": 192,
+    "errors": 0,
+    "warnings": 0,
+    "mismatches": 0,
+    "gatePassed": true
+  },
+  "sourcePreflight": {
+    "preExistingDriftCase": "U001",
+    "currentDocumentTopicPresent": true,
+    "rankingUsesFrozenIndexedVersion": true,
+    "otherSourceHashesMatched": 20,
+    "hashStabilityDuringValidation": true
+  },
+  "gates": {
+    "accuracy": true,
+    "concurrency": true,
+    "operationalApi": true,
+    "sourceAndIndexUnchangedDuringValidation": true,
+    "releaseValidationPassed": true,
+    "preregisteredAccuracy": {
+      "maximumHybridHitLoss": 0,
+      "minimumHybridNetGain": 0,
+      "maximumErrors": 0,
+      "maximumWarnings": 0
+    },
+    "preregisteredConcurrency": {
+      "maximumErrors": 0,
+      "maximumWarnings": 0,
+      "maximumResultMismatch": 0,
+      "maxLatencyMs": 10000,
+      "candidateP95RelativeToBaselineMax": 1.5,
+      "candidateP95AbsoluteAllowanceMs": 25
+    },
+    "latencyChecks": [
+      {
+        "level": 1,
+        "baselineP95": 152.20639999999548,
+        "candidateP95": 150.13090000000375,
+        "limitMs": 253.30959999999322,
+        "passed": true
+      },
+      {
+        "level": 4,
+        "baselineP95": 254.7086000000054,
+        "candidateP95": 260.5313999999926,
+        "limitMs": 407.0629000000081,
+        "passed": true
+      },
+      {
+        "level": 8,
+        "baselineP95": 480.52840000001015,
+        "candidateP95": 483.32810000001336,
+        "limitMs": 745.7926000000152,
+        "passed": true
+      }
+    ]
+  },
+  "releaseReadiness": {
+    "version": "0.11.2",
+    "localBuildsPassed": [
+      "Extractor",
+      "remote MCP"
+    ],
+    "componentVersionsAndStdioHttpInitializePassed": true,
+    "publicationStatusSource": "https://github.com/HoonStyle/greplet/releases/tag/v0.11.2"
+  }
+}

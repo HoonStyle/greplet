@@ -15,8 +15,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { readFileSync } from "node:fs";
 
 const BASE_URL = process.env.GREPLET_BASE_URL || "http://localhost:7802";
+const PACKAGE_VERSION = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 const CLIENT_NAME = process.env.GREPLET_CLIENT_NAME || "mcp:claude";
 const DEFAULT_WORKSPACE = process.env.GREPLET_DEFAULT_WORKSPACE || undefined;
 const SESSION_HEADERS = process.env.GREPLET_SESSION ? { "X-Greplet-Session": process.env.GREPLET_SESSION } : {};
@@ -171,7 +173,7 @@ async function callEvidenceGetApi(evidenceRef) {
 }
 
 // ---------- MCP 서버 (stdio) ----------
-const server = new McpServer({ name: "greplet", version: "0.10.0" });
+const server = new McpServer({ name: "greplet", version: PACKAGE_VERSION });
 
 server.registerTool(
   "greplet",

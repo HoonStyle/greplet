@@ -85,7 +85,7 @@ jobs:
         shell: bash
         run: node scripts/test-cli-evidence.mjs
 
-      # Remote MCP server: build only (smoke needs a running indexer + token)
+      # Remote MCP server: build; version handshake below uses an isolated server.
       - name: mcp-server install + build
         run: npm ci && npm run build
         working-directory: mcp-server
@@ -111,6 +111,9 @@ jobs:
             await c.close();
           ' --input-type=module
         working-directory: greplet-mcpb
+
+      - name: Package versions and MCP initialize responses
+        run: node scripts/test-package-versions.mjs
 
       # CLI: help + offline error path
       - name: greplet.mjs smoke

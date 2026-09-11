@@ -11,6 +11,7 @@
 */
 import express from "express";
 import { timingSafeEqual } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
@@ -31,6 +32,7 @@ const backend: BackendConfig = {
   defaultWorkspace: process.env.GREPLET_DEFAULT_WORKSPACE || undefined,
 };
 const PORT = Number(process.env.PORT ?? 7801);
+const PACKAGE_VERSION: string = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 
 if (!AUTH_TOKEN) {
   console.error("[fatal] MCP_AUTH_TOKEN 미설정 — 무인증 공개 금지. 기동 중단.");
@@ -39,7 +41,7 @@ if (!AUTH_TOKEN) {
 
 // ---------- MCP 서버 (요청마다 새 인스턴스 — stateless) ----------
 function buildMcpServer(): McpServer {
-  const server = new McpServer({ name: "greplet", version: "0.10.0" });
+  const server = new McpServer({ name: "greplet", version: PACKAGE_VERSION });
 
   server.registerTool(
     "greplet",
