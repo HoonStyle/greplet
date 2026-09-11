@@ -4,6 +4,16 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 
 const base = new URL('../docs/tuning/', import.meta.url);
+const checkOnly = process.argv.includes('--check');
+function emitReport(file, content) {
+  const target = new URL(file, base);
+  if (checkOnly) {
+    assert.equal(fs.readFileSync(target, 'utf8').replaceAll('\r\n', '\n'), content.replaceAll('\r\n', '\n'),
+      `${file} is stale; run node scripts/report-retrieval-results.mjs`);
+  } else {
+    fs.writeFileSync(target, content);
+  }
+}
 const inputs = ['2026-09-11-expanded-100.json', '2026-09-11-trajectory-rerun.json'];
 const [original, traced] = inputs.map(file => JSON.parse(fs.readFileSync(new URL(`results/${file}`, base), 'utf8')));
 assert.equal(original.protocol.querySha256, traced.protocol.querySha256);
@@ -100,7 +110,7 @@ const result = { schemaVersion: 1, date: '2026-09-11', newSearches: 0, uniqueQue
   querySha256: original.protocol.querySha256,
   inputs: inputs.map((file, i) => ({ file, canonicalJsonSha256: createHash('sha256').update(JSON.stringify([original, traced][i])).digest('hex') })),
   groups, transitions, workspaceBreakdown, comparison, strictHybridOnly, rankBands, retainedMissRanks };
-fs.writeFileSync(new URL('results/2026-09-11-trajectory-details.json', base), JSON.stringify(result, null, 2) + '\n');
+emitReport('results/2026-09-11-trajectory-details.json', JSON.stringify(result, null, 2) + '\n');
 
 const rankText = n => n === 0 ? '—' : String(n);
 const retained = groups.retainedHitImprovedRank.length + groups.retainedHitSameRank.length + groups.retainedHitWorseRank.length;
@@ -148,6 +158,6 @@ lines.push('## 근거와 재생성', '',
   '- [T07 원래 적중 결과](results/2026-09-11-expanded-100.json) · [T09 단계별 순위](results/2026-09-11-trajectory-rerun.json)', '',
   '저장소 루트에서 `node scripts/report-retrieval-results.mjs`로 재생성한다. 공개된 두 JSON만 사용하며 문항 해시·100개 ID·전후 순위·회귀 수·워크스페이스 합계·전이표 합계를 대조한다. 비공개 원시 자료나 검색 서비스 접속이 필요하지 않다.', '',
   'T07~T09 평가와 실행 도구는 `6aa26ed`에 기록돼 있다. 이 부록은 동일 실험의 결과 보완이며 새 튜닝 단계가 아니다.', '');
-fs.writeFileSync(new URL('2026-09-11-trajectory-details.md', base), lines.join('\n'));
+emitReport('2026-09-11-trajectory-details.md', lines.join('\n'));
 console.log(JSON.stringify({ groups: Object.fromEntries(Object.entries(groups).map(([k, ids]) => [k, ids.length])),
   rankBands, workspaceBreakdown, hybridOnly: comparison.hybridOnly, checks: '100 cases reconciled; no searches' }, null, 2));
