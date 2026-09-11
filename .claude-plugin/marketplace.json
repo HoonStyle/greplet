@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "greplet",
+  "owner": {
+    "name": "HoonStyle"
+  },
+  "plugins": [
+    {
+      "name": "greplet",
+      "source": "./",
+      "description": "Local code and document search with MCP and an agent skill.",
+      "category": "development"
+    }
+  ]
+}
