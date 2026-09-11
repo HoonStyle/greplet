@@ -1,395 +1,309 @@
 # greplet
 
-<p align="center">
-  <a href="README.md"><img alt="언어: English" src="https://img.shields.io/badge/lang-English-blue"></a>
-  <a href="README.ko.md"><img alt="언어: 한국어" src="https://img.shields.io/badge/lang-%ED%95%9C%EA%B5%AD%EC%96%B4-blue"></a>
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
-  <a href="https://github.com/HoonStyle/greplet/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/HoonStyle/greplet/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Node 22+" src="https://img.shields.io/badge/Node-22%2B-339933?logo=nodedotjs&logoColor=white">
-  <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
-  <img alt="C# / Roslyn" src="https://img.shields.io/badge/C%23-Roslyn-239120?logo=csharp&logoColor=white">
-  <br>
-  <img alt="LanceDB" src="https://img.shields.io/badge/LanceDB-vector%20%2B%20FTS-EF6A3C">
-  <img alt="Ollama bge-m3" src="https://img.shields.io/badge/Ollama-bge--m3-000000?logo=ollama&logoColor=white">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-stdio%20%C2%B7%20HTTP-6E56CF">
-  <img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-skill%20%2B%20MCP-D97757?logo=claude&logoColor=white">
-  <img alt="Codex" src="https://img.shields.io/badge/Codex-MCP%20%2B%20skill-000000?logo=openai&logoColor=white">
-  <br>
-  <img alt="Windows" src="https://img.shields.io/badge/Windows-CI-0078D4?logo=windows&logoColor=white">
-  <img alt="macOS" src="https://img.shields.io/badge/macOS-CI%20%C2%B7%20Intel%20%C2%B7%20Apple%20Silicon-000000?logo=apple&logoColor=white">
-  <img alt="Linux" src="https://img.shields.io/badge/Linux-CI-FCC624?logo=linux&logoColor=black">
-</p>
+[English](README.md) · [한국어](README.ko.md)
 
-코드와 문서를 위한 로컬 하이브리드 검색 서버입니다. 여러 워크스페이스를 질의하고 **파일·심볼·줄 범위**가 포함된 결과를 점수순으로 받습니다.
+[![CI](https://github.com/HoonStyle/greplet/actions/workflows/ci.yml/badge.svg)](https://github.com/HoonStyle/greplet/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+![Node 22+](https://img.shields.io/badge/Node-22%2B-339933)
+![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-greplet은 벡터 검색(Ollama `bge-m3`)과 BM25 전문 검색을 RRF로 결합합니다. 소스 청크를 검색하며 답변을 생성하지 않습니다. 기본 검색 구성은 로컬에서 동작하고, 다운로드·선택적 원격 연동에는 별도 네트워크 조건이 적용됩니다.
+**코드와 문서를 로컬에서 검색하고, 에이전트가 바로 열 수 있는 근거 위치를 반환합니다.**
 
-**시작하기:** [설치와 실행](#설치와-실행) → [사용법](#사용법) → [에이전트 연동](#클라이언트). 소스 빌드에는 Node 22+와 .NET 8이 필요합니다. 키워드 검색만 사용한다면 Ollama는 선택 사항입니다.
+greplet은 Ollama `bge-m3` 벡터 검색과 BM25 전문 검색을 결합합니다. 하나 또는 여러 워크스페이스에서 소스 청크를 찾아 파일 경로·심볼·줄 또는 페이지 위치를 반환합니다. 내용을 검색하며 답변을 생성하지 않습니다.
 
-**Claude Code / Codex 플러그인:** [자체 마켓 설치 안내](docs/plugin-install.md)를 참고하세요. 기존 인덱서를 사용하며, 공식 중앙 디렉터리 등재와는 별개입니다.
+- **코드와 문서를 함께 검색:** C#은 Roslyn으로 타입·멤버 단위, PDF는 PdfPig로 페이지 단위, 그 외 지원 형식은 텍스트 단위로 나눕니다.
+- **변경을 반영하는 인덱스:** 인덱싱할 때 파일 해시로 추가·수정·삭제를 반영합니다. UI·CLI·API 또는 설치한 커밋 훅으로 실행합니다.
+- **여러 사용 방식:** 관리 UI, Node·PowerShell CLI, 로컬·원격 MCP, Claude Code·Codex 플러그인을 제공합니다.
 
-## 튜닝 히스토리
+기본 인덱서와 임베딩 구성은 로컬에서 실행됩니다. 의존성·모델 설치와 선택적 원격 연동에는 네트워크가 필요합니다. 정확한 파일 경로나 문자열의 모든 출현 위치는 파일 시스템 검색으로 확인할 수 있습니다.
 
-[튜닝 히스토리](docs/tuning/README.md)에서 문제·변경 방법·전후 결과·채택/보류 결정을 누적 관리합니다. 테스트 대상은 익명 처리했으며, 공개용 집계 결과를 함께 제공합니다.
+**시작하기:** [설치와 실행](#설치와-실행) · [검색 사용법](#사용법) · [에이전트 연결](#클라이언트) · [튜닝 히스토리](#튜닝-히스토리)
 
-
-## 개요
-
-1. **인덱스가 코드를 따라간다.** 파일 해시 매니페스트로 추가·변경·삭제를 증분 반영한다. 커밋 훅이 돌리므로 지운 파일의 청크가 검색에 남지 않는다.
-2. **위치로 답한다.** C# 은 Roslyn 으로 타입·멤버 단위, PDF 는 페이지 단위로 자른다. 결과는 `파일 :: 심볼 (L시작-끝)` 형태라 에이전트는 그 자리만 열어 보면 된다.
-3. **찾기만 한다.** 요약·해석·검증은 하지 않는다. 구조는 LSP(Serena), 사양 문서화와 인용 검증은 legacy-spec-agent 가 맡는 [역할 분담](#에이전트에서의-역할-분담)을 전제로 설계했다. 검색 결과는 원본과 대조해야 하며, 후속 도구가 정확성을 보장하는 것은 아니다.
-
-Claude Code 스킬, Codex, Claude Desktop MCP 번들, 원격 MCP 서버, CLI(PowerShell·Node), git 훅으로 붙여 쓴다. 목적은 하나다. 에이전트가 "이 기능 어디 구현돼 있어?", "사양서에 이 값 어떻게 정의돼 있어?" 같은 질문에 폴더 전체를 읽지 않고 답하게 하는 것.
-
-<p align="center"><img src="docs/images/dashboard.png" alt="greplet Live Pipeline 관리 UI" width="900"><br><sub>관리 UI: 검색·인덱싱 Live Pipeline, 클라이언트 활동 피드, 워크스페이스 상태와 검색 테스트</sub></p>
-
-## 목차
-
-- [왜 필요한가](#왜-필요한가)
-- [주요 기능](#주요-기능)
-- [구조](#구조)
-- [요구 환경](#요구-환경)
-- [설치와 실행](#설치와-실행)
-- [사용법](#사용법)
-- [설정](#설정)
-- [클라이언트](#클라이언트)
-- [HTTP API](#http-api)
-- [에이전트에서의 역할 분담](#에이전트에서의-역할-분담)
-- [청킹 규칙](#청킹-규칙)
-- [개발과 검증](#개발과-검증)
-- [알려진 제약](#알려진-제약)
-- [라이선스](#라이선스)
-
-## 왜 필요한가
-
-| 상황 | 기존 도구의 한계 | greplet |
-|---|---|---|
-| 레거시가 여러 벌이고, 현재 코드와 사양서 PDF 가 따로 있다 | 검색 범위가 열린 리포나 활성 프로젝트에 한정되는 경우가 있다 | 리포 밖 어디든 여러 루트를 워크스페이스로 묶는다. `-All` 로 벌 간 비교까지 한 번에 |
-| 상수·에러 코드·메서드명으로 찾는다 | 순수 벡터 검색은 정확 토큰에 약하다 | 벡터 + BM25 하이브리드. `fts` 모드는 Ollama 없이 동작 |
-| 결과를 받아 바로 그 자리를 열어야 한다 | 고정 길이 청킹은 메서드 중간에서 끊기고 위치를 못 준다 | Roslyn 멤버 단위, PDF 페이지 단위. 모든 결과에 파일·심볼·줄 범위 |
-| 코드가 계속 바뀐다 | 수동 업로드한 스냅샷에는 삭제·변경 전 내용이 남을 수 있다 | 파일 해시 매니페스트로 추가·변경·삭제 증분 반영. 커밋 훅 연동 |
-| 소스를 외부로 보낼 수 없다 | 클라우드 검색은 업로드가 전제 | 완전 로컬. 인덱서는 `127.0.0.1` 에만 바인딩. 외부 노출은 Bearer 인증 MCP 서버 경유만 |
-
-반대로 리포 하나에 문서 몇 개인 환경이면 greplet 을 쓸 이유가 약하다. 내장 검색이나 grep 으로 충분하다.
-
-## 주요 기능
-
-### 이름으로 인덱싱 제외
-
-파일이나 폴더 이름 앞에 `!`를 붙이면 제외됩니다. `!임시사양.pdf`는 해당 파일, `!참고자료/`는 모든 하위 파일을 제외합니다. 제외 폴더 내부를 별도 루트로 지정해도 제외하며 업로드에도 적용됩니다. 이름 중간의 `!`나 `#`는 제외 표시가 아닙니다.
-
-이름 변경 후 인덱싱을 실행하면 기존 청크도 제거됩니다. `!`를 없애고 다시 인덱싱하면 복원됩니다. 기존 `excludeDirs`·`excludeFiles` 규칙도 유지됩니다. 소스 파일·폴더 이름 변경은 코드 참조에 영향을 줄 수 있으므로 이름을 유지해야 하는 항목에는 기존 제외 설정을 사용하세요.
-
-### 마이그레이션 근거 조회 (선택 기능)
-
-제품·고객별 레거시를 별도 워크스페이스로 구분한다. `greplet_search_evidence`는 출처별 발췌와 버전이 포함된 참조를, `greplet_get_evidence`는 현재 원본 파일 해시를 확인한 청크 전문을 반환한다. 기존 검색도 다른 출처의 유사 결과를 생략하지 않는다.
-
-```bash
-node greplet.mjs evidence-search "재시도" --all
-node greplet.mjs evidence-get --ref-file evidence-ref.json
-```
-
-`evidence-ref.json`에는 검색 hit의 `evidenceRef` 객체만 저장한다. 검색 결과는 인덱스 기준(`unchecked`)이고, 상세 조회의 `verified`는 조회 시점의 파일 해시 일치만 뜻한다. 의미적 정확성이나 테스트 통과를 보증하지 않는다. 원본 변경·삭제·인덱싱 중에는 정상 근거를 반환하지 않는다.
-
-[전체 로드맵](docs/migration-roadmap.md) · [인터페이스·회귀 검증 계획](docs/greplet-evidence-v1.md). 실제 5세트 파일럿은 자동 검증과 별도 단계다.
-
-- **하이브리드 검색** — `hybrid`(기본) · `vector` · `fts` 세 모드.
-- **Ollama 없이도 동작** — Ollama 가 없으면 영벡터로 인덱싱하고 검색은 `fts` 로 자동 강등한다. Ollama 가 생기면 다음 인덱스 잡이 전체 재인덱스로 승격돼 벡터를 채운다.
-- **구문 단위 청킹** — C# 멤버 단위, PDF 페이지 단위, 그 외 텍스트는 줄 윈도우. 암호 PDF 지원.
-- **증분 인덱싱** — 커밋 훅이나 API 호출로 변경분만 재인덱스.
-- **다중 워크스페이스** — 코드·레거시·문서를 분리해 두고 개별 또는 통합 검색.
-- **관리 UI** — 워크스페이스 상태, 파일 업로드, 재인덱스, 검색 테스트(파일 글롭 필터, 결과 클릭 시 VS Code/Cursor 로 열기), 실시간 로그, Live Pipeline 시각화와 클라이언트별 활동 피드.
-- **결과 캐시** — 같은 질의는 인덱스가 바뀔 때까지 10분간 서버가 캐시. 반복 질의하는 에이전트의 임베딩 호출을 줄인다.
-- **에이전트 연동** — Claude Code 스킬, Codex, MCP(stdio·원격), CLI, git 훅.
-
-## 구조
-
-```
-[Claude Code skill / Codex / MCP / greplet.ps1 / greplet.mjs / post-commit]
-                 │  HTTP (127.0.0.1:7802)
-                 ▼
-        indexer (Node/TS, Express)
-      ┌──────────┼──────────────┐
-  Extractor    Ollama         LanceDB
-  (C#/Roslyn   bge-m3        벡터 + FTS
-   PdfPig)     임베딩         RRF 하이브리드
-```
-
-| 폴더 | 역할 |
-|---|---|
-| `Extractor/` | C# 콘솔. Roslyn·PdfPig 로 파일을 청크 JSONL 로 변환 |
-| `indexer/` | Node/TS 서비스. 스캔·임베딩·LanceDB 저장·검색 API·관리 UI |
-| `greplet.ps1` | PowerShell CLI 클라이언트 (Windows) |
-| `greplet.mjs` | Node CLI 클라이언트 (모든 OS) |
-| `greplet-mcpb/` | Claude Desktop/Cowork 용 로컬 stdio MCP 번들. Codex 도 이 서버를 쓴다 |
-| `mcp-server/` | Bearer 인증 원격 MCP 서버 |
-| `git-hooks/` | 커밋 후 증분 인덱스를 트리거하는 post-commit 훅 |
-| `examples/claude-code-skill/` | Claude Code 스킬 예제, CLAUDE.md 규칙 스니펫, SessionStart 훅 예제 |
-| `examples/codex/` | Codex MCP 등록·스킬 예제 |
-| `docs/design.md` | 상세 설계 문서 |
-
-## 요구 환경
-
-| 항목 | 값 |
-|---|---|
-| Node | 22+ |
-| .NET SDK | 8.0+ |
-| Ollama | 선택. `bge-m3` 모델 (`ollama pull bge-m3`). 없으면 `fts` 전용으로 동작 |
-| PowerShell | 7+. Windows 에서 `greplet.ps1`·`start-indexer.ps1` 을 쓸 때만. 다른 OS 는 `greplet.mjs`·`start-indexer.sh` |
-| OS | Windows · macOS · Linux. Intel Mac 은 LanceDB 버전 제약이 있다([알려진 제약](#알려진-제약)) |
+<p align="center"><img src="docs/images/dashboard.png" alt="워크스페이스 상태·검색 테스트·실시간 활동을 보여 주는 greplet 관리 UI" width="900"></p>
 
 ## 설치와 실행
 
-저장소를 복제한 뒤 루트 디렉터리에서 시작한다.
+### 1. 실행 환경 준비
 
-```bash
+| 요구 환경 | 필요한 경우 |
+|---|---|
+| Node.js 22+와 npm | 인덱서와 Node·MCP 클라이언트 |
+| .NET 8 SDK와 런타임 | 소스에서 Extractor를 빌드하고 실행할 때 |
+| Ollama와 `bge-m3` | 벡터·하이브리드 검색. BM25만 사용하면 선택 사항 |
+| PowerShell 7+ | Windows 기동 스크립트와 PowerShell CLI |
+| Bash와 curl | macOS·Linux 기동 스크립트 |
+
+임베딩을 사용하려면 Ollama를 실행하고 모델을 받습니다.
+
+```sh
+ollama pull bge-m3
+```
+
+Ollama가 없어도 임베딩 없이 인덱싱할 수 있으며 검색은 `fts`로 전환됩니다. Ollama와 모델이 준비되면 인덱싱을 다시 실행해 벡터를 채웁니다.
+
+<details>
+<summary>macOS 환경 설정과 Intel Mac 호환 설치</summary>
+
+Homebrew의 `dotnet@8`을 사용한다면 빌드 전에 런타임 경로를 설정합니다.
+
+```sh
+brew install dotnet@8
+export DOTNET_ROOT="$(brew --prefix dotnet@8)/libexec"
+export PATH="$DOTNET_ROOT:$PATH"
+```
+
+Intel Mac은 LanceDB 호환 설치가 필요합니다. 아래 빌드 단계의 `npm --prefix indexer ci`를 다음 명령으로 대체합니다.
+
+```sh
+npm --prefix indexer install @lancedb/lancedb@0.22.3
+```
+
+이 명령은 로컬 의존성 버전을 변경합니다. Apple Silicon·Windows·Linux는 기본 잠금 파일로 설치합니다. 기동 스크립트도 일반적인 Homebrew .NET 8 경로를 자동으로 감지합니다.
+
+</details>
+
+### 2. 저장소 복제와 빌드
+
+복제 후 저장소 루트에서 실행합니다. 이후 예제도 이 디렉터리를 기준으로 합니다.
+
+```sh
 git clone https://github.com/HoonStyle/greplet.git
 cd greplet
+dotnet build Extractor -c Release
+npm --prefix indexer ci
+npm --prefix indexer run build
 ```
 
-순서는 모든 OS 가 같다. Extractor 빌드 → 인덱서 빌드 → 워크스페이스 정의 → 기동.
+[Releases](https://github.com/HoonStyle/greplet/releases)의 self-contained Extractor를 사용한다면 OS에 맞는 파일의 압축을 풀고 `GREPLET_EXTRACTOR`를 실행 파일 경로로 설정합니다. 이 경우 .NET SDK·런타임 설치와 `dotnet build` 명령을 생략할 수 있습니다. 인덱서의 Node 설치와 빌드 단계는 필요합니다.
 
-.NET SDK 없이 쓰려면 [Releases](https://github.com/HoonStyle/greplet/releases) 에서 OS 별 self-contained Extractor(`greplet-extractor-<버전>-<rid>`)를 받아 압축을 풀고 `GREPLET_EXTRACTOR` 로 그 경로를 지정한다. 그러면 아래의 `dotnet build` 단계를 건너뛴다. Claude Desktop 용 `.mcpb` 도 같은 곳에 있다. 버전별 변경 내역은 [CHANGELOG.md](CHANGELOG.md).
+### 3. 워크스페이스 선택
 
-**Windows (PowerShell)**
+처음 설치할 때 예제 설정을 복사합니다.
+
+```sh
+cp indexer/workspaces.example.json indexer/workspaces.json
+```
+
+**기동 전에** `indexer/workspaces.json`을 편집합니다. 예제 루트를 실제 로컬 경로로 바꾸고, 사용하지 않는 워크스페이스는 제거하며, 선택 항목인 PDF 비밀번호 파일 경로도 수정하거나 제거합니다. 업그레이드할 때는 기존 설정을 유지합니다. 최소 예제는 [설정](#설정)을 참고하세요.
+
+### 4. 기동과 첫 인덱싱
+
+Windows:
 
 ```powershell
-dotnet build Extractor -c Release
-
-cd indexer
-npm install
-npm run build
-cp workspaces.example.json workspaces.json     # roots 를 실제 경로로 수정
-pwsh start-indexer.ps1                         # 백그라운드 기동, healthz 확인
+pwsh -File indexer/start-indexer.ps1
 ```
 
-**macOS / Linux (bash)**
+macOS·Linux:
 
-```bash
-# macOS 에 .NET 8 이 없다면. dotnet@8 은 keg-only 라 PATH 에 안 들어간다
-brew install dotnet@8
-export DOTNET_ROOT=/usr/local/opt/dotnet@8/libexec     # Apple Silicon: /opt/homebrew/opt/dotnet@8/libexec
-export PATH="$DOTNET_ROOT:$PATH"                        # start-indexer.sh 는 이 keg 를 자동 감지한다
-
-dotnet build Extractor -c Release
-
-cd indexer
-npm install
-npm i @lancedb/lancedb@0.22.3                  # Intel Mac 만. Apple Silicon·Linux 는 불필요
-npm run build
-cp workspaces.example.json workspaces.json     # roots 를 실제 경로로 수정
-bash start-indexer.sh                          # 백그라운드 기동, healthz 확인
+```sh
+bash indexer/start-indexer.sh
 ```
 
-기동 후 `http://localhost:7802` 관리 UI 에서 **[전체 재인덱스]** 를 누르면 첫 인덱싱이 시작된다. 기동 스크립트는 기동 확인 직후 관리 UI 를 기본 브라우저로 연다. 열지 않으려면 `--no-open`(bash) 또는 `-NoOpenUI`(PowerShell)를 준다. 환경변수 `GREPLET_OPEN_UI=0` 도 같은 효과다.
+스크립트가 인덱서를 백그라운드로 기동하고 상태를 확인한 뒤 [관리 UI](http://localhost:7802)를 엽니다. 대상 워크스페이스의 **전체 재인덱스**를 눌러 첫 인덱스를 만든 다음 검색창이나 CLI를 사용합니다.
 
-Claude Code 세션이 열릴 때마다 인덱서를 띄우고 UI 를 열려면 SessionStart 훅에 그 명령을 등록한다. 예시는 [`examples/claude-code-skill/hooks.settings.json`](examples/claude-code-skill/hooks.settings.json).
-
-데이터(LanceDB·매니페스트·업로드·로그)는 `GREPLET_DATA_DIR` 에 저장되며 기본값은 OS 별로 다르다.
-
-| OS | 기본 경로 |
-|---|---|
-| Windows | `%LOCALAPPDATA%\greplet` |
-| macOS | `~/Library/Application Support/greplet` |
-| Linux | `$XDG_DATA_HOME/greplet` (기본 `~/.local/share/greplet`) |
-
-로그온 시 자동 기동은 Windows 는 작업 스케줄러에 `pwsh -File <경로>\indexer\start-indexer.ps1`, macOS 는 launchd, Linux 는 systemd user service 로 `node indexer/dist/server.js` 를 등록한다.
+브라우저를 열지 않으려면 `-NoOpenUI`(PowerShell), `--no-open`(Bash), 또는 `GREPLET_OPEN_UI=0`을 사용합니다. 기동 로그는 `indexer/logs/server.log`와 `server.log.err`에 있습니다. 세션 시작 시 자동 기동하려면 [Claude Code 훅 예제](examples/claude-code-skill/hooks.settings.json)를 참고하세요.
 
 ## 사용법
 
-**Windows (PowerShell)**
+저장소 루트에서 실행하며, `code`와 `docs`는 설정한 워크스페이스 slug로 바꿉니다.
 
-```powershell
-pwsh greplet.ps1 -Query "재시도 백오프 로직"                    # 기본 워크스페이스 의미 검색
-pwsh greplet.ps1 -Query "0x0A03" -Mode fts                      # 정확 토큰 (상수·에러 코드·메서드명)
-pwsh greplet.ps1 -Query "설정 파일 스키마" -Workspace docs -TopN 8
-pwsh greplet.ps1 -Query "에러 코드" -All -Full                  # 모든 워크스페이스 통합, 청크 전문
-```
-
-**모든 OS (Node)**
-
-```bash
-node greplet.mjs "재시도 백오프 로직"
+```sh
+node greplet.mjs "재시도 백오프 로직" -w code
 node greplet.mjs "0x0A03" --mode fts
 node greplet.mjs "설정 파일 스키마" -w docs --top-n 8
-node greplet.mjs "에러 코드" --all --full
-node greplet.mjs "재시도" --file "Lib/**/*.cs"      # 파일 경로 글롭으로 결과 필터
-node greplet.mjs "재시도" --all --json | jq '.hits[0]'   # 서버 JSON 그대로
+node greplet.mjs "에러 처리" --all --full
+node greplet.mjs "재시도" --file "Lib/**/*.cs" --json
 
-node greplet.mjs status                             # 서버·Ollama·Extractor·큐 상태
-node greplet.mjs workspaces                         # 워크스페이스 목록과 인덱스 통계
-node greplet.mjs index code --wait                  # 증분 인덱스 후 완료까지 로그 출력
-node greplet.mjs index docs --force                 # 전체 재인덱스 잡 등록
+node greplet.mjs status
+node greplet.mjs workspaces
+node greplet.mjs index code --wait
+node greplet.mjs index docs --force
 ```
 
-`greplet.mjs` 의 관리 서브커맨드(`status` · `workspaces` · `index`)는 curl 없이 인덱서를 다루기 위한 것이다. 검색 결과는 인덱스가 바뀌지 않는 한 서버가 10분간 캐시하며, 캐시된 응답은 `cached: true` 로 표시된다.
+`--full`은 청크 전문, `--json`은 서버 응답 그대로, `--file`은 상대경로 글롭 필터입니다. `-w`나 `--all`을 생략하면 CLI는 `GREPLET_DEFAULT_WORKSPACE` 또는 설정의 첫 워크스페이스를 사용합니다. 전체 옵션은 `node greplet.mjs --help`로 확인합니다. 일반 CLI 출력 문구는 한국어입니다.
 
-출력 예:
+Windows에서는 PowerShell CLI로도 일반 검색을 실행할 수 있습니다.
 
-```
-[code] "재시도 백오프 로직" -> 총 6건 (점수순)
-======================================================================
-#1  score 0.0328  |  Lib/Retry/RetryPolicy.cs :: RetryPolicy.Execute (L120-161)
-// Lib/Retry/RetryPolicy.cs // namespace My.Lib.Retry // class RetryPolicy : IRetryPolicy public bool Execute(...
-----------------------------------------------------------------------
+```powershell
+pwsh -File greplet.ps1 -Query "재시도 백오프 로직" -Workspace code
+pwsh -File greplet.ps1 -Query "0x0A03" -Mode fts -All
 ```
 
 ### 검색 모드
 
-| mode | 동작 | 용도 |
+| 모드 | 동작 | 주요 용도 |
 |---|---|---|
-| `hybrid` (기본) | 정확한 `Type.Member`는 정의 우선. 단일 워크스페이스는 벡터 상위 3개 우선 + 4:1 가중 RRF 나머지 순서, 여러 워크스페이스는 4:1 가중 RRF(k=60) | 정의 조회와 내용 검색 |
-| `vector` | 의미 검색만 | 표현이 다른 유사 코드 찾기 |
-| `fts` | BM25 만, 임베딩 호출 없음 | 정확 토큰. Ollama 없이도 동작 |
+| `hybrid` (기본) | 정확한 `Type.Member`는 정의 조회, 그 외는 벡터 + BM25 융합 | 정의와 내용 검색 |
+| `vector` | 임베딩 유사도 검색 | 자연어 설명과 표현이 다른 내용 |
+| `fts` | BM25, 임베딩 호출 없음 | 상수·에러 코드·정확한 용어 |
 
-hybrid의 정의 조회는 임베딩 없이 동작한다. 그 외 검색에서 임베딩 없이 인덱싱된 워크스페이스에 `hybrid`/`vector`를 요청하면 서버가 `fts`로 강등하고 응답의 `warnings`에 알린다. 단일 워크스페이스 융합 점수는 순서를 나타내며, 신뢰도나 워크스페이스 간 비교 점수가 아니다. [벡터 상위 후보 보호 비교](docs/tuning/2026-09-11-vector-prefix.md)에 품질·지연의 전후 결과와 적용 범위의 근거를 기록했다.
+hybrid에서 입력 전체가 대소문자를 구분하는 `Type.Member`이면 임베딩 호출 없이 정의를 조회합니다. 해당 워크스페이스에서 정의를 찾지 못하면 일반 하이브리드 검색으로 이어집니다. 사용처를 찾을 때는 설명이 포함된 질의를 사용합니다.
+
+단일 워크스페이스는 벡터 상위 3개를 먼저 배치하고, 나머지를 벡터:FTS **4:1 가중 RRF(k=60)** 순서로 채웁니다. 여러 워크스페이스는 전체에 가중 RRF를 사용합니다. 융합 점수는 순서를 뜻하며 신뢰도나 워크스페이스 간 공통 확률이 아닙니다. [측정 결과와 적용 범위](docs/tuning/2026-09-11-vector-prefix.md).
+
+일반 검색은 캐시 가능한 응답을 10분간 저장하고 인덱스 변경 시 무효화합니다. 캐시 응답은 `cached: true`로 표시하며, 경고가 있는 응답은 캐시하지 않습니다. 임베딩·검색 실패로 다른 모드로 전환되면 `warnings`에 알립니다.
+
+### 근거 조회
+
+버전이 포함된 참조와 정확한 인덱스 청크가 필요하면 선택 기능인 근거 조회를 사용합니다.
+
+```sh
+node greplet.mjs evidence-search "재시도 백오프 로직" --all
+node greplet.mjs evidence-get --ref-file evidence-ref.json
+```
+
+`evidence-ref.json`에는 검색 hit의 `evidenceRef` 객체만 저장합니다. 근거 검색은 인덱스 기준의 워크스페이스별 결과(`unchecked`)를 반환합니다. 상세 조회는 현재 원본 파일 해시를 확인한 뒤 저장된 청크(`verified`)를 반환합니다. 이는 조회 시점의 최신성 확인이며 의미적 정확성 검증은 아닙니다. 오래되거나 삭제된 원본, 인덱싱 중인 대상, 모호한 출처는 다른 근거로 대체하지 않고 상태로 알립니다. [근거 인터페이스](docs/greplet-evidence-v1.md)와 [마이그레이션 파일럿](docs/migration-pilot.md)을 참고하세요. 실제 마이그레이션 파일럿은 별도의 검증 단계입니다.
+
+## 클라이언트
+
+인덱서를 먼저 설정하고 실행합니다. 에이전트 플러그인은 기존 인덱서에 연결하며 Extractor 설치·서비스 기동·인덱스 생성을 수행하지 않습니다.
+
+| 클라이언트 | 설정 방법 |
+|---|---|
+| Claude Code·Codex 플러그인 | [자체 마켓 설치 안내](docs/plugin-install.md). MCP 연결과 스킬 포함 |
+| Codex 수동 MCP 설정 | [설정과 스킬 예제](examples/codex/README.md) |
+| Claude Code 수동 스킬 설정 | [스킬](examples/claude-code-skill/SKILL.md)과 [규칙 스니펫](examples/claude-code-skill/CLAUDE.md.snippet) |
+| Claude Desktop·Cowork | [Releases](https://github.com/HoonStyle/greplet/releases)의 `.mcpb` 설치 |
+| 원격 MCP | [Bearer 인증 HTTP 서버](mcp-server/README.md)를 터널로 연결 |
+| Git 훅 | 소스 저장소에서 `git config greplet.slug <slug>` 설정 후 [post-commit](git-hooks/post-commit) 설치 |
+
+마켓은 이 저장소에서 제공하며 공식 중앙 디렉터리 등재와는 별개입니다. 첫 MCP 실행에는 연결 도구의 의존성 설치를 위한 npm 레지스트리 접근이 필요할 수 있습니다. 플러그인과 동일한 수동 MCP 연결을 중복 활성화하지 않습니다.
+
+두 MCP 전송 방식 모두 읽기 전용 도구 4개를 제공합니다.
+
+| 도구 | 용도 |
+|---|---|
+| `greplet` | 순위가 있는 내용 검색 |
+| `greplet_workspaces` | 워크스페이스 목록 |
+| `greplet_search_evidence` | 워크스페이스별 발췌와 버전이 포함된 참조 |
+| `greplet_get_evidence` | 원본 해시를 확인한 뒤 참조된 청크 조회 |
+
+`readOnlyHint`는 도구 동작의 특성이며 승인 정책은 클라이언트가 결정합니다. 호출자·참조·상속은 [Serena](https://github.com/oraios/serena) 같은 LSP 도구, 사양 문서화는 [legacy-spec-agent](https://github.com/HoonStyle/legacy-spec-agent)를 활용할 수 있습니다. 에이전트가 결과를 조합하며 greplet이 이 도구들을 자동 호출하지는 않습니다.
 
 ## 설정
 
-### 워크스페이스 (`indexer/workspaces.json`)
-
-워크스페이스 목록의 단일 소스다. 모든 클라이언트는 이 파일이나 서버의 `GET /api/workspaces` 에서 목록을 읽는다.
+워크스페이스는 `indexer/workspaces.json` 또는 `GREPLET_WORKSPACES`로 지정한 파일에서 정의합니다. 아래 경로는 예시이며 인덱서가 실행되는 머신의 경로를 사용합니다.
 
 ```json
 [
   { "slug": "code", "label": "메인 솔루션", "kind": "code",
-    "roots": ["C:\\work\\my-solution"] },
-  { "slug": "docs", "label": "사양서·매뉴얼", "kind": "docs",
-    "roots": ["/Users/me/work/specs"],
-    "includeExt": [".pdf", ".html", ".md"],
-    "pdfPasswordFile": "/Users/me/work/specs/passwords.txt" }
+    "roots": ["C:/work/my-solution"] },
+  { "slug": "docs", "label": "사양서", "kind": "docs",
+    "roots": ["C:/work/specs"], "includeExt": [".pdf", ".html", ".md"] }
 ]
 ```
 
-`roots` 에는 어느 OS 경로든 쓸 수 있다. Windows 경로는 JSON 문자열이므로 백슬래시를 `\\` 로 이스케이프한다.
+Linux·macOS는 `/home/me/work/...` 또는 `/Users/me/work/...`를 사용합니다. Windows JSON 경로는 위처럼 슬래시를 쓰거나 백슬래시를 이스케이프(`\\`)합니다. 출처 구분이 중요한 코드 버전·제품은 워크스페이스를 분리합니다.
 
-| 필드 | 설명 |
+| 필드 | 의미 |
 |---|---|
-| `slug` | 검색·API 에서 쓰는 식별자 |
-| `label` | 관리 UI 표시 이름 |
-| `kind` | `code` 또는 `docs`. 기본 확장자·제외 규칙이 달라진다 |
-| `roots` | 인덱스할 루트 폴더 목록 |
-| `includeExt` | 대상 확장자. `code` 기본 `.cs .csproj .sln .xaml .proto .config .settings .manifest .md`, `docs` 기본 `.pdf` |
-| `excludeDirs` / `excludeFiles` | 명시하면 기본값을 대체한다 |
-| `pdfPasswordFile` | 암호 PDF 용 비밀번호 목록 파일 |
+| `slug` / `label` | API 식별자 / 표시 이름 |
+| `kind` | `code` 또는 `docs`. 기본 확장자와 제외 규칙 선택 |
+| `roots` | 인덱싱할 폴더 |
+| `includeExt` | 포함할 확장자. `code`는 C# 프로젝트·텍스트 형식, `docs`는 `.pdf`가 기본값 |
+| `excludeDirs` / `excludeFiles` | 기본 폴더·파일 제외 규칙을 대체 |
+| `pdfPasswordFile` | 암호 PDF용 비밀번호 목록 파일. 선택 항목 |
 
-자세한 규칙은 [docs/design.md §3](docs/design.md).
+### 이름으로 인덱싱 제외
 
-### 환경변수
+파일·폴더 이름 앞에 `!`를 붙입니다. `!draft.pdf`는 파일 하나, `!reference/`는 하위 트리 전체를 제외하며 업로드와 제외 폴더 내부의 명시적 루트에도 적용됩니다. 이름 중간의 `!`나 맨 앞의 `#`는 특별한 의미가 없습니다. 이름을 바꾼 뒤 인덱싱을 실행하면 다음 성공한 실행에서 기존 청크를 제거합니다. 접두사를 없애고 다시 인덱싱하면 포함됩니다. 원래 이름을 유지해야 하는 소스에는 제외 설정을 사용합니다.
 
-| 변수 | 기본값 | 설명 |
-|---|---|---|
-| `GREPLET_PORT` | `7802` | 인덱서 포트 |
-| `GREPLET_DATA_DIR` | OS 별 기본값(위 표) | DB·매니페스트·업로드·로그 저장 위치 |
-| `GREPLET_WORKSPACES` | `indexer/workspaces.json` | 워크스페이스 정의 파일. CLI(`greplet.ps1`·`greplet.mjs`)도 기본 워크스페이스를 여기서 읽으므로 서버에 다른 경로를 줬다면 CLI 에도 같은 값을 넘긴다 |
-| `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS·Linux) | Extractor 실행 파일 |
-| `GREPLET_DEFAULT_WORKSPACE` | 첫 워크스페이스 | 워크스페이스 미지정 시 기본값 (CLI·MCP) |
-| `GREPLET_OPEN_UI` | `1` | `0` 이면 기동 스크립트가 기동 확인 후 관리 UI 를 열지 않는다 (`--no-open`/`-NoOpenUI` 와 동일) |
-| `GREPLET_CLIENT_NAME` | 클라이언트별 기본값 | `/api/search` 에 보내고 활동 피드에 표시할 클라이언트 이름. `^[a-z0-9:_-]{1,32}$` 형식만 허용 |
-| `GREPLET_ACTIVITY_QUERY` | 없음 | `hidden` 이면 활동 이벤트·이력의 질의를 `(hidden)` 으로 바꾼다 |
-| `OLLAMA_URL` | `http://localhost:11434` | Ollama 주소 |
-| `OLLAMA_KEEP_ALIVE` | `30m` | 임베딩 요청 뒤 Ollama 모델을 메모리에 유지하는 시간. 첫 요청의 모델 로딩은 여전히 발생하며, 유지 시간이 길수록 메모리를 더 점유할 수 있다 |
+### 데이터와 환경변수
 
-## 클라이언트
+인덱스 데이터·매니페스트·업로드·활동 로그는 `GREPLET_DATA_DIR`에 저장합니다.
 
-| 클라이언트 | 위치 | 비고 |
-|---|---|---|
-| PowerShell CLI | `greplet.ps1` | `-Query -Workspace -All -TopN -Full -Mode -BaseUrl`. Windows |
-| Node CLI | `greplet.mjs` | `<query> -w --all --top-n --full --mode --file --json` 과 `status` · `workspaces` · `index <slug> [--force] [--wait]`. 모든 OS |
-| Claude Code 스킬 | `examples/claude-code-skill/SKILL.md` | `.claude/skills/greplet/` 에 복사하고 워크스페이스 목록만 채운다 |
-| Claude Desktop / Cowork | `greplet-mcpb/` | `npm run pack` → `.mcpb` 설치. stdio, 인증 없음 |
-| Codex | `examples/codex/` | `config.toml` 에 `greplet-mcpb/server/index.js` 를 stdio MCP 로 등록. 스킬 예제 포함 |
-| 원격 MCP | `mcp-server/` | Streamable HTTP + Bearer, `127.0.0.1:7801`. 외부 노출은 터널 경유. [README](mcp-server/README.md) |
-| git 훅 | `git-hooks/post-commit` | `git config greplet.slug <slug>` 후 `.git/hooks/` 에 복사 |
+| OS | 기본 데이터 경로 |
+|---|---|
+| Windows | `%LOCALAPPDATA%\greplet` |
+| macOS | `~/Library/Application Support/greplet` |
+| Linux | `$XDG_DATA_HOME/greplet`, 또는 `~/.local/share/greplet` |
 
-MCP 툴은 `greplet`(검색)과 `greplet_workspaces`(목록) 두 개이며 모두 `readOnlyHint`가 붙어 있다. 이는 도구의 특성을 알리는 표식이며, 실제 승인 여부는 클라이언트 정책이 결정한다.
+<details>
+<summary>환경변수 참고표</summary>
+
+| 변수 | 기본값 / 용도 |
+|---|---|
+| `GREPLET_PORT` | `7802`. 인덱서 포트 |
+| `GREPLET_BASE_URL` | `http://localhost:7802`. CLI·MCP 연결 대상 |
+| `GREPLET_WORKSPACES` | `indexer/workspaces.json`. 인덱서와 로컬 CLI에 일관되게 지정 |
+| `GREPLET_DATA_DIR` | 위 OS별 기본 경로 |
+| `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor` (Windows는 `.exe`) |
+| `GREPLET_DEFAULT_WORKSPACE` | CLI·MCP 기본 워크스페이스. 생략하면 설정의 첫 항목 |
+| `OLLAMA_URL` | `http://localhost:11434` |
+| `OLLAMA_KEEP_ALIVE` | `30m`. 임베딩 요청 뒤 모델 유지 시간 |
+| `GREPLET_OPEN_UI` | `1`. `0`이면 기동 시 브라우저를 열지 않음 |
+| `GREPLET_CLIENT_NAME` | 활동 기록의 호출자 이름. 형식 `^[a-z0-9:_-]{1,32}$` |
+| `GREPLET_SESSION` | 활동 그룹에 사용할 세션 식별자 지정 |
+| `GREPLET_ACTIVITY_QUERY` | `hidden`이면 활동 기록의 질의 본문을 숨김 |
+| `GREPLET_ACTIVITY_LOG` | `off`이면 활동 로그 영속화 중지 |
+| `GREPLET_ACTIVITY_RETENTION_DAYS` | `90`. 활동 로그 보존 일수 |
+
+모델 유지 시간이 길면 메모리를 점유하며 첫 모델 로딩 지연은 여전히 발생할 수 있습니다. 포트를 바꿀 때는 기동 스크립트의 상태 확인 URL과 클라이언트도 해당 인덱서 포트에 맞춥니다.
+
+</details>
 
 ## HTTP API
 
-인덱서는 `127.0.0.1:7802` 에 무인증으로 뜬다. 외부에 열려면 `mcp-server` 를 앞에 둔다.
+인덱서는 **`127.0.0.1:7802`에 무인증으로 바인딩**합니다. 원격 접근에는 별도의 Bearer 인증 MCP 서버와 터널을 사용합니다.
 
-| 메서드·경로 | 용도 |
+| 엔드포인트 | 용도 |
 |---|---|
-| `GET /healthz` | 가동 확인 |
-| `GET /api/status` | Ollama·Extractor·큐 상태 |
-| `GET /api/workspaces` | 워크스페이스 목록과 인덱스 통계 |
-| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode, fileGlob? }`. `fileGlob` 은 파일 상대경로 글롭(`*`·`**`·`?`). 응답 hit 에 `abs`(절대경로) 포함, 캐시 응답은 `cached: true` |
-| `POST /api/index/:slug` | 증분 인덱스 잡 등록. `{ force: true }` 로 전체 재인덱스 |
-| `GET /api/jobs` · `GET /api/jobs/:id/events` | 잡 목록, SSE 로그 스트림 |
-| `POST /api/upload/:slug` | 파일 업로드 후 증분 인덱스 |
+| `GET /healthz` · `GET /api/status` | 가동과 구성 요소 상태 |
+| `GET /api/workspaces` | 워크스페이스·인덱스 통계와 `complete`·`partial`·`unknown` 커버리지 |
+| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode, fileGlob? }` |
+| `POST /api/evidence/search` · `POST /api/evidence/get` | 근거 검색과 참조 조회 |
+| `POST /api/index/:slug` | 증분 인덱싱. `{ force: true }`이면 전체 실행 |
+| `GET /api/jobs` · `GET /api/jobs/:id/events` | 잡과 SSE 로그 |
+| `GET /api/events` · `GET /api/activity` · `GET /api/usage` | 실시간 활동·최근 검색·사용량 요약 |
+| `POST /api/upload/:slug` | 파일 업로드와 인덱싱 |
 | `DELETE /api/workspaces/:slug/files?file=` | 업로드 파일 삭제 |
 
-전체 요청·응답 형식은 [docs/design.md §5.5](docs/design.md).
+검색 hit에는 절대경로인 `abs`가 포함됩니다. `fileGlob`은 파일 상대경로의 `*`·`**`·`?` 패턴을 사용합니다. 세부 내용은 [설계 문서](docs/design.md)와 [근거 인터페이스](docs/greplet-evidence-v1.md)를 참고하세요.
 
-## 에이전트에서의 역할 분담
+## 튜닝 히스토리
 
-greplet 는 "어디에 무슨 내용이 있나"를 찾는 도구다. 나머지는 다른 도구에 맡긴다.
+[튜닝 히스토리](docs/tuning/README.md)에 실험별 문제·구현·고정 비교 조건·전후 결과·채택 결정을 기록합니다. 벤치마크의 함수·프로젝트·질문은 익명 식별자를 사용합니다.
 
-| 질문 | 도구 | 이유 |
-|---|---|---|
-| 이 기능이 어디 구현돼 있나, 문서에 어떻게 정의돼 있나 | **greplet** | 폴더 전체를 읽는 대신 관련 소스 위치를 반환한다. 실제 지연·토큰 사용량은 작업에 따라 달라진다 |
-| 이 메서드를 누가 호출하나, 상속·참조 체인 | **LSP 심볼 도구** ([Serena](https://github.com/oraios/serena) 등) | greplet 는 청크 텍스트만 알고 참조 관계는 모른다 |
-| 문서 없는 레거시 코드의 사양을 인용 근거와 함께 문서화 | **[legacy-spec-agent](https://github.com/HoonStyle/legacy-spec-agent)** | greplet 는 해석·요약·검증을 하지 않는다 |
-| 파일명·경로 찾기, 방금 편집한 파일 확인 | **Glob / Grep / Read** | 인덱스가 아직 안 따라왔을 수 있다 |
-| 정확 문자열의 완전한 출현 목록 | **Grep** | 하이브리드는 topN 만 돌려준다. `fts` 로 후보를 좁힌 뒤 Grep 으로 확인 |
+| 상태 | 기록 |
+|---|---|
+| 운영 적용 | 요청 내 임베딩 공유, 모델 유지 30분, 정확한 정의 조회, 범위에 따른 하이브리드 융합: [0.11.2 변경 내역](CHANGELOG.md#0112---2026-09-11) |
+| 기록된 조건에서 검증 | [T10 융합 비교](docs/tuning/2026-09-11-vector-prefix.md), [T11 실사용·동시 요청 검사](docs/tuning/2026-09-11-release-validation.md) |
+| 채택 보류 | [T12 워크스페이스 자동 선택](docs/tuning/2026-09-11-workspace-routing.md). 오프라인 후보가 채택 기준 미달 |
+| 후속 연구 검토 | [ReSLLM·MKP-QA·RAGRoute 비교](docs/tuning/2026-09-11-workspace-routing-research.md). 논문 결과이며 Greplet 측정값과 구분 |
 
-규칙 파일(CLAUDE.md 등)에 넣어 둘 원칙: 내용 검색은 greplet 먼저, 구조는 LSP, 경로는 Glob/Grep. greplet 결과가 비거나 서버가 꺼져 있을 때만 폴더 스캔으로 폴백. 예시는 [`examples/claude-code-skill/CLAUDE.md.snippet`](examples/claude-code-skill/CLAUDE.md.snippet).
+워크스페이스 자동 선택은 운영 검색 API에 포함되지 않습니다. 범위를 직접 지정하거나 전체를 검색합니다. 보고서마다 표본·분모가 다르므로 개선율을 누적 합산하지 않습니다.
 
-### greplet + Serena + legacy-spec-agent
+## 구조와 개발
 
-레거시 코드 여러 벌과 현재 프로젝트, 사양서 PDF 가 뒤섞인 환경에서 쓰는 조합이다. 세 도구는 서로를 호출하지 않는다. 에이전트가 각 결과를 받아 조합한다.
-
-| 도구 | 준비 | 담당 |
-|---|---|---|
-| greplet | 레거시 각 벌·현재 프로젝트·문서를 워크스페이스로 분리 (`code`, `code-legacy`, `docs`) | 내용 검색. "이 값 어디서 정의되나", "사양서에서 이 프로토콜 설명" |
-| Serena | 레거시 각 벌과 현재 프로젝트를 모두 Serena 프로젝트로 등록. 고정하지 않고 요청이 가리키는 쪽을 `activate_project` 로 그때그때 전환 | 구조 질의. 참조·호출 체인·상속, 심볼 단위 읽기와 편집 |
-| legacy-spec-agent | Claude Code / Codex 플러그인 설치 | `path:line` 인용이 붙은 SPEC/ARCHITECTURE 역생성, 코드 변경 후 drift 검사 |
-
-Serena 를 `--project` 로 프로젝트를 지정해 띄우면 `claude-code`·`ide` 컨텍스트에서 `activate_project` 툴이 꺼진다. 전환하며 쓰려면 프로젝트 없이 기동해야 한다 ([Serena 문서](https://oraios.github.io/serena/02-usage/040_workflow.html)).
-
-"레거시 기능을 현재 프로젝트로 옮기기"의 전형적인 흐름:
-
-1. **greplet** `-Workspace code-legacy` 로 기능·상수·에러코드가 있는 파일과 위치를 찾는다. 정확 토큰은 `-Mode fts`.
-2. **Serena** 로 그 심볼의 참조·호출 체인을 따라가 실제 범위를 확정한다.
-3. **legacy-spec-agent** 로 그 범위의 사양 문서를 뽑는다. 인용이 없는 주장은 Unverified 로 남는다.
-4. **greplet** `-Workspace docs` 로 사양서 PDF 의 해당 정의를 대조한다.
-5. **greplet** `-Workspace code` 와 **Serena** 로 현재 프로젝트의 대응 위치를 찾아 반영한다.
-6. 커밋 훅이 greplet 증분 인덱스를 돌리므로 다음 검색부터 바뀐 코드가 반영된다.
-
-역할이 겹칠 때의 선택 기준:
-
-- 파일 위치를 모른다 → greplet. 심볼 이름을 안다 → Serena.
-- 여러 레거시 벌에서 같은 기능이 어떻게 다른지 → greplet `-All`. Serena 는 활성 프로젝트 하나만 보므로 벌마다 전환해야 한다.
-- 결과를 문서로 남겨야 한다 → legacy-spec-agent. greplet 출력은 근거 위치를 찾는 용도이지 산출물이 아니다.
-
-## 청킹 규칙
-
-- **C#**: 타입 선언·멤버(메서드/생성자/속성/이벤트/연산자)·필드 묶음을 각각 청크로. 모든 청크 앞에 `// file` `// namespace` `// class X : Base` 헤더 3줄. 6000자 초과 멤버는 4000/400 윈도우, 300자 미만 연속 멤버는 1200자까지 병합.
-- **PDF**: 페이지 = 청크. 암호 PDF 지원. 스캔 이미지 페이지는 스킵.
-- **HTML/Markdown/XAML/기타**: 3000/300 줄 윈도우. HTML 은 script·style 제거 후 평문화.
-- **인코딩**: UTF-8 → CP949 폴백.
-
-전체 사양은 [docs/design.md](docs/design.md).
-
-## 개발과 검증
-
-```bash
-dotnet build Extractor -c Release
-cd indexer && npm run build && npm run test:incremental
-cd ../mcp-server && npm run build && MCP_AUTH_TOKEN=<token> npm run smoke
-cd ../greplet-mcpb && npm install && npm run smoke
+```text
+UI / CLI / MCP / hooks
+        | HTTP, localhost:7802
+        v
+Node/TypeScript indexer
+  +-- Extractor: Roslyn (C#), PdfPig (PDF), text extraction
+  +-- Ollama: bge-m3 embeddings
+  +-- LanceDB: vectors + BM25, hybrid ranking
 ```
 
-PowerShell 에서는 `MCP_AUTH_TOKEN=<token>` 대신 `$env:MCP_AUTH_TOKEN = "<token>"` 을 먼저 설정한다. 개발 중에는 `indexer/` 와 `mcp-server/` 에서 `npm run dev`(tsx) 로 빌드 없이 실행할 수 있다.
+소스: [Extractor](Extractor/) · [인덱서](indexer/) · [로컬 MCP](greplet-mcpb/) · [원격 MCP](mcp-server/). 자세한 청킹·설정 규칙은 [설계 문서](docs/design.md)에 있습니다.
 
-## 알려진 제약
+C#은 타입·멤버 단위로 나누고 큰 멤버를 분할하거나 작은 멤버를 병합합니다. PDF는 페이지 단위, 그 외 지원 텍스트는 윈도우 단위입니다. 인코딩은 UTF-8에서 CP949로 폴백합니다. OCR은 포함하지 않으며 다른 프로그래밍 언어는 C# 심볼 추출 대신 텍스트 청크를 사용합니다. 현재 벡터 검색은 전체 스캔이므로 데이터가 커지면 검색 작업량도 늘어납니다.
 
-- 청커는 C# 에 특화돼 있다. 다른 언어는 텍스트 윈도우로 들어간다(확장자를 `includeExt` 에 추가).
-- 벡터 인덱스를 만들지 않는다(flat 스캔). 워크스페이스당 수십만 청크를 넘기면 검색이 느려진다.
-- 인덱서 HTTP API 는 무인증이라 `127.0.0.1` 에만 바인딩한다.
-- Intel Mac(darwin-x64)용 `@lancedb/lancedb` 네이티브 바이너리는 0.22.3 이 마지막이다(0.23.0 은 의존성 목록에만 있고 패키지가 배포되지 않았다). `npm install` 뒤 `npm i @lancedb/lancedb@0.22.3` 을 한 번 더 실행한다. Apple Silicon·Linux·Windows 는 해당 없음.
-- Ollama 없이 인덱싱한 워크스페이스는 벡터가 비어 있어 `fts` 만 의미가 있다. Ollama 가 준비되면 다음 인덱스 잡이 전체 재인덱스로 자동 승격된다.
+설치 후 다음 로컬 검사는 운영 인덱서를 기동하지 않아도 실행할 수 있습니다.
+
+```sh
+npm --prefix indexer run build
+npm --prefix indexer run test:incremental
+npm --prefix indexer run test:hybrid
+npm --prefix indexer run test:fusion-protection
+npm --prefix indexer run test:workspace-routing
+node scripts/report-retrieval-results.mjs --check
+node scripts/report-workspace-routing.mjs --check
+node scripts/check-plugin.mjs
+```
+
+근거 조회·MCP·CLI를 포함한 Windows·macOS·Linux 전체 검증 구성은 [CI](.github/workflows/ci.yml)를 참고하세요. 개발 서버는 각 의존성을 설치한 뒤 `indexer/` 또는 `mcp-server/`에서 `npm run dev`로 실행합니다. 프로토콜 스모크 테스트에 필요한 추가 설정은 해당 구성 요소의 안내를 따릅니다.
 
 ## 라이선스
 

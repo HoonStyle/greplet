@@ -1,396 +1,309 @@
 # greplet
 
-### Exclude by name
+[English](README.md) · [한국어](README.ko.md)
 
-Prefix a file or folder name with `!` to omit it from indexing: `!draft.pdf`
-excludes one file and `!reference/` excludes its entire subtree. This also
-applies to uploads and explicit roots/files inside excluded folders. A `!`
-in the middle of a name, or a leading `#`, has no special meaning.
-Run indexing after renaming: old chunks are removed on the next successful
-index run. Remove the prefix and reindex to include the content again.
-Existing `excludeDirs`/`excludeFiles` rules still apply. Prefer those settings
-when renaming source paths would break code references.
+[![CI](https://github.com/HoonStyle/greplet/actions/workflows/ci.yml/badge.svg)](https://github.com/HoonStyle/greplet/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+![Node 22+](https://img.shields.io/badge/Node-22%2B-339933)
+![.NET 8](https://img.shields.io/badge/.NET-8-512BD4)
 
-Migration evidence retrieval is opt-in: `greplet_search_evidence` returns per-workspace excerpts and version-bound references; `greplet_get_evidence` fetches the exact indexed chunk after checking the source file hash. Use `node greplet.mjs evidence-search "query" --all` and `evidence-get --ref-file evidence-ref.json` (save only a hit's `evidenceRef` object). `verified` means a source hash matched at retrieval time, not semantic correctness. Legacy search keeps all source variants. See the [migration roadmap](docs/migration-roadmap.md) and [release contract](docs/greplet-evidence-v1.md); the real migration pilot is a separate completion gate.
+**Local hybrid search for code and documents, with source locations an agent can open.**
 
-<p align="center">
-  <a href="README.md"><img alt="Language: English" src="https://img.shields.io/badge/lang-English-blue"></a>
-  <a href="README.ko.md"><img alt="Language: Korean" src="https://img.shields.io/badge/lang-%ED%95%9C%EA%B5%AD%EC%96%B4-blue"></a>
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
-  <a href="https://github.com/HoonStyle/greplet/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/HoonStyle/greplet/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Node 22+" src="https://img.shields.io/badge/Node-22%2B-339933?logo=nodedotjs&logoColor=white">
-  <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
-  <img alt="C# / Roslyn" src="https://img.shields.io/badge/C%23-Roslyn-239120?logo=csharp&logoColor=white">
-  <br>
-  <img alt="LanceDB" src="https://img.shields.io/badge/LanceDB-vector%20%2B%20FTS-EF6A3C">
-  <img alt="Ollama bge-m3" src="https://img.shields.io/badge/Ollama-bge--m3-000000?logo=ollama&logoColor=white">
-  <img alt="MCP" src="https://img.shields.io/badge/MCP-stdio%20%C2%B7%20HTTP-6E56CF">
-  <img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-skill%20%2B%20MCP-D97757?logo=claude&logoColor=white">
-  <img alt="Codex" src="https://img.shields.io/badge/Codex-MCP%20%2B%20skill-000000?logo=openai&logoColor=white">
-  <br>
-  <img alt="Windows" src="https://img.shields.io/badge/Windows-CI-0078D4?logo=windows&logoColor=white">
-  <img alt="macOS" src="https://img.shields.io/badge/macOS-CI%20%C2%B7%20Intel%20%C2%B7%20Apple%20Silicon-000000?logo=apple&logoColor=white">
-  <img alt="Linux" src="https://img.shields.io/badge/Linux-CI-FCC624?logo=linux&logoColor=black">
-</p>
+greplet combines Ollama `bge-m3` vector search with BM25 full-text search. It searches one or several workspaces and returns source chunks with file paths, symbols, and line or page locations. It retrieves content; it does not generate answers.
 
-Local hybrid search for code and documents. Query multiple workspaces and get ranked results with **file, symbol, and line range**.
+- **Code and documents together:** C# type/member chunks with Roslyn, PDF pages with PdfPig, and text chunks for other supported formats.
+- **An index you can update:** file hashes track additions, edits, and deletions during indexing. Run it from the UI, CLI, API, or an installed commit hook.
+- **Several ways to search:** admin UI, Node/PowerShell CLI, local or remote MCP, and Claude Code/Codex plugins.
 
-greplet combines vector search (Ollama `bge-m3`) with BM25 full-text search using RRF. It retrieves source chunks; it does not generate answers. The default search setup runs locally. Downloads and optional remote integrations have their own network requirements.
+The default indexer and embedding setup runs locally. Installing dependencies/models and using optional remote integrations require network access. For exact file paths or every occurrence of a string, filesystem search remains useful.
 
-**Start here:** [Install and run](#install-and-run) → [Usage](#usage) → [Agent clients](#clients). Node 22+ and .NET 8 are required for a source build; Ollama is optional for keyword-only search.
+**Start:** [Install and run](#install-and-run) · [Search](#usage) · [Connect an agent](#clients) · [Tuning history](#tuning-history)
 
-**Claude Code / Codex plugin:** See [self-hosted marketplace installation](docs/plugin-install.md). Uses your existing indexer; no central directory listing is implied.
-
-## Overview
-
-1. **The index follows the code.** A file-hash manifest applies additions, changes, and deletions incrementally. A post-commit hook drives it, so chunks of deleted files do not linger in search results.
-2. **It answers with locations.** C# is chunked by type and member with Roslyn; PDFs by page. Results come back as `file :: symbol (Lstart-end)`, so the agent opens only that spot.
-3. **It only finds.** No summarizing, interpreting, or verifying. Structure belongs to an LSP tool (Serena), and spec writing with citation checks belongs to legacy-spec-agent. That [division of labor](#division-of-labor-among-agent-tools) is a design assumption. Retrieved results still need to be checked against the source; downstream tools do not guarantee correctness.
-
-It plugs in as a Claude Code skill, a Codex MCP server, a Claude Desktop MCP bundle, a remote MCP server, a CLI (PowerShell or Node), and a git hook. The goal is one thing: let an agent answer "where is this feature implemented?" or "how does the spec define this value?" without reading the whole folder.
-
-<p align="center"><img src="docs/images/dashboard.png" alt="greplet Live Pipeline admin UI" width="900"><br><sub>Admin UI: Live Pipeline for search/indexing activity, client feed, workspace status, and search test</sub></p>
-
-## Table of contents
-
-- [Why](#why)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Requirements](#requirements)
-- [Install and run](#install-and-run)
-- [Usage](#usage)
-- [Configuration](#configuration)
-- [Clients](#clients)
-- [HTTP API](#http-api)
-- [Division of labor among agent tools](#division-of-labor-among-agent-tools)
-- [Chunking rules](#chunking-rules)
-- [Development and verification](#development-and-verification)
-- [Known limitations](#known-limitations)
-- [License](#license)
-
-## Why
-
-| Situation | Limit of existing tools | greplet |
-|---|---|---|
-| Several legacy codebases, plus current code and spec PDFs kept elsewhere | Search is often scoped to the open repo or active project | Any roots anywhere become workspaces. `--all` compares across codebases in one query |
-| Searching by constant, error code, or method name | Pure vector search is weak on exact tokens | Vector + BM25 hybrid. `fts` mode works without Ollama |
-| The result must point at a place to open | Fixed-length chunking cuts methods in half and gives no location | Roslyn member-level and PDF page-level chunks. Every hit has file, symbol, and line range |
-| The code keeps changing | Manually uploaded snapshots can retain deleted or outdated content | Hash manifest applies adds, changes, and deletes incrementally. Hooked into commits |
-| Source cannot leave the machine | Cloud search assumes upload | Fully local. The indexer binds to `127.0.0.1` only. External exposure goes through the Bearer-authenticated MCP server |
-
-Conversely, with one repo and a handful of documents there is little reason to use greplet. Built-in search or grep is enough.
-
-## Features
-
-- **Hybrid search** — three modes: `hybrid` (default), `vector`, `fts`.
-- **Works without Ollama** — if Ollama is absent, indexing fills zero vectors and search is downgraded to `fts`. Once Ollama appears, the next index job is promoted to a full reindex that fills the vectors.
-- **Syntax-aware chunking** — C# by member, PDF by page, other text by line windows. Encrypted PDFs supported.
-- **Incremental indexing** — only changed files are reindexed, triggered by the commit hook or the API.
-- **Multiple workspaces** — keep code, legacy, and docs separate; search one or all.
-- **Admin UI** — workspace status, file upload, reindex, search test (file-glob filter, click a hit to open it in VS Code/Cursor), live logs, and Live Pipeline visualization with a per-client activity feed.
-- **Result cache** — identical queries are served from a server-side cache for 10 minutes until the index changes, cutting embedding calls for agents that repeat themselves.
-- **Agent integration** — Claude Code skill, Codex, MCP (stdio and remote), CLI, git hook.
-
-## Architecture
-
-```
-[Claude Code skill / Codex / MCP / greplet.ps1 / greplet.mjs / post-commit]
-                 │  HTTP (127.0.0.1:7802)
-                 ▼
-        indexer (Node/TS, Express)
-      ┌──────────┼──────────────┐
-  Extractor    Ollama         LanceDB
-  (C#/Roslyn   bge-m3        vector + FTS
-   PdfPig)     embeddings    RRF hybrid
-```
-
-| Folder | Role |
-|---|---|
-| `Extractor/` | C# console. Turns files into chunk JSONL with Roslyn and PdfPig |
-| `indexer/` | Node/TS service. Scan, embed, store in LanceDB, search API, admin UI |
-| `greplet.ps1` | PowerShell CLI client (Windows) |
-| `greplet.mjs` | Node CLI client (all OSes) |
-| `greplet-mcpb/` | Local stdio MCP bundle for Claude Desktop/Cowork. Codex uses this server too |
-| `mcp-server/` | Remote MCP server with Bearer auth |
-| `git-hooks/` | post-commit hook that triggers an incremental index |
-| `examples/claude-code-skill/` | Claude Code skill example, CLAUDE.md rule snippet, SessionStart hook example |
-| `examples/codex/` | Codex MCP registration and skill example |
-| `docs/design.md` | Detailed design document (Korean) |
-
-## Requirements
-
-| Item | Value |
-|---|---|
-| Node | 22+ |
-| .NET SDK | 8.0+ |
-| Ollama | Optional. `bge-m3` model (`ollama pull bge-m3`). Without it, `fts` only |
-| PowerShell | 7+. Only for `greplet.ps1` and `start-indexer.ps1` on Windows. Other OSes use `greplet.mjs` and `start-indexer.sh` |
-| OS | Windows · macOS · Linux. Intel Macs have a LanceDB version constraint ([Known limitations](#known-limitations)) |
+<p align="center"><img src="docs/images/dashboard.png" alt="greplet admin UI with workspace status, search testing, and live activity" width="900"></p>
 
 ## Install and run
 
-Clone the repository and run the commands below from its root:
+### 1. Prepare the runtime
 
-```bash
+| Requirement | When needed |
+|---|---|
+| Node.js 22+ and npm | Indexer and Node/MCP clients |
+| .NET 8 SDK and runtime | Building and running the source-built Extractor |
+| Ollama with `bge-m3` | Vector and hybrid search; optional for BM25-only use |
+| PowerShell 7+ | Windows startup script and PowerShell CLI |
+| Bash and curl | macOS/Linux startup script |
+
+To use embeddings, start Ollama and download the model:
+
+```sh
+ollama pull bge-m3
+```
+
+Without Ollama, indexing can run without embeddings and searches fall back to `fts`. Once Ollama and the model are available, run indexing again to fill the vectors.
+
+<details>
+<summary>macOS setup and Intel Mac compatibility</summary>
+
+If you use Homebrew's `dotnet@8`, set its runtime path before building:
+
+```sh
+brew install dotnet@8
+export DOTNET_ROOT="$(brew --prefix dotnet@8)/libexec"
+export PATH="$DOTNET_ROOT:$PATH"
+```
+
+Intel Macs need a LanceDB compatibility installation. In the build step below, replace `npm --prefix indexer ci` with:
+
+```sh
+npm --prefix indexer install @lancedb/lancedb@0.22.3
+```
+
+This changes the local dependency version. Apple Silicon, Windows, and Linux use the normal lockfile installation. The startup script also detects the usual Homebrew .NET 8 locations.
+
+</details>
+
+### 2. Clone and build
+
+Run these commands from the repository root after cloning. Subsequent examples also use that directory.
+
+```sh
 git clone https://github.com/HoonStyle/greplet.git
 cd greplet
+dotnet build Extractor -c Release
+npm --prefix indexer ci
+npm --prefix indexer run build
 ```
 
-The order is the same on every OS: build the Extractor → build the indexer → define workspaces → start.
+To use a self-contained Extractor from [Releases](https://github.com/HoonStyle/greplet/releases), unpack the artifact for your OS and set `GREPLET_EXTRACTOR` to its executable. You can then skip the .NET SDK/runtime requirement and the `dotnet build` command. The indexer still needs Node and its build step.
 
-To skip the .NET SDK, download a self-contained Extractor for your OS (`greplet-extractor-<version>-<rid>`) from [Releases](https://github.com/HoonStyle/greplet/releases), unpack it, and point `GREPLET_EXTRACTOR` at the binary. Then skip the `dotnet build` step below. The `.mcpb` for Claude Desktop is in the same place. Per-version changes are in [CHANGELOG.md](CHANGELOG.md).
+### 3. Choose your workspaces
 
-**Windows (PowerShell)**
+On first setup, copy the example configuration:
+
+```sh
+cp indexer/workspaces.example.json indexer/workspaces.json
+```
+
+Edit `indexer/workspaces.json` **before starting**: replace the example roots with existing local paths, remove unused workspaces, and update or remove the optional PDF password-file path. Keep an existing configuration when upgrading. See [Configuration](#configuration) for a minimal example.
+
+### 4. Start and index
+
+Windows:
 
 ```powershell
-dotnet build Extractor -c Release
-
-cd indexer
-npm install
-npm run build
-cp workspaces.example.json workspaces.json     # set roots to real paths
-pwsh start-indexer.ps1                         # background start, waits for healthz
+pwsh -File indexer/start-indexer.ps1
 ```
 
-**macOS / Linux (bash)**
+macOS/Linux:
 
-```bash
-# macOS without .NET 8: dotnet@8 is keg-only and not on PATH
-brew install dotnet@8
-export DOTNET_ROOT=/usr/local/opt/dotnet@8/libexec     # Apple Silicon: /opt/homebrew/opt/dotnet@8/libexec
-export PATH="$DOTNET_ROOT:$PATH"                        # start-indexer.sh auto-detects this keg
-
-dotnet build Extractor -c Release
-
-cd indexer
-npm install
-npm i @lancedb/lancedb@0.22.3                  # Intel Mac only. Not needed on Apple Silicon or Linux
-npm run build
-cp workspaces.example.json workspaces.json     # set roots to real paths
-bash start-indexer.sh                          # background start, waits for healthz
+```sh
+bash indexer/start-indexer.sh
 ```
 
-Open the admin UI at `http://localhost:7802` and press **[Full reindex]** to run the first indexing. The start script opens the admin UI in the default browser right after the health check. Pass `--no-open` (bash) or `-NoOpenUI` (PowerShell) to skip that. The environment variable `GREPLET_OPEN_UI=0` does the same.
+The script starts the indexer in the background, checks its health, and opens [the admin UI](http://localhost:7802). Choose **Full reindex** for your workspace to create its first index, then use the search box or CLI.
 
-To start the indexer and open the UI every time a Claude Code session begins, register that command as a SessionStart hook. Example: [`examples/claude-code-skill/hooks.settings.json`](examples/claude-code-skill/hooks.settings.json).
-
-Data (LanceDB, manifests, uploads, logs) lives in `GREPLET_DATA_DIR`. The default depends on the OS.
-
-| OS | Default path |
-|---|---|
-| Windows | `%LOCALAPPDATA%\greplet` |
-| macOS | `~/Library/Application Support/greplet` |
-| Linux | `$XDG_DATA_HOME/greplet` (default `~/.local/share/greplet`) |
-
-For start at logon, register `pwsh -File <path>\indexer\start-indexer.ps1` in Task Scheduler on Windows, or `node indexer/dist/server.js` as a launchd agent on macOS or a systemd user service on Linux.
+Use `-NoOpenUI` (PowerShell), `--no-open` (Bash), or `GREPLET_OPEN_UI=0` to skip opening the browser. Startup logs are in `indexer/logs/server.log` and `server.log.err`. Session startup automation is available through the [Claude Code hook example](examples/claude-code-skill/hooks.settings.json).
 
 ## Usage
 
-**Windows (PowerShell)**
+Run from the repository root; replace `code` and `docs` with your configured workspace slugs.
+
+```sh
+node greplet.mjs "retry backoff logic" -w code
+node greplet.mjs "0x0A03" --mode fts
+node greplet.mjs "configuration schema" -w docs --top-n 8
+node greplet.mjs "error handling" --all --full
+node greplet.mjs "retry" --file "Lib/**/*.cs" --json
+
+node greplet.mjs status
+node greplet.mjs workspaces
+node greplet.mjs index code --wait
+node greplet.mjs index docs --force
+```
+
+`--full` returns full chunks; `--json` preserves the server response; `--file` filters by a relative-path glob. Without `-w` or `--all`, the CLI uses `GREPLET_DEFAULT_WORKSPACE` or the first workspace in its configuration. Use `node greplet.mjs --help` for all options. Human-readable CLI labels are Korean.
+
+The Windows CLI also supports ordinary search:
 
 ```powershell
-pwsh greplet.ps1 -Query "retry backoff logic"                   # semantic search in the default workspace
-pwsh greplet.ps1 -Query "0x0A03" -Mode fts                      # exact token (constants, error codes, method names)
-pwsh greplet.ps1 -Query "config file schema" -Workspace docs -TopN 8
-pwsh greplet.ps1 -Query "error codes" -All -Full                # all workspaces, full chunk text
+pwsh -File greplet.ps1 -Query "retry backoff logic" -Workspace code
+pwsh -File greplet.ps1 -Query "0x0A03" -Mode fts -All
 ```
-
-**All OSes (Node)**
-
-```bash
-node greplet.mjs "retry backoff logic"
-node greplet.mjs "0x0A03" --mode fts
-node greplet.mjs "config file schema" -w docs --top-n 8
-node greplet.mjs "error codes" --all --full
-node greplet.mjs "retry" --file "Lib/**/*.cs"       # filter hits by file-path glob
-node greplet.mjs "retry" --all --json | jq '.hits[0]'   # raw server JSON
-
-node greplet.mjs status                             # server, Ollama, Extractor, queue
-node greplet.mjs workspaces                         # workspace list with index stats
-node greplet.mjs index code --wait                  # incremental index, stream the log until done
-node greplet.mjs index docs --force                 # enqueue a full reindex
-```
-
-The management subcommands of `greplet.mjs` (`status` · `workspaces` · `index`) exist so you never need curl. Search responses are cached server-side for 10 minutes as long as the index has not changed; cached responses carry `cached: true`.
-
-Example output:
-
-```
-[code] "retry backoff logic" -> 6 hits (by score)
-======================================================================
-#1  score 0.0328  |  Lib/Retry/RetryPolicy.cs :: RetryPolicy.Execute (L120-161)
-// Lib/Retry/RetryPolicy.cs // namespace My.Lib.Retry // class RetryPolicy : IRetryPolicy public bool Execute(...
-----------------------------------------------------------------------
-```
-
-The CLI prints its labels in Korean. The layout above is what to expect.
 
 ### Search modes
 
-| mode | Behavior | Use for |
+| Mode | Behavior | Typical use |
 |---|---|---|
-| `hybrid` (default) | Bare `Type.Member`: matching definitions first; otherwise vector + FTS → RRF fusion | Definition lookup and content searches |
-| `vector` | Semantic only | Similar code written differently |
-| `fts` | BM25 only, no embedding call | Exact tokens. Works without Ollama |
+| `hybrid` (default) | Qualified `Type.Member` definition lookup, otherwise vector + BM25 fusion | Definitions and content search |
+| `vector` | Embedding similarity | Natural-language descriptions and differently worded content |
+| `fts` | BM25, without embedding calls | Constants, error codes, and exact terms |
 
-In `hybrid`, a query consisting only of a case-sensitive qualified identifier such as `ExampleType.ExampleMethod` returns matching symbol definitions without an embedding call. This includes overloads, split method chunks, and merged member chunks. File filters still apply. If no definition matches in a workspace, that workspace uses the normal hybrid search. Prose queries and explicit `fts` / `vector` modes retain their normal behavior; use prose when looking for usages rather than definitions.
+A hybrid query consisting only of a case-sensitive `Type.Member` checks matching definitions without embedding the query. If no definition is found in a workspace, normal hybrid search runs there. Use a prose query when looking for usages.
 
-For one workspace, hybrid fusion places the top three vector candidates first, then fills from vector:FTS 4:1 weighted RRF (k=60), removing duplicates. Searches across multiple workspaces retain weighted RRF throughout. Single-workspace fusion scores express ordering, not confidence or scores comparable across workspaces. See the [prefix protection comparison](docs/tuning/2026-09-11-vector-prefix.md) for measured gains, ranking tradeoffs, and the reason for this scope.
+For one workspace, hybrid places the top three vector candidates first and fills the remainder using vector:FTS **4:1 weighted RRF (k=60)**. Multiple workspaces use weighted RRF throughout. Fusion scores indicate ordering, not confidence or a common probability across workspaces. [Measured effects and scope](docs/tuning/2026-09-11-vector-prefix.md).
 
-Requesting `hybrid` or `vector` on a workspace indexed without embeddings makes the server fall back to `fts` and say so in the response `warnings`, except when the hybrid definition lookup succeeds.
+Ordinary search caches eligible responses for 10 minutes, with index changes invalidating entries. Cached responses carry `cached: true`; responses with warnings are not cached. Embedding/search failures can cause a fallback reported in `warnings`.
+
+### Evidence retrieval
+
+Use the optional evidence flow when you need a version-bound reference and the exact indexed chunk:
+
+```sh
+node greplet.mjs evidence-search "retry backoff logic" --all
+node greplet.mjs evidence-get --ref-file evidence-ref.json
+```
+
+Save only a search hit's `evidenceRef` object in `evidence-ref.json`. Evidence search reports per-workspace results from the index (`unchecked`). Detail retrieval checks the current source file hash before returning the stored chunk (`verified`). That verifies freshness at retrieval time, not semantic correctness. Stale, deleted, indexing, or ambiguous sources are reported instead of silently substituting another source. See the [evidence interface](docs/greplet-evidence-v1.md) and [migration pilot](docs/migration-pilot.md); a real migration pilot is a separate validation step.
+
+## Clients
+
+Configure and start the indexer first. Agent plugins connect to it; they do not install the Extractor, start the service, or create indexes.
+
+| Client | Setup |
+|---|---|
+| Claude Code / Codex plugin | [Self-hosted marketplace installation](docs/plugin-install.md); MCP connection and skill included |
+| Codex, manual MCP setup | [Configuration and skill example](examples/codex/README.md) |
+| Claude Code, manual skill setup | [Skill](examples/claude-code-skill/SKILL.md) and [rules snippet](examples/claude-code-skill/CLAUDE.md.snippet) |
+| Claude Desktop / Cowork | Install the `.mcpb` artifact from [Releases](https://github.com/HoonStyle/greplet/releases) |
+| Remote MCP | [Bearer-authenticated HTTP server](mcp-server/README.md), exposed through a tunnel |
+| Git hook | Set `git config greplet.slug <slug>` in the source repository and install [post-commit](git-hooks/post-commit) |
+
+The marketplace is provided by this repository; it is not a central-directory listing. Its first MCP launch may need npm registry access to install connector dependencies. Avoid enabling both the plugin and a duplicate manual MCP connection.
+
+Both MCP transports expose four read-only tools:
+
+| Tool | Purpose |
+|---|---|
+| `greplet` | Ranked content search |
+| `greplet_workspaces` | Workspace listing |
+| `greplet_search_evidence` | Per-workspace excerpts and version-bound references |
+| `greplet_get_evidence` | Retrieve a referenced chunk after source-hash checks |
+
+`readOnlyHint` describes tool behavior; the client controls approval policy. Use an LSP tool such as [Serena](https://github.com/oraios/serena) for callers, references, and inheritance, and [legacy-spec-agent](https://github.com/HoonStyle/legacy-spec-agent) for specification work. The agent coordinates these tools; greplet does not call them automatically.
 
 ## Configuration
 
-### Workspaces (`indexer/workspaces.json`)
-
-The single source of truth for the workspace list. Every client reads it from this file or from the server's `GET /api/workspaces`.
+Workspaces are defined in `indexer/workspaces.json` or the file selected by `GREPLET_WORKSPACES`. Paths below are examples; use paths on the machine running the indexer.
 
 ```json
 [
   { "slug": "code", "label": "Main solution", "kind": "code",
-    "roots": ["C:\\work\\my-solution"] },
-  { "slug": "docs", "label": "Specs and manuals", "kind": "docs",
-    "roots": ["/Users/me/work/specs"],
-    "includeExt": [".pdf", ".html", ".md"],
-    "pdfPasswordFile": "/Users/me/work/specs/passwords.txt" }
+    "roots": ["C:/work/my-solution"] },
+  { "slug": "docs", "label": "Specifications", "kind": "docs",
+    "roots": ["C:/work/specs"], "includeExt": [".pdf", ".html", ".md"] }
 ]
 ```
 
-`roots` accepts paths from any OS. Windows paths inside JSON strings need backslashes escaped as `\\`.
+Use `/home/me/work/...` or `/Users/me/work/...` for Linux/macOS. Windows JSON paths can use forward slashes as above or escaped backslashes (`\\`). Separate code versions or products into workspaces when their source identity matters.
 
-| Field | Description |
+| Field | Meaning |
 |---|---|
-| `slug` | Identifier used by search and the API |
-| `label` | Display name in the admin UI |
-| `kind` | `code` or `docs`. Changes the default extensions and exclusion rules |
-| `roots` | Root folders to index |
-| `includeExt` | Target extensions. `code` default: `.cs .csproj .sln .xaml .proto .config .settings .manifest .md`; `docs` default: `.pdf` |
-| `excludeDirs` / `excludeFiles` | Replace the defaults when given |
-| `pdfPasswordFile` | Password list for encrypted PDFs |
+| `slug` / `label` | API identifier / display name |
+| `kind` | `code` or `docs`; selects default extensions and exclusions |
+| `roots` | Folders to index |
+| `includeExt` | Extensions to include; defaults to C# project/text formats for `code`, `.pdf` for `docs` |
+| `excludeDirs` / `excludeFiles` | Override the default directory/file exclusions |
+| `pdfPasswordFile` | Optional password-list file for encrypted PDFs |
 
-Full rules in [docs/design.md §3](docs/design.md) (Korean).
+### Exclude by name
 
-### Environment variables
+Prefix a file or folder name with `!`: `!draft.pdf` excludes one file and `!reference/` its subtree, including uploads and explicit roots inside excluded folders. A `!` in the middle or a leading `#` has no special meaning. Run indexing after renaming; old chunks are removed on the next successful run. Remove the prefix and reindex to include them again. Use exclusion settings when source paths must keep their names.
 
-| Variable | Default | Description |
-|---|---|---|
-| `GREPLET_PORT` | `7802` | Indexer port |
-| `GREPLET_DATA_DIR` | Per-OS default (table above) | Location of DB, manifests, uploads, logs |
-| `GREPLET_WORKSPACES` | `indexer/workspaces.json` | Workspace definition file. The CLIs (`greplet.ps1`, `greplet.mjs`) also read the default workspace from here, so pass the same value to the CLI if you gave the server a different path |
-| `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor.exe` (Windows) / `…/Extractor` (macOS, Linux) | Extractor executable |
-| `GREPLET_DEFAULT_WORKSPACE` | First workspace | Default when no workspace is given (CLI, MCP) |
-| `GREPLET_OPEN_UI` | `1` | `0` stops the start scripts from opening the admin UI in the browser after the health check (same as `--no-open` / `-NoOpenUI`) |
-| `GREPLET_CLIENT_NAME` | client-specific | Client name sent to `/api/search` and shown in the activity feed; valid names match `^[a-z0-9:_-]{1,32}$` |
-| `GREPLET_ACTIVITY_QUERY` | unset | Set to `hidden` to replace query text in activity events and history with `(hidden)` |
-| `OLLAMA_URL` | `http://localhost:11434` | Ollama address |
+### Data and environment
 
-## Clients
+Index data, manifests, uploads, and activity logs use `GREPLET_DATA_DIR`:
 
-| Client | Location | Notes |
-|---|---|---|
-| PowerShell CLI | `greplet.ps1` | `-Query -Workspace -All -TopN -Full -Mode -BaseUrl`. Windows |
-| Node CLI | `greplet.mjs` | `<query> -w --all --top-n --full --mode --file --json` plus `status` · `workspaces` · `index <slug> [--force] [--wait]`. All OSes |
-| Claude Code skill | `examples/claude-code-skill/SKILL.md` | Copy into `.claude/skills/greplet/` and fill in the workspace list |
-| Claude Desktop / Cowork | `greplet-mcpb/` | `npm run pack` → install the `.mcpb`. stdio, no auth |
-| Codex | `examples/codex/` | Register `greplet-mcpb/server/index.js` as a stdio MCP server in `config.toml`. Skill example included |
-| Remote MCP | `mcp-server/` | Streamable HTTP + Bearer, `127.0.0.1:7801`. Expose only through a tunnel. [README](mcp-server/README.md) (Korean) |
-| git hook | `git-hooks/post-commit` | `git config greplet.slug <slug>`, then copy into `.git/hooks/` |
+| OS | Default data directory |
+|---|---|
+| Windows | `%LOCALAPPDATA%\greplet` |
+| macOS | `~/Library/Application Support/greplet` |
+| Linux | `$XDG_DATA_HOME/greplet`, or `~/.local/share/greplet` |
 
-The MCP tools are `greplet` (search) and `greplet_workspaces` (list). Both carry `readOnlyHint`. This is a tool annotation, not authorization; approval behavior is controlled by the client.
+<details>
+<summary>Environment variable reference</summary>
+
+| Variable | Default / purpose |
+|---|---|
+| `GREPLET_PORT` | `7802`; indexer port |
+| `GREPLET_BASE_URL` | `http://localhost:7802`; CLI/MCP target |
+| `GREPLET_WORKSPACES` | `indexer/workspaces.json`; set consistently for the indexer and local CLI |
+| `GREPLET_DATA_DIR` | OS-specific directory above |
+| `GREPLET_EXTRACTOR` | `Extractor/bin/Release/net8.0/Extractor` (`.exe` on Windows) |
+| `GREPLET_DEFAULT_WORKSPACE` | Default CLI/MCP workspace; otherwise the first configured workspace |
+| `OLLAMA_URL` | `http://localhost:11434` |
+| `OLLAMA_KEEP_ALIVE` | `30m`; model retention after embedding requests |
+| `GREPLET_OPEN_UI` | `1`; set `0` to skip opening the browser at startup |
+| `GREPLET_CLIENT_NAME` | Client label in activity records; format `^[a-z0-9:_-]{1,32}$` |
+| `GREPLET_SESSION` | Explicit session identifier for activity grouping |
+| `GREPLET_ACTIVITY_QUERY` | Set `hidden` to replace query text in activity records |
+| `GREPLET_ACTIVITY_LOG` | Set `off` to disable persistent activity logging |
+| `GREPLET_ACTIVITY_RETENTION_DAYS` | `90`; activity log retention |
+
+Longer model retention uses memory; the first model load can still add latency. For custom ports, point both the startup health-check URL and clients at the configured indexer port.
+
+</details>
 
 ## HTTP API
 
-The indexer listens on `127.0.0.1:7802` without authentication. Put `mcp-server` in front of it to expose it externally.
+The indexer binds to **`127.0.0.1:7802` without authentication**. Use the separate Bearer-authenticated MCP server and a tunnel for remote access.
 
-| Method · path | Purpose |
+| Endpoint | Purpose |
 |---|---|
-| `GET /healthz` | Liveness |
-| `GET /api/status` | Ollama, Extractor, and queue status |
-| `GET /api/workspaces` | Workspace list with index statistics and persistent coverage (`complete`, `partial`, or `unknown`) |
-| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode, fileGlob? }`. `fileGlob` is a file-path glob (`*`, `**`, `?`). Hits include `abs` (absolute path); cached responses carry `cached: true` |
-| `POST /api/index/:slug` | Enqueue an incremental index job. `{ force: true }` for a full reindex |
-| `GET /api/jobs` · `GET /api/jobs/:id/events` | Job list, SSE log stream |
-| `POST /api/upload/:slug` | Upload files, then incremental index |
+| `GET /healthz` · `GET /api/status` | Health and component status |
+| `GET /api/workspaces` | Workspaces, index statistics, and `complete`/`partial`/`unknown` coverage |
+| `POST /api/search` | `{ query, workspaces: string[] \| "all", topN, mode, fileGlob? }` |
+| `POST /api/evidence/search` · `POST /api/evidence/get` | Evidence search and reference retrieval |
+| `POST /api/index/:slug` | Incremental indexing; `{ force: true }` for a full run |
+| `GET /api/jobs` · `GET /api/jobs/:id/events` | Jobs and their SSE logs |
+| `GET /api/events` · `GET /api/activity` · `GET /api/usage` | Live activity, recent searches, and usage summaries |
+| `POST /api/upload/:slug` | Upload and index files |
 | `DELETE /api/workspaces/:slug/files?file=` | Delete an uploaded file |
 
-Full request and response formats in [docs/design.md §5.5](docs/design.md) (Korean).
-
-## Division of labor among agent tools
-
-greplet answers "where is what". Everything else goes to other tools.
-
-| Question | Tool | Why |
-|---|---|---|
-| Where is this feature implemented, how does the doc define it | **greplet** | Returns ranked source locations without requiring a whole-folder read; actual latency and token use depend on the task |
-| Who calls this method, inheritance and reference chains | **LSP symbol tool** ([Serena](https://github.com/oraios/serena) etc.) | greplet only knows chunk text, not references |
-| Write a citation-backed spec for undocumented legacy code | **[legacy-spec-agent](https://github.com/HoonStyle/legacy-spec-agent)** | greplet does not interpret, summarize, or verify |
-| Find a file by name or path, check a file just edited | **Glob / Grep / Read** | The index may not have caught up yet |
-| Every occurrence of an exact string | **Grep** | Hybrid returns only topN. Narrow with `fts`, then confirm with Grep |
-
-Rule for the agent's rules file (CLAUDE.md etc.): content search goes to greplet first, structure to LSP, paths to Glob/Grep. Fall back to folder scanning only when greplet returns nothing or the server is down. Example: [`examples/claude-code-skill/CLAUDE.md.snippet`](examples/claude-code-skill/CLAUDE.md.snippet) (Korean).
-
-### greplet + Serena + legacy-spec-agent
-
-The combination for environments with several legacy codebases, a current project, and spec PDFs. The three tools never call each other. The agent combines their results.
-
-| Tool | Setup | Owns |
-|---|---|---|
-| greplet | Separate workspaces for each legacy codebase, the current project, and docs (`code`, `code-legacy`, `docs`) | Content search. "Where is this value defined", "how does the spec describe this protocol" |
-| Serena | Register every legacy codebase and the current project as Serena projects. Do not pin one. Switch with `activate_project` to whichever the request points at | Structure. References, call chains, inheritance, symbol-level read and edit |
-| legacy-spec-agent | Install the Claude Code / Codex plugin | Reverse-generate SPEC/ARCHITECTURE with `path:line` citations, then drift-check after code changes |
-
-If Serena is started with `--project`, the `activate_project` tool is disabled in the `claude-code` and `ide` contexts. Start it without a project to switch freely ([Serena docs](https://oraios.github.io/serena/02-usage/040_workflow.html)).
-
-A typical flow for "port a legacy feature into the current project":
-
-1. **greplet** `-Workspace code-legacy` finds the files and locations holding the feature, constants, and error codes. Use `-Mode fts` for exact tokens.
-2. **Serena** follows references and call chains from those symbols to fix the real scope.
-3. **legacy-spec-agent** writes the spec for that scope. Claims without a citation stay Unverified.
-4. **greplet** `-Workspace docs` cross-checks the definition in the spec PDFs.
-5. **greplet** `-Workspace code` and **Serena** locate the counterpart in the current project and apply the change.
-6. The commit hook runs an incremental greplet index, so the next search reflects the new code.
-
-When roles overlap:
-
-- Unknown file location → greplet. Known symbol name → Serena.
-- How the same feature differs across legacy codebases → greplet `--all`. Serena sees one active project at a time, so it needs a switch per codebase.
-- The result must become a document → legacy-spec-agent. greplet output locates evidence; it is not a deliverable.
-
-## Chunking rules
-
-- **C#**: type declarations, members (method/constructor/property/event/operator), and field groups each become a chunk. Every chunk starts with three header lines: `// file`, `// namespace`, `// class X : Base`. Members over 6000 chars use a 4000/400 window; consecutive members under 300 chars are merged up to 1200 chars.
-- **PDF**: one page = one chunk. Encrypted PDFs supported. Scanned image pages are skipped.
-- **HTML/Markdown/XAML/other**: 3000/300 line windows. HTML is flattened after removing script and style.
-- **Encoding**: UTF-8, falling back to CP949.
-
-Full specification in [docs/design.md](docs/design.md) (Korean).
-
+Search hits include an absolute `abs` path. `fileGlob` uses file-relative `*`, `**`, and `?` patterns. See the [design reference](docs/design.md) and [evidence contract](docs/greplet-evidence-v1.md) for details.
 
 ## Tuning history
 
-Measured bottlenecks, implementation changes, before/after results, and accepted or deferred experiments: [Tuning history](docs/tuning/README.md) (Korean). Reports use anonymous benchmark identifiers; aggregate results are included.
+The [tuning history](docs/tuning/README.md) records the problem, implementation, fixed comparison conditions, before/after results, and adoption decision for each experiment. Benchmark functions, projects, and questions use anonymous identifiers.
 
-The [workspace routing research review](docs/tuning/2026-09-11-workspace-routing-research.md) compares ReSLLM, MKP-QA, and RAGRoute with the T12 experiment and records hypotheses for further validation (Korean).
+| Status | Record |
+|---|---|
+| In use | Shared request embeddings, 30-minute model retention, qualified-definition lookup, and scope-dependent hybrid fusion: [0.11.2 changes](CHANGELOG.md#0112---2026-09-11) |
+| Validated under recorded conditions | [T10 fusion comparison](docs/tuning/2026-09-11-vector-prefix.md) and [T11 usage/concurrency checks](docs/tuning/2026-09-11-release-validation.md) |
+| Deferred | [T12 automatic workspace selection](docs/tuning/2026-09-11-workspace-routing.md); offline candidates did not meet adoption criteria |
+| Research for later experiments | [ReSLLM, MKP-QA, and RAGRoute comparison](docs/tuning/2026-09-11-workspace-routing-research.md); these are published results, not Greplet measurements |
 
-## Development and verification
+Automatic workspace selection is not part of the production search API. Choose a workspace explicitly or search all. Evaluation samples and denominators differ across reports; improvements are not cumulative percentages.
 
-```bash
-dotnet build Extractor -c Release
-cd indexer && npm run build && npm run test:incremental
-cd ../mcp-server && npm run build && MCP_AUTH_TOKEN=<token> npm run smoke
-cd ../greplet-mcpb && npm install && npm run smoke
+## Architecture and development
+
+```text
+UI / CLI / MCP / hooks
+        | HTTP, localhost:7802
+        v
+Node/TypeScript indexer
+  +-- Extractor: Roslyn (C#), PdfPig (PDF), text extraction
+  +-- Ollama: bge-m3 embeddings
+  +-- LanceDB: vectors + BM25, hybrid ranking
 ```
 
-In PowerShell, set `$env:MCP_AUTH_TOKEN = "<token>"` first instead of the inline `MCP_AUTH_TOKEN=<token>`. During development, `npm run dev` (tsx) in `indexer/` and `mcp-server/` runs without a build.
+Source: [Extractor](Extractor/) · [Indexer](indexer/) · [Local MCP](greplet-mcpb/) · [Remote MCP](mcp-server/). Detailed chunking and configuration: [Design](docs/design.md) (Korean).
 
-## Known limitations
+C# uses type/member chunks and splitting/merging for large/small members; PDF uses pages. Other supported text uses windows. UTF-8 input has CP949 fallback. OCR is not included, and other programming languages use text chunks rather than C# symbol extraction. The current vector path uses a flat scan, so increasing the corpus increases search work.
 
-- The chunker is specialized for C#. Other languages fall into text windows (add the extension to `includeExt`).
-- No vector index is built (flat scan). Beyond a few hundred thousand chunks per workspace, search slows down.
-- The indexer HTTP API has no authentication, so it binds to `127.0.0.1` only.
-- The last `@lancedb/lancedb` native binary for Intel Macs (darwin-x64) is 0.22.3 (0.23.0 lists it as a dependency but the package was never published). Run `npm i @lancedb/lancedb@0.22.3` after `npm install`. Not needed on Apple Silicon, Linux, or Windows.
-- A workspace indexed without Ollama has empty vectors, so only `fts` is meaningful. Once Ollama is available, the next index job is automatically promoted to a full reindex.
+After the setup above, these local checks do not require a running production indexer:
+
+```sh
+npm --prefix indexer run build
+npm --prefix indexer run test:incremental
+npm --prefix indexer run test:hybrid
+npm --prefix indexer run test:fusion-protection
+npm --prefix indexer run test:workspace-routing
+node scripts/report-retrieval-results.mjs --check
+node scripts/report-workspace-routing.mjs --check
+node scripts/check-plugin.mjs
+```
+
+See [CI](.github/workflows/ci.yml) for the full Windows/macOS/Linux test matrix, including evidence, MCP, and CLI checks. Development servers use `npm run dev` in `indexer/` or `mcp-server/` after installing their dependencies. Protocol smoke tests may have additional setup; use each component's instructions.
 
 ## License
 

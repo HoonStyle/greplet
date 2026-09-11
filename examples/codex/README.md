@@ -16,7 +16,7 @@ greplet 은 코드(신규+레거시)와 문서(PDF/매뉴얼)를 Roslyn/PdfPig �
    # Windows
    pwsh indexer/start-indexer.ps1
    ```
-   인덱서는 임베딩을 위해 Ollama(`http://localhost:11434`, 모델 `bge-m3`)가 떠 있어야 한다(`--mode fts` 는 Ollama 없이도 동작).
+   Ollama(`http://localhost:11434`, 모델 `bge-m3`)는 벡터·하이브리드 검색용 선택 사항이다. Ollama 없이도 인덱싱할 수 있으며 이때 검색은 `fts` 로 동작한다.
 
 ## MCP 서버 등록
 
@@ -37,7 +37,7 @@ GREPLET_CLIENT_NAME = "mcp:codex"
 - `GREPLET_DEFAULT_WORKSPACE`: workspace 를 지정하지 않았을 때 검색할 기본 워크스페이스 slug. 비워두면 서버에 정의된 첫 워크스페이스를 쓴다.
 - `GREPLET_CLIENT_NAME`: 대시보드 활동 피드에 표시할 호출자 이름.
 
-등록 후 Codex 를 재시작하면 `greplet`, `greplet_workspaces` 두 도구를 사용할 수 있다.
+등록 후 Codex 를 재시작하면 `greplet`, `greplet_workspaces`, `greplet_search_evidence`, `greplet_get_evidence` 네 도구를 사용할 수 있다.
 
 ## Skill 설치 (선택, 권장)
 

@@ -1,8 +1,8 @@
 # greplet MCP 서버 (원격, Streamable HTTP)
 
-greplet 인덱서 `/api/search`·`/api/workspaces` 를 감싸는 **원격 MCP 서버**. Bearer 토큰 인증, stateless. 다른 PC 나 클라우드 에이전트(Claude Cowork 커넥터 등)에서 로컬 인덱서를 쓰게 할 때 사용한다. 같은 PC 에서만 쓸 거면 `greplet-mcpb`(stdio, 인증 불필요)가 더 간단하다.
+greplet 인덱서 `/api/search`·`/api/workspaces`·`/api/evidence/search`·`/api/evidence/get` 을 감싸는 **원격 MCP 서버**. Bearer 토큰 인증, stateless. 다른 PC 나 클라우드 에이전트(Claude Cowork 커넥터 등)에서 로컬 인덱서를 쓰게 할 때 사용한다. 같은 PC 에서만 쓸 거면 `greplet-mcpb`(stdio, 인증 불필요)가 더 간단하다.
 
-`greplet.ps1` 의 출력 포맷(점수순·중복 제거·300자 스니펫)을 동치 이식했다. 워크스페이스 병합·정렬은 인덱서가 하므로 이 서버는 API 1회 호출과 포맷팅만 담당한다.
+`greplet.ps1` 의 출력 포맷(점수순·300자 스니펫)을 동치 이식했다. 인덱서가 워크스페이스 병합과 순위 계산을 담당하며, 서로 다른 출처의 결과를 그대로 보존한다. 이 서버는 인덱서 API 호출과 출력 포맷팅만 담당한다.
 
 ## 구조
 
@@ -13,7 +13,7 @@ greplet 인덱서 `/api/search`·`/api/workspaces` 를 감싸는 **원격 MCP �
                                greplet 인덱서(:7802, 무인증 로컬 전용)
 ```
 
-- 툴: `greplet`(검색, 읽기 전용) · `greplet_workspaces`(목록). topN 상한 20, mode hybrid/vector/fts.
+- 툴: `greplet`(검색) · `greplet_workspaces`(목록) · `greplet_search_evidence`(근거 참조가 포함된 검색) · `greplet_get_evidence`(근거 전문 재조회와 원본 해시 검증). 네 도구 모두 읽기 전용이며, 검색의 topN 상한은 20이고 mode 는 hybrid/vector/fts 다.
 - 워크스페이스 목록은 인덱서 `GET /api/workspaces` 에서 받아 온다(60초 캐시). 하드코딩 없음.
 - **127.0.0.1 에만 바인딩** — 외부 노출은 반드시 터널(Cloudflare Tunnel 등) 경유.
 
