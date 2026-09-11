@@ -19,7 +19,8 @@
     "test:source-validation": "node tests/sourceValidation.mjs",
     "test:hybrid": "node tests/hybridHarness.mjs",
     "test:fusion-protection": "node tests/fusionProtection.mjs",
-    "test:embed-keep-alive": "node tests/embedKeepAlive.mjs"
+    "test:embed-keep-alive": "node tests/embedKeepAlive.mjs",
+    "test:workspace-routing": "node tests/routing.mjs"
   },
   "dependencies": {
     "@lancedb/lancedb": "^0.38.0",

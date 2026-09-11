@@ -65,6 +65,9 @@ jobs:
       - name: Indexer scoped vector prefix fusion test
         run: npm run test:fusion-protection
         working-directory: indexer
+      - name: Offline workspace router inference and masked training test
+        run: npm run test:workspace-routing
+        working-directory: indexer
       - name: Retrieval trajectory attribution and observer tests
         run: node scripts/test-retrieval-trace.mjs
       - name: Public retrieval report consistency
