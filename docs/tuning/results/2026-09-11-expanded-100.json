@@ -1,0 +1,1079 @@
+{
+  "date": "2026-09-11",
+  "currentCommit": "898e559",
+  "baseline": "equal-weight RRF with definition shortcut",
+  "candidate": "vector:FTS 4:1, k60; frozen before expanded rankings",
+  "protocol": {
+    "created": 115,
+    "actuallyEvaluated": 100,
+    "reservedUnsearched": 15,
+    "distinctFiles": 91,
+    "workspaces": 5,
+    "rounds": 5,
+    "modes": 3,
+    "versions": 2,
+    "searches": 3000,
+    "pairedAlternatingOrder": true,
+    "querySha256": "269cd9cfddf2e647d5722b1b8275e631aaaed382325d3f1412e9393ad867b5cf",
+    "reservedSha256": "7f737e005249716989804d5782be4503db93879666e10eb4d2b13d7bf810429c",
+    "reserveSplit": "Whole source files; 5 cases from each author group"
+  },
+  "summary": {
+    "equal": [
+      {
+        "mode": "fts",
+        "n": 500,
+        "questions": 100,
+        "targetHit5": 9,
+        "targetMRR5": 0.0525,
+        "medianMs": 8.73700000000099,
+        "p95Ms": 10.545399999995425,
+        "stableQuestions": 100,
+        "warnings": 0,
+        "cached": 0
+      },
+      {
+        "mode": "vector",
+        "n": 500,
+        "questions": 100,
+        "targetHit5": 64,
+        "targetMRR5": 0.48066666666666663,
+        "medianMs": 47.625599999999395,
+        "p95Ms": 51.728900000001886,
+        "stableQuestions": 100,
+        "warnings": 0,
+        "cached": 0
+      },
+      {
+        "mode": "hybrid",
+        "n": 500,
+        "questions": 100,
+        "targetHit5": 39,
+        "targetMRR5": 0.20466666666666666,
+        "medianMs": 56.09810000000289,
+        "p95Ms": 61.47820000000138,
+        "stableQuestions": 100,
+        "warnings": 0,
+        "cached": 0
+      }
+    ],
+    "weighted": [
+      {
+        "mode": "fts",
+        "n": 500,
+        "questions": 100,
+        "targetHit5": 9,
+        "targetMRR5": 0.0525,
+        "medianMs": 8.750100000001112,
+        "p95Ms": 10.074499999999944,
+        "stableQuestions": 100,
+        "warnings": 0,
+        "cached": 0
+      },
+      {
+        "mode": "vector",
+        "n": 500,
+        "questions": 100,
+        "targetHit5": 64,
+        "targetMRR5": 0.48066666666666663,
+        "medianMs": 47.66619999999966,
+        "p95Ms": 51.85830000000715,
+        "stableQuestions": 100,
+        "warnings": 0,
+        "cached": 0
+      },
+      {
+        "mode": "hybrid",
+        "n": 500,
+        "questions": 100,
+        "targetHit5": 57,
+        "targetMRR5": 0.3261666666666666,
+        "medianMs": 57.73769999999786,
+        "p95Ms": 62.9773000000132,
+        "stableQuestions": 100,
+        "warnings": 0,
+        "cached": 0
+      }
+    ]
+  },
+  "paired": {
+    "n": 100,
+    "beforeHit5": 39,
+    "afterHit5": 57,
+    "gains": 20,
+    "losses": 2,
+    "rankWorsenedWithinTop5": 2
+  },
+  "byWorkspace": {
+    "W1": {
+      "n": 46,
+      "beforeHit5": 18,
+      "afterHit5": 26,
+      "gains": 9,
+      "losses": 1,
+      "rankWorsenedWithinTop5": 2
+    },
+    "W2": {
+      "n": 14,
+      "beforeHit5": 5,
+      "afterHit5": 8,
+      "gains": 3,
+      "losses": 0,
+      "rankWorsenedWithinTop5": 0
+    },
+    "W3": {
+      "n": 14,
+      "beforeHit5": 7,
+      "afterHit5": 9,
+      "gains": 2,
+      "losses": 0,
+      "rankWorsenedWithinTop5": 0
+    },
+    "W4": {
+      "n": 15,
+      "beforeHit5": 6,
+      "afterHit5": 8,
+      "gains": 3,
+      "losses": 1,
+      "rankWorsenedWithinTop5": 0
+    },
+    "W5": {
+      "n": 11,
+      "beforeHit5": 3,
+      "afterHit5": 6,
+      "gains": 3,
+      "losses": 0,
+      "rankWorsenedWithinTop5": 0
+    }
+  },
+  "uncertainty": {
+    "beforeWilson95": [
+      0.3001687400639441,
+      0.4879698295415926
+    ],
+    "afterWilson95": [
+      0.47215389549212305,
+      0.6626670147588988
+    ],
+    "exactMcNemarP": 0.00012111663818359375,
+    "pairedFileClusterBootstrapDelta95": [
+      0.0970873786407767,
+      0.2653061224489796
+    ],
+    "bootstrapResamples": 10000,
+    "notes": "Intervals describe this authored benchmark sample, not random real-user traffic; file grouping does not remove all project-level dependence."
+  },
+  "verification": {
+    "unchangedFtsVectorRuns": 1000,
+    "allTargetsPresent": true,
+    "manifestsUnchanged": true
+  },
+  "cases": [
+    {
+      "id": "E001",
+      "workspace": "W1",
+      "fileGroup": "G001",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E002",
+      "workspace": "W1",
+      "fileGroup": "G001",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E005",
+      "workspace": "W1",
+      "fileGroup": "G002",
+      "ftsRank": 0,
+      "vectorRank": 3,
+      "equalRank": 4,
+      "weightedRank": 2
+    },
+    {
+      "id": "E006",
+      "workspace": "W1",
+      "fileGroup": "G003",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 5,
+      "weightedRank": 4
+    },
+    {
+      "id": "E007",
+      "workspace": "W1",
+      "fileGroup": "G003",
+      "ftsRank": 3,
+      "vectorRank": 1,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E009",
+      "workspace": "W1",
+      "fileGroup": "G004",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E010",
+      "workspace": "W1",
+      "fileGroup": "G004",
+      "ftsRank": 3,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 1
+    },
+    {
+      "id": "E011",
+      "workspace": "W1",
+      "fileGroup": "G005",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E012",
+      "workspace": "W1",
+      "fileGroup": "G005",
+      "ftsRank": 0,
+      "vectorRank": 4,
+      "equalRank": 0,
+      "weightedRank": 5
+    },
+    {
+      "id": "E013",
+      "workspace": "W1",
+      "fileGroup": "G006",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E014",
+      "workspace": "W1",
+      "fileGroup": "G007",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E015",
+      "workspace": "W1",
+      "fileGroup": "G007",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E016",
+      "workspace": "W1",
+      "fileGroup": "G008",
+      "ftsRank": 0,
+      "vectorRank": 3,
+      "equalRank": 2,
+      "weightedRank": 2
+    },
+    {
+      "id": "E017",
+      "workspace": "W1",
+      "fileGroup": "G009",
+      "ftsRank": 1,
+      "vectorRank": 1,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E018",
+      "workspace": "W1",
+      "fileGroup": "G009",
+      "ftsRank": 0,
+      "vectorRank": 5,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E019",
+      "workspace": "W1",
+      "fileGroup": "G010",
+      "ftsRank": 0,
+      "vectorRank": 4,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E020",
+      "workspace": "W1",
+      "fileGroup": "G011",
+      "ftsRank": 1,
+      "vectorRank": 1,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E021",
+      "workspace": "W1",
+      "fileGroup": "G012",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 5,
+      "weightedRank": 4
+    },
+    {
+      "id": "E022",
+      "workspace": "W1",
+      "fileGroup": "G013",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E024",
+      "workspace": "W1",
+      "fileGroup": "G014",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E025",
+      "workspace": "W1",
+      "fileGroup": "G015",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E027",
+      "workspace": "W1",
+      "fileGroup": "G016",
+      "ftsRank": 3,
+      "vectorRank": 0,
+      "equalRank": 2,
+      "weightedRank": 3
+    },
+    {
+      "id": "E028",
+      "workspace": "W1",
+      "fileGroup": "G017",
+      "ftsRank": 0,
+      "vectorRank": 5,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E029",
+      "workspace": "W1",
+      "fileGroup": "G018",
+      "ftsRank": 0,
+      "vectorRank": 3,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E030",
+      "workspace": "W1",
+      "fileGroup": "G019",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E031",
+      "workspace": "W1",
+      "fileGroup": "G020",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E032",
+      "workspace": "W1",
+      "fileGroup": "G021",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E033",
+      "workspace": "W1",
+      "fileGroup": "G022",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E034",
+      "workspace": "W1",
+      "fileGroup": "G023",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E035",
+      "workspace": "W1",
+      "fileGroup": "G024",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E037",
+      "workspace": "W1",
+      "fileGroup": "G025",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E038",
+      "workspace": "W1",
+      "fileGroup": "G026",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 0,
+      "weightedRank": 5
+    },
+    {
+      "id": "E039",
+      "workspace": "W1",
+      "fileGroup": "G027",
+      "ftsRank": 2,
+      "vectorRank": 1,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E040",
+      "workspace": "W1",
+      "fileGroup": "G028",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E041",
+      "workspace": "W1",
+      "fileGroup": "G029",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 3,
+      "weightedRank": 5
+    },
+    {
+      "id": "E042",
+      "workspace": "W1",
+      "fileGroup": "G030",
+      "ftsRank": 1,
+      "vectorRank": 3,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E043",
+      "workspace": "W1",
+      "fileGroup": "G031",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E045",
+      "workspace": "W1",
+      "fileGroup": "G032",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 3,
+      "weightedRank": 2
+    },
+    {
+      "id": "E046",
+      "workspace": "W1",
+      "fileGroup": "G033",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 0,
+      "weightedRank": 5
+    },
+    {
+      "id": "E047",
+      "workspace": "W1",
+      "fileGroup": "G034",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E048",
+      "workspace": "W1",
+      "fileGroup": "G035",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 5,
+      "weightedRank": 0
+    },
+    {
+      "id": "E049",
+      "workspace": "W1",
+      "fileGroup": "G036",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 3,
+      "weightedRank": 1
+    },
+    {
+      "id": "E051",
+      "workspace": "W2",
+      "fileGroup": "G037",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E052",
+      "workspace": "W2",
+      "fileGroup": "G038",
+      "ftsRank": 0,
+      "vectorRank": 3,
+      "equalRank": 0,
+      "weightedRank": 3
+    },
+    {
+      "id": "E053",
+      "workspace": "W2",
+      "fileGroup": "G039",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 1
+    },
+    {
+      "id": "E054",
+      "workspace": "W2",
+      "fileGroup": "G040",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E056",
+      "workspace": "W2",
+      "fileGroup": "G041",
+      "ftsRank": 0,
+      "vectorRank": 4,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E057",
+      "workspace": "W2",
+      "fileGroup": "G042",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 4,
+      "weightedRank": 2
+    },
+    {
+      "id": "E058",
+      "workspace": "W2",
+      "fileGroup": "G043",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E059",
+      "workspace": "W2",
+      "fileGroup": "G044",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 4,
+      "weightedRank": 1
+    },
+    {
+      "id": "E060",
+      "workspace": "W2",
+      "fileGroup": "G045",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 2
+    },
+    {
+      "id": "E062",
+      "workspace": "W1",
+      "fileGroup": "G046",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E063",
+      "workspace": "W1",
+      "fileGroup": "G047",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E064",
+      "workspace": "W1",
+      "fileGroup": "G048",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E065",
+      "workspace": "W1",
+      "fileGroup": "G049",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E066",
+      "workspace": "W2",
+      "fileGroup": "G050",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E067",
+      "workspace": "W2",
+      "fileGroup": "G051",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 1
+    },
+    {
+      "id": "E068",
+      "workspace": "W2",
+      "fileGroup": "G052",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E069",
+      "workspace": "W2",
+      "fileGroup": "G053",
+      "ftsRank": 0,
+      "vectorRank": 3,
+      "equalRank": 0,
+      "weightedRank": 3
+    },
+    {
+      "id": "E070",
+      "workspace": "W2",
+      "fileGroup": "G054",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E071",
+      "workspace": "W3",
+      "fileGroup": "G055",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 3,
+      "weightedRank": 1
+    },
+    {
+      "id": "E072",
+      "workspace": "W3",
+      "fileGroup": "G056",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 1
+    },
+    {
+      "id": "E073",
+      "workspace": "W3",
+      "fileGroup": "G057",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 1
+    },
+    {
+      "id": "E074",
+      "workspace": "W3",
+      "fileGroup": "G058",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 3,
+      "weightedRank": 1
+    },
+    {
+      "id": "E075",
+      "workspace": "W3",
+      "fileGroup": "G059",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E076",
+      "workspace": "W3",
+      "fileGroup": "G060",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 0,
+      "weightedRank": 2
+    },
+    {
+      "id": "E077",
+      "workspace": "W3",
+      "fileGroup": "G061",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 2
+    },
+    {
+      "id": "E079",
+      "workspace": "W3",
+      "fileGroup": "G062",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 1
+    },
+    {
+      "id": "E080",
+      "workspace": "W3",
+      "fileGroup": "G063",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E081",
+      "workspace": "W4",
+      "fileGroup": "G064",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E082",
+      "workspace": "W4",
+      "fileGroup": "G065",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 2
+    },
+    {
+      "id": "E083",
+      "workspace": "W4",
+      "fileGroup": "G066",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E084",
+      "workspace": "W4",
+      "fileGroup": "G067",
+      "ftsRank": 0,
+      "vectorRank": 3,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E085",
+      "workspace": "W4",
+      "fileGroup": "G068",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E086",
+      "workspace": "W4",
+      "fileGroup": "G069",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 5
+    },
+    {
+      "id": "E087",
+      "workspace": "W4",
+      "fileGroup": "G070",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 2,
+      "weightedRank": 2
+    },
+    {
+      "id": "E088",
+      "workspace": "W4",
+      "fileGroup": "G071",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 2,
+      "weightedRank": 0
+    },
+    {
+      "id": "E089",
+      "workspace": "W4",
+      "fileGroup": "G072",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 4,
+      "weightedRank": 4
+    },
+    {
+      "id": "E090",
+      "workspace": "W4",
+      "fileGroup": "G073",
+      "ftsRank": 0,
+      "vectorRank": 4,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E091",
+      "workspace": "W5",
+      "fileGroup": "G074",
+      "ftsRank": 2,
+      "vectorRank": 1,
+      "equalRank": 1,
+      "weightedRank": 1
+    },
+    {
+      "id": "E092",
+      "workspace": "W5",
+      "fileGroup": "G075",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E094",
+      "workspace": "W5",
+      "fileGroup": "G076",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 3,
+      "weightedRank": 2
+    },
+    {
+      "id": "E095",
+      "workspace": "W5",
+      "fileGroup": "G077",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E096",
+      "workspace": "W3",
+      "fileGroup": "G078",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 3,
+      "weightedRank": 2
+    },
+    {
+      "id": "E097",
+      "workspace": "W3",
+      "fileGroup": "G079",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E098",
+      "workspace": "W3",
+      "fileGroup": "G080",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E099",
+      "workspace": "W3",
+      "fileGroup": "G081",
+      "ftsRank": 0,
+      "vectorRank": 3,
+      "equalRank": 0,
+      "weightedRank": 3
+    },
+    {
+      "id": "E100",
+      "workspace": "W3",
+      "fileGroup": "G055",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E101",
+      "workspace": "W4",
+      "fileGroup": "G064",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E102",
+      "workspace": "W4",
+      "fileGroup": "G068",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E103",
+      "workspace": "W4",
+      "fileGroup": "G082",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 3
+    },
+    {
+      "id": "E104",
+      "workspace": "W4",
+      "fileGroup": "G083",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 5,
+      "weightedRank": 2
+    },
+    {
+      "id": "E105",
+      "workspace": "W4",
+      "fileGroup": "G084",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 3,
+      "weightedRank": 1
+    },
+    {
+      "id": "E106",
+      "workspace": "W5",
+      "fileGroup": "G085",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E107",
+      "workspace": "W5",
+      "fileGroup": "G086",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E109",
+      "workspace": "W5",
+      "fileGroup": "G087",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E110",
+      "workspace": "W5",
+      "fileGroup": "G088",
+      "ftsRank": 0,
+      "vectorRank": 0,
+      "equalRank": 0,
+      "weightedRank": 0
+    },
+    {
+      "id": "E111",
+      "workspace": "W5",
+      "fileGroup": "G089",
+      "ftsRank": 0,
+      "vectorRank": 2,
+      "equalRank": 0,
+      "weightedRank": 5
+    },
+    {
+      "id": "E112",
+      "workspace": "W5",
+      "fileGroup": "G090",
+      "ftsRank": 0,
+      "vectorRank": 1,
+      "equalRank": 0,
+      "weightedRank": 4
+    },
+    {
+      "id": "E113",
+      "workspace": "W5",
+      "fileGroup": "G091",
+      "ftsRank": 4,
+      "vectorRank": 2,
+      "equalRank": 2,
+      "weightedRank": 2
+    }
+  ],
+  "vectorComparison": {
+    "bothHit": 55,
+    "vectorOnly": 9,
+    "weightedOnly": 2,
+    "bothMiss": 34
+  }
+}

@@ -1,0 +1,6668 @@
+{
+  "date": "2026-09-11",
+  "schemaVersion": 1,
+  "scope": "Observed retrieval trajectories; no agent planning, answer, or safety evaluation",
+  "protocol": {
+    "questions": 100,
+    "rounds": 5,
+    "modes": 3,
+    "versions": 2,
+    "cacheBypassed": true,
+    "topN": 5,
+    "fileGlob": null,
+    "searches": 3000,
+    "hybridTraces": 1000,
+    "reservedUnsearched": 15,
+    "querySha256": "269cd9cfddf2e647d5722b1b8275e631aaaed382325d3f1412e9393ad867b5cf",
+    "tracedLatencyComparableToOriginal": false
+  },
+  "verification": {
+    "searches": 3000,
+    "warmups": 10,
+    "originalTop5Identical": 3000,
+    "goldUnchanged": true,
+    "reserveUnchangedAndUnsearched": true,
+    "tableVersionsUnchanged": true,
+    "sourceAndManifestsUnchangedDuringTraceRun": true,
+    "identicalCandidatePairs": 500,
+    "stableHybridQuestionVersions": 200,
+    "uninstrumentedHybridSearches": 200,
+    "fullReturnOrderScoresAndIdentityMatch": 200,
+    "effectiveModesWarningsAndCacheMatch": 200,
+    "sourceManifestsAndTableVersionsUnchangedDuringCheck": true,
+    "manifestDriftSinceOriginalCount": 1,
+    "anomalies": 0,
+    "rawTraceSha256": "44aa393a206605210402a85d10de8ba64e19e08043b19785c38cd820c384df68"
+  },
+  "counts": {
+    "equal": {
+      "final_top5_cutoff": 52,
+      "candidate_pool_miss": 6,
+      "target_hit": 39,
+      "fused_pool_cutoff": 3
+    },
+    "weighted": {
+      "target_hit": 57,
+      "candidate_pool_miss": 6,
+      "final_top5_cutoff": 37
+    }
+  },
+  "cases": [
+    {
+      "id": "E001",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 9
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E002",
+      "versions": {
+        "equal": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E005",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fused_union": {
+              "count": 87,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fused_union": {
+              "count": 87,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 3,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E006",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 96,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 96,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E007",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 3,
+      "weightingRegression": false
+    },
+    {
+      "id": "E009",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 19
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 12
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E010",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 3,
+      "weightingRegression": false
+    },
+    {
+      "id": "E011",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 14
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 7
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E012",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 9
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 4,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E013",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 86,
+              "targetRank": 15
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 15
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 15
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 86,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E014",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E015",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 87,
+              "targetRank": 14
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 87,
+              "targetRank": 9
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E016",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 3,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E017",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fused_union": {
+              "count": 83,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fused_union": {
+              "count": 83,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 1,
+      "weightingRegression": false
+    },
+    {
+      "id": "E018",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 90,
+              "targetRank": 14
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 90,
+              "targetRank": 10
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 10
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 10
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 5,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E019",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 82,
+              "targetRank": 20
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 20
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 20
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 82,
+              "targetRank": 11
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 4,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E020",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 1,
+      "weightingRegression": false
+    },
+    {
+      "id": "E021",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 96,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 96,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E022",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 10
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 10
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 10
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E024",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E025",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E027",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 3,
+      "weightingRegression": false
+    },
+    {
+      "id": "E028",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 9
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 5,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E029",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 98,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 98,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 3,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E030",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 89,
+              "targetRank": 35
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 35
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 35
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 89,
+              "targetRank": 24
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 24
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 24
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E031",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E032",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 24
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 24
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 24
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 17
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 17
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 17
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E033",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 23
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 13
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E034",
+      "versions": {
+        "equal": {
+          "classification": "fused_pool_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 40
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 72
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 40
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 40
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 40
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 40
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E035",
+      "versions": {
+        "equal": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E037",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 21
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 21
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 21
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 9
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E038",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 7
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E039",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 2,
+      "weightingRegression": false
+    },
+    {
+      "id": "E040",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E041",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "fts_candidates": {
+              "count": 25,
+              "targetRank": 10
+            },
+            "fused_union": {
+              "count": 72,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "fts_candidates": {
+              "count": 25,
+              "targetRank": 10
+            },
+            "fused_union": {
+              "count": 72,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E042",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 3,
+      "ftsRankAt5": 1,
+      "weightingRegression": false
+    },
+    {
+      "id": "E043",
+      "versions": {
+        "equal": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E045",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "fused_union": {
+              "count": 90,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "fused_union": {
+              "count": 90,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E046",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E047",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 27
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 27
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 27
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 16
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 16
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 16
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E048",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "fused_union": {
+              "count": 85,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "fused_union": {
+              "count": 85,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": true
+    },
+    {
+      "id": "E049",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "fused_union": {
+              "count": 79,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "fused_union": {
+              "count": 79,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E051",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "fts_candidates": {
+              "count": 34,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 84,
+              "targetRank": 26
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 26
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 26
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "fts_candidates": {
+              "count": 34,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 84,
+              "targetRank": 13
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E052",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 13,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 62,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 13,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 62,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 3,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E053",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 19,
+              "targetRank": 15
+            },
+            "fused_union": {
+              "count": 65,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 19,
+              "targetRank": 15
+            },
+            "fused_union": {
+              "count": 65,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E054",
+      "versions": {
+        "equal": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 27,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 77,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 27,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 77,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E056",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 7
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 4,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E057",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E058",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 25
+            },
+            "fts_candidates": {
+              "count": 15,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 65,
+              "targetRank": 40
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 40
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 40
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 25
+            },
+            "fts_candidates": {
+              "count": 15,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 65,
+              "targetRank": 25
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 25
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 25
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E059",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 98,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 98,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E060",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 2,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 51,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 2,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 51,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E062",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 17
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 17
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 17
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 11
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E063",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 35
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 35
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 35
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 19
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E064",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 10
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 10
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 10
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E065",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E066",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 98,
+              "targetRank": 14
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 98,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E067",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 4,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 54,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 4,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 54,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E068",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "fts_candidates": {
+              "count": 15,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 63,
+              "targetRank": 12
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "fts_candidates": {
+              "count": 15,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 63,
+              "targetRank": 7
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E069",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 3,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E070",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 25
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 49
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 49
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 49
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 25
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 26
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 26
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 26
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E071",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E072",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E073",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E074",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E075",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 46
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 46
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 46
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 24
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 24
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 24
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E076",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 96,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 96,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E077",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 42,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 42,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E079",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E080",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "fts_candidates": {
+              "count": 42,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 22
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 22
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 22
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "fts_candidates": {
+              "count": 42,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 91,
+              "targetRank": 12
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E081",
+      "versions": {
+        "equal": {
+          "classification": "fused_pool_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 47
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 92
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 47
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 47
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 47
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 47
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E082",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 45
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 45
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E083",
+      "versions": {
+        "equal": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 47,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 47,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E084",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 87,
+              "targetRank": 18
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 87,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 3,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E085",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 19
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 19
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 15
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 15
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 15
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E086",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 93,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E087",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E088",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 49
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 35
+            },
+            "fused_union": {
+              "count": 98,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 49
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 35
+            },
+            "fused_union": {
+              "count": 98,
+              "targetRank": 25
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 25
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 25
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": true
+    },
+    {
+      "id": "E089",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 15
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 15
+            },
+            "fused_union": {
+              "count": 94,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E090",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 4,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E091",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 12,
+              "targetRank": 2
+            },
+            "fused_union": {
+              "count": 59,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 12,
+              "targetRank": 2
+            },
+            "fused_union": {
+              "count": 59,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 2,
+      "weightingRegression": false
+    },
+    {
+      "id": "E092",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 28,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 66,
+              "targetRank": 13
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 28,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 66,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E094",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 38,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 86,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 38,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 86,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E095",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "fts_candidates": {
+              "count": 36,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 82,
+              "targetRank": 23
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 11
+            },
+            "fts_candidates": {
+              "count": 36,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 82,
+              "targetRank": 12
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 12
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E096",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 22,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 72,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 22,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 72,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E097",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 16
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 33
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 33
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 33
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 16
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 97,
+              "targetRank": 18
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 18
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E098",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 22
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 43
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 43
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 43
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 22
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 22
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 22
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 22
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E099",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 6
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 100,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 3,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E100",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 16
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 79,
+              "targetRank": 38
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 38
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 38
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 16
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 79,
+              "targetRank": 23
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 23
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E101",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 14
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 14
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 99,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E102",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 13
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 13
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E103",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 41
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 7
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 7
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 41
+            },
+            "fused_union": {
+              "count": 88,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E104",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 96,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 96,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E105",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 32,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 80,
+              "targetRank": 3
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 3
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 3
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 32,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 80,
+              "targetRank": 1
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 1
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E106",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 83,
+              "targetRank": 27
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 27
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 27
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 6
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 83,
+              "targetRank": 16
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 16
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 16
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E107",
+      "versions": {
+        "equal": {
+          "classification": "fused_pool_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 38
+            },
+            "fts_candidates": {
+              "count": 28,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 64,
+              "targetRank": 53
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 38
+            },
+            "fts_candidates": {
+              "count": 28,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 64,
+              "targetRank": 39
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 39
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 39
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E109",
+      "versions": {
+        "equal": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 79,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "candidate_pool_miss",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 79,
+              "targetRank": 0
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E110",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 22
+            },
+            "fts_candidates": {
+              "count": 23,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 70,
+              "targetRank": 43
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 43
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 43
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 22
+            },
+            "fts_candidates": {
+              "count": 23,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 70,
+              "targetRank": 24
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 24
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 24
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 0,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E111",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 49,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 8
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 8
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 49,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 95,
+              "targetRank": 5
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 5
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 5
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E112",
+      "versions": {
+        "equal": {
+          "classification": "final_top5_cutoff",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 9
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 9
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 0
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 1
+            },
+            "fts_candidates": {
+              "count": 50,
+              "targetRank": 0
+            },
+            "fused_union": {
+              "count": 92,
+              "targetRank": 4
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 4
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 4
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 1,
+      "ftsRankAt5": 0,
+      "weightingRegression": false
+    },
+    {
+      "id": "E113",
+      "versions": {
+        "equal": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 43,
+              "targetRank": 4
+            },
+            "fused_union": {
+              "count": 87,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        },
+        "weighted": {
+          "classification": "target_hit",
+          "evidence": {
+            "vector_candidates": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "fts_candidates": {
+              "count": 43,
+              "targetRank": 4
+            },
+            "fused_union": {
+              "count": 87,
+              "targetRank": 2
+            },
+            "query_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "search_return": {
+              "count": 50,
+              "targetRank": 2
+            },
+            "evaluation_top5": {
+              "count": 5,
+              "targetRank": 2
+            }
+          }
+        }
+      },
+      "vectorRankAt5": 2,
+      "ftsRankAt5": 4,
+      "weightingRegression": false
+    }
+  ],
+  "instrumentation": {
+    "hookSha256": "1eb450dfd51160d76ee77c62024f034c2a5d69c7b36a629646885869c92a1aa9",
+    "runnerSha256AtExecution": "ecf1f90a90f87b4094ff20cda5d6c49be11667236b0c3e48a3228061a4ef94d6",
+    "searchRuntimeHashes": [
+      {
+        "version": "equal",
+        "original": "86c9bca9135007ee7788e9cd257b141080f08adeaaef66e48bb20ea1d484a015",
+        "instrumented": "58f42dce486c9678c4c9e84372e4f1da349ad6ba2751904006d0f149420c36b5"
+      },
+      {
+        "version": "weighted",
+        "original": "0ace8e1410ede35ab3d4bebd5f3cea7352b0ee2ff2ab594937d59a21a01fc114",
+        "instrumented": "e67edcc05cdaa6d72ebb84790de533c1a411f7709e5f4c53ee209d56787c2a96"
+      }
+    ]
+  }
+}
