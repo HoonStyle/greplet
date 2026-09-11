@@ -17,7 +17,8 @@
     "test:partial-failure": "node tests/partialFailure.mjs",
     "test:file-glob": "node tests/fileGlob.mjs",
     "test:source-validation": "node tests/sourceValidation.mjs",
-    "test:hybrid": "node tests/hybridHarness.mjs"
+    "test:hybrid": "node tests/hybridHarness.mjs",
+    "test:embed-keep-alive": "node tests/embedKeepAlive.mjs"
   },
   "dependencies": {
     "@lancedb/lancedb": "^0.38.0",

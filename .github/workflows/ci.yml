@@ -62,6 +62,9 @@ jobs:
       - name: Indexer deterministic hybrid test
         run: npm run test:hybrid
         working-directory: indexer
+      - name: Indexer embedding keep-alive test
+        run: npm run test:embed-keep-alive
+        working-directory: indexer
       - name: Indexer activity event test (fts-only path)
         run: npm run test:activity
         working-directory: indexer

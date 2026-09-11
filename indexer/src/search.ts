@@ -53,6 +53,8 @@ export interface SearchOptions {
   // 응답 근사 토큰 수 계산용 스니펫 길이(문자). undefined=전문. 캐시 키에는 포함하지 않는다.
   snippetChars?: number;
   bypassCache?: boolean;
+  /** Hybrid-only definition lookup for a bare Type.Member query. Disable for diagnostics. */
+  symbolFirst?: boolean;
 }
 
 /** 파일 글롭 → 정규식 패턴. scan.ts 의 파일명 글롭과 달리 경로 전체를 대상으로 하며 `**` 를 지원한다. */
@@ -92,6 +94,18 @@ export function fileGlobToSqlPredicate(glob: string): string {
 /** 하이브리드 융합 전 하위 질의(벡터·FTS)별 최소 후보 수 */
 const HYBRID_MIN_POOL = 50;
 
+/** Only a complete qualified identifier opts in; prose and SQL syntax never do. */
+export function exactSymbolPredicate(query: string): string | null {
+  if (!/^[\p{L}_][\p{L}\p{N}_]*(?:\.[\p{L}_][\p{L}\p{N}_]*)+$/u.test(query)) return null;
+  const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const dot = query.lastIndexOf(".");
+  const owner = escape(query.slice(0, dot));
+  const member = escape(query.slice(dot + 1));
+  // Standalone, split, and merged-small-member definitions share this policy.
+  const pattern = `^(?:${escape(query)}(?:\\(|#|$)|${owner}\\.\\{(?:.*?,)?${member}(?:\\(|,|\\}))`;
+  return `regexp_like(symbol, '${pattern}')`;
+}
+
 const SELECT_COLS = ["id", "file", "abs", "root", "file_hash", "indexed_at", "symbol", "kind", "start_line", "end_line", "text"];
 
 // ---------- 결과 캐시(§8) ----------
@@ -102,7 +116,7 @@ const cache = new Map<string, { at: number; value: SearchResponse }>();
 
 function cacheKey(cfg: AppConfig, workspaces: WorkspaceConfig[], query: string, topN: number, mode: SearchMode, opts: SearchOptions): string {
   const versions = workspaces.map((ws) => `${ws.slug}@${loadManifest(manifestPathFor(cfg, ws.slug)).lastRun || "-"}`).join(",");
-  return JSON.stringify([query, topN, mode, opts.fileGlob ?? "", versions]);
+  return JSON.stringify([query, topN, mode, opts.fileGlob ?? "", versions, opts.symbolFirst !== false]);
 }
 
 function cacheGet(key: string): SearchResponse | undefined {
@@ -142,6 +156,8 @@ async function searchOneWorkspace(
   filePredicate: string | null,
   searchId: string,
   outcome: WorkspaceSearchOutcome,
+  getQueryVector: () => Promise<number[]>,
+  preferSymbols: boolean,
 ): Promise<SearchHit[]> {
   const finish = (hits: SearchHit[], actualMode: SearchMode): SearchHit[] => {
     outcome.effectiveMode = actualMode;
@@ -168,18 +184,33 @@ async function searchOneWorkspace(
     return hits.filter((h) => fileRe.test(h.file)).slice(0, topN);
   };
 
-  // 임베딩 없는(구버전 매니페스트는 있음으로 간주) 워크스페이스는 hybrid/vector 를 fts 로 강등한다.
-  // 영벡터에 cosine 을 적용하면 NaN 이 나오므로 이 강등이 유일한 보호막이다.
-  if (effectiveMode !== "fts") {
-    const manifest = loadManifest(manifestPathFor(cfg, ws.slug));
-    if (manifest.embeddings === "none") {
-      warnings.push(`[${ws.slug}] 임베딩 없음 → fts 로 강등`);
-      stage("embed", "skip");
-      effectiveMode = "fts";
-    }
-  }
-
   try {
+    if (effectiveMode === "hybrid" && preferSymbols) {
+      const symbolPredicate = exactSymbolPredicate(query);
+      if (symbolPredicate) {
+        try {
+          const predicate = [filePredicate, symbolPredicate].filter(Boolean).map(p => `(${p})`).join(" AND ");
+          const rows = await table.query().where(predicate).select(SELECT_COLS).limit(topN).toArray();
+          if (rows.length) {
+            stage("sort", "enter", "Exact symbol definitions");
+            return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, 1))), "hybrid");
+          }
+        } catch {
+          // An optional definition lookup must not prevent the normal search.
+        }
+      }
+    }
+
+    // Definition lookup needs no vectors. Other searches still downgrade
+    // embedding-free indexes before attempting cosine distance on zero vectors.
+    if (effectiveMode !== "fts") {
+      const manifest = loadManifest(manifestPathFor(cfg, ws.slug));
+      if (manifest.embeddings === "none") {
+        warnings.push(`[${ws.slug}] 임베딩 없음 → fts 로 강등`);
+        stage("embed", "skip");
+        effectiveMode = "fts";
+      }
+    }
     if (effectiveMode === "fts") {
       stage("fts", "enter");
       const rows = await baseQuery().fullTextSearch(query).select(SELECT_COLS).limit(topN).toArray();
@@ -189,7 +220,7 @@ async function searchOneWorkspace(
     let qvec: number[];
     try {
       stage("embed", "enter");
-      qvec = await embedQuery(cfg, query);
+      qvec = await getQueryVector();
     } catch (embedErr) {
       // 질의 임베딩 실패(Ollama 미가동 등) 시 fts 로 폴백해 결과가 비지 않게 한다.
       const msg = errMsg(embedErr);
@@ -314,8 +345,13 @@ export async function search(
     const filePredicate = opts.fileGlob ? fileGlobToSqlPredicate(opts.fileGlob) : null;
     const warnings: string[] = [];
     const workspaceResults = workspaces.map((ws): WorkspaceSearchOutcome => ({ workspace: ws.slug, effectiveMode: mode, failed: false }));
+    // Share only within this search request. Lazy creation keeps FTS-only and
+    // embedding-free workspaces independent of Ollama; a failure still falls
+    // back separately for each workspace without repeating the same retries.
+    let queryVector: Promise<number[]> | undefined;
+    const getQueryVector = () => queryVector ??= embedQuery(cfg, query);
     const perWs = await Promise.all(
-      workspaces.map((ws, i) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, filePredicate, id, workspaceResults[i])),
+      workspaces.map((ws, i) => searchOneWorkspace(cfg, ws, query, topN, mode, warnings, fileRe, filePredicate, id, workspaceResults[i], getQueryVector, opts.symbolFirst !== false)),
     );
     emitActivity({ type: "search.stage", id, workspace: "*", stage: "sort", status: "enter" });
     const hits = perWs.flat().sort((a, b) => b.score - a.score);

@@ -22,7 +22,7 @@ async function embedBatch(cfg: AppConfig, texts: string[]): Promise<number[][]> 
       const resp = await fetch(`${cfg.ollamaUrl}/api/embed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: cfg.ollamaModel, input: texts }),
+        body: JSON.stringify({ model: cfg.ollamaModel, input: texts, keep_alive: cfg.ollamaKeepAlive ?? "30m" }),
       });
       if (!resp.ok) {
         throw new Error(`Ollama /api/embed HTTP ${resp.status}: ${await resp.text()}`);

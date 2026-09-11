@@ -1,0 +1,469 @@
+{
+  "date": "2026-09-11",
+  "schemaVersion": 1,
+  "scope": "Aggregate measurements only; no source corpus, symbols, query text or local paths.",
+  "protocol": {
+    "questions": 40,
+    "modes": 3,
+    "rounds": 5,
+    "variants": 4,
+    "searches": 2400,
+    "metric": "known-target Hit@5 and MRR@5",
+    "cohortsOverlap": true,
+    "latency": "local function calls; excludes HTTP and concurrency; context database timings not comparable to baseline"
+  },
+  "quality": {
+    "baseline": {
+      "summary": [
+        {
+          "mode": "fts",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 9.577400000001944,
+          "p95Ms": 11.927400000000489,
+          "fileHit5": 24,
+          "targetHit5": 16,
+          "targetMRR5": 0.2966666666666667,
+          "stableQuestions": 40,
+          "warnings": 0
+        },
+        {
+          "mode": "vector",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 50.192800000000716,
+          "p95Ms": 59.93560000000002,
+          "fileHit5": 38,
+          "targetHit5": 30,
+          "targetMRR5": 0.5183333333333333,
+          "stableQuestions": 40,
+          "warnings": 0
+        },
+        {
+          "mode": "hybrid",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 59.35159999999996,
+          "p95Ms": 70.56660000000011,
+          "fileHit5": 36,
+          "targetHit5": 26,
+          "targetMRR5": 0.5041666666666665,
+          "stableQuestions": 40,
+          "warnings": 0
+        }
+      ],
+      "cohorts": {
+        "regression": {
+          "all": {
+            "n": 12,
+            "fts": 8,
+            "vector": 11,
+            "hybrid": 11
+          },
+          "natural": {
+            "n": 12,
+            "fts": 8,
+            "vector": 11,
+            "hybrid": 11
+          },
+          "identifier": {
+            "n": 0,
+            "fts": 0,
+            "vector": 0,
+            "hybrid": 0
+          }
+        },
+        "diagnostic": {
+          "all": {
+            "n": 17,
+            "fts": 3,
+            "vector": 8,
+            "hybrid": 5
+          },
+          "natural": {
+            "n": 13,
+            "fts": 1,
+            "vector": 6,
+            "hybrid": 3
+          },
+          "identifier": {
+            "n": 4,
+            "fts": 2,
+            "vector": 2,
+            "hybrid": 2
+          }
+        },
+        "holdout": {
+          "all": {
+            "n": 12,
+            "fts": 5,
+            "vector": 11,
+            "hybrid": 10
+          },
+          "natural": {
+            "n": 8,
+            "fts": 2,
+            "vector": 7,
+            "hybrid": 6
+          },
+          "identifier": {
+            "n": 4,
+            "fts": 3,
+            "vector": 4,
+            "hybrid": 4
+          }
+        }
+      }
+    },
+    "context-only": {
+      "summary": [
+        {
+          "mode": "fts",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 5.786700000000565,
+          "p95Ms": 8.23759999999993,
+          "fileHit5": 22,
+          "targetHit5": 20,
+          "targetMRR5": 0.35375,
+          "stableQuestions": 40,
+          "warnings": 0
+        },
+        {
+          "mode": "vector",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 39.52969999999914,
+          "p95Ms": 48.14879999999994,
+          "fileHit5": 36,
+          "targetHit5": 31,
+          "targetMRR5": 0.5254166666666665,
+          "stableQuestions": 40,
+          "warnings": 0
+        },
+        {
+          "mode": "hybrid",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 44.82930000000033,
+          "p95Ms": 53.64350000000013,
+          "fileHit5": 31,
+          "targetHit5": 27,
+          "targetMRR5": 0.5404166666666667,
+          "stableQuestions": 40,
+          "warnings": 0
+        }
+      ],
+      "cohorts": {
+        "regression": {
+          "all": {
+            "n": 12,
+            "fts": 9,
+            "vector": 12,
+            "hybrid": 11
+          },
+          "natural": {
+            "n": 12,
+            "fts": 9,
+            "vector": 12,
+            "hybrid": 11
+          },
+          "identifier": {
+            "n": 0,
+            "fts": 0,
+            "vector": 0,
+            "hybrid": 0
+          }
+        },
+        "diagnostic": {
+          "all": {
+            "n": 17,
+            "fts": 5,
+            "vector": 10,
+            "hybrid": 7
+          },
+          "natural": {
+            "n": 13,
+            "fts": 3,
+            "vector": 7,
+            "hybrid": 4
+          },
+          "identifier": {
+            "n": 4,
+            "fts": 2,
+            "vector": 3,
+            "hybrid": 3
+          }
+        },
+        "holdout": {
+          "all": {
+            "n": 12,
+            "fts": 6,
+            "vector": 10,
+            "hybrid": 9
+          },
+          "natural": {
+            "n": 8,
+            "fts": 4,
+            "vector": 6,
+            "hybrid": 6
+          },
+          "identifier": {
+            "n": 4,
+            "fts": 2,
+            "vector": 4,
+            "hybrid": 3
+          }
+        }
+      }
+    },
+    "exact-only": {
+      "summary": [
+        {
+          "mode": "fts",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 9.434300000000803,
+          "p95Ms": 10.99539999999979,
+          "fileHit5": 24,
+          "targetHit5": 16,
+          "targetMRR5": 0.2966666666666667,
+          "stableQuestions": 40,
+          "warnings": 0
+        },
+        {
+          "mode": "vector",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 50.3104000000003,
+          "p95Ms": 57.351100000000315,
+          "fileHit5": 38,
+          "targetHit5": 30,
+          "targetMRR5": 0.5183333333333333,
+          "stableQuestions": 40,
+          "warnings": 0
+        },
+        {
+          "mode": "hybrid",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 59.08340000000135,
+          "p95Ms": 69.92489999999998,
+          "fileHit5": 36,
+          "targetHit5": 28,
+          "targetMRR5": 0.6108333333333332,
+          "stableQuestions": 40,
+          "warnings": 0
+        }
+      ],
+      "cohorts": {
+        "regression": {
+          "all": {
+            "n": 12,
+            "fts": 8,
+            "vector": 11,
+            "hybrid": 11
+          },
+          "natural": {
+            "n": 12,
+            "fts": 8,
+            "vector": 11,
+            "hybrid": 11
+          },
+          "identifier": {
+            "n": 0,
+            "fts": 0,
+            "vector": 0,
+            "hybrid": 0
+          }
+        },
+        "diagnostic": {
+          "all": {
+            "n": 17,
+            "fts": 3,
+            "vector": 8,
+            "hybrid": 7
+          },
+          "natural": {
+            "n": 13,
+            "fts": 1,
+            "vector": 6,
+            "hybrid": 3
+          },
+          "identifier": {
+            "n": 4,
+            "fts": 2,
+            "vector": 2,
+            "hybrid": 4
+          }
+        },
+        "holdout": {
+          "all": {
+            "n": 12,
+            "fts": 5,
+            "vector": 11,
+            "hybrid": 10
+          },
+          "natural": {
+            "n": 8,
+            "fts": 2,
+            "vector": 7,
+            "hybrid": 6
+          },
+          "identifier": {
+            "n": 4,
+            "fts": 3,
+            "vector": 4,
+            "hybrid": 4
+          }
+        }
+      }
+    },
+    "combined": {
+      "summary": [
+        {
+          "mode": "fts",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 5.7312999999994645,
+          "p95Ms": 7.808100000000195,
+          "fileHit5": 22,
+          "targetHit5": 20,
+          "targetMRR5": 0.35375,
+          "stableQuestions": 40,
+          "warnings": 0
+        },
+        {
+          "mode": "vector",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 38.71679999999924,
+          "p95Ms": 46.39990000000034,
+          "fileHit5": 36,
+          "targetHit5": 31,
+          "targetMRR5": 0.5254166666666665,
+          "stableQuestions": 40,
+          "warnings": 0
+        },
+        {
+          "mode": "hybrid",
+          "n": 200,
+          "questions": 40,
+          "medianMs": 43.40309999999954,
+          "p95Ms": 50.89290000000028,
+          "fileHit5": 31,
+          "targetHit5": 29,
+          "targetMRR5": 0.65625,
+          "stableQuestions": 40,
+          "warnings": 0
+        }
+      ],
+      "cohorts": {
+        "regression": {
+          "all": {
+            "n": 12,
+            "fts": 9,
+            "vector": 12,
+            "hybrid": 11
+          },
+          "natural": {
+            "n": 12,
+            "fts": 9,
+            "vector": 12,
+            "hybrid": 11
+          },
+          "identifier": {
+            "n": 0,
+            "fts": 0,
+            "vector": 0,
+            "hybrid": 0
+          }
+        },
+        "diagnostic": {
+          "all": {
+            "n": 17,
+            "fts": 5,
+            "vector": 10,
+            "hybrid": 8
+          },
+          "natural": {
+            "n": 13,
+            "fts": 3,
+            "vector": 7,
+            "hybrid": 4
+          },
+          "identifier": {
+            "n": 4,
+            "fts": 2,
+            "vector": 3,
+            "hybrid": 4
+          }
+        },
+        "holdout": {
+          "all": {
+            "n": 12,
+            "fts": 6,
+            "vector": 10,
+            "hybrid": 10
+          },
+          "natural": {
+            "n": 8,
+            "fts": 4,
+            "vector": 6,
+            "hybrid": 6
+          },
+          "identifier": {
+            "n": 4,
+            "fts": 2,
+            "vector": 4,
+            "hybrid": 4
+          }
+        }
+      }
+    }
+  },
+  "performance": {
+    "multiWorkspace": {
+      "workspaces": 10,
+      "pairs": 15,
+      "beforeMedianMs": 176.5,
+      "afterMedianMs": 135.3,
+      "beforeEmbeddings": 10,
+      "afterEmbeddings": 1,
+      "allResultsIdentical": true
+    },
+    "idle": {
+      "comparisons": 1,
+      "beforeKeepAlive": "5m",
+      "afterKeepAlive": "30m",
+      "beforeIdleSeconds": 327.2,
+      "afterIdleSeconds": 327.1,
+      "beforeMs": 2470.5,
+      "afterMs": 27.7,
+      "beforeLoadMs": 2419.3,
+      "afterLoadMs": 1.5
+    },
+    "exactSymbol": {
+      "identicalUnaffectedSearches": 560,
+      "definitionSearchesAtRankOneWithoutEmbedding": 40,
+      "allTargetsAvailable": true,
+      "timings": {
+        "before": {
+          "n": 40,
+          "medianMs": 56.96969999999965,
+          "embeddingCalls": 40
+        },
+        "after": {
+          "n": 40,
+          "medianMs": 10.547500000000582,
+          "embeddingCalls": 0
+        }
+      }
+    }
+  },
+  "deployment": {
+    "apiComparisons": 120,
+    "allResultsMatch": true,
+    "workspaces": 10
+  }
+}

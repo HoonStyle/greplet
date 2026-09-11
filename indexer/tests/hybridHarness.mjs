@@ -71,6 +71,58 @@ try {
   assert.deepEqual(orders[1], orders[0]);
   assert.deepEqual(orders[2], orders[0]);
 
+  // One request embeds its query once across workspaces, while independent
+  // requests and FTS-only searches retain their own behavior.
+  const second = workspace("hybrid-second");
+  await prepare(second, [row(second, "second.txt", "needle second", unit(0), 1)], true);
+  let calls = fake.requests.length;
+  const shared = await search(cfg, [normal, second], "needle", 2, "hybrid", { bypassCache: true });
+  assert.equal(fake.requests.length - calls, 1);
+  assert.equal(shared.workspaceResults.every(ws => ws.effectiveMode === "hybrid" && !ws.failed), true);
+  assert.deepEqual(shared.warnings, []);
+  calls = fake.requests.length;
+  await search(cfg, [normal, second], "needle", 2, "fts", { bypassCache: true });
+  assert.equal(fake.requests.length - calls, 0);
+  await search(cfg, [normal, second], "needle", 2, "vector", { bypassCache: true });
+  assert.equal(fake.requests.length - calls, 1);
+  calls = fake.requests.length;
+  fake.setMode("http-failure");
+  const fallback = await search(cfg, [normal, second], "needle", 2, "hybrid", { bypassCache: true });
+  assert.equal(fake.requests.length - calls, 4, "one shared initial request plus three retries");
+  assert.equal(fallback.workspaceResults.every(ws => ws.effectiveMode === "fts" && !ws.failed), true);
+  assert.equal(fallback.warnings.length, 2);
+  fake.setMode("normal");
+
+  const definitions = workspace("symbol-definitions");
+  await prepare(definitions, [
+    { ...row(definitions, "src/one.cs", "validator body", unit(1), 1), symbol: "Validator.Validate(Config)" },
+    { ...row(definitions, "src/two.cs", "validator overload", unit(1), 2), symbol: "Validator.Validate(Config,bool)#2" },
+    { ...row(definitions, "src/merged.cs", "small members", unit(1), 3), symbol: "Validator.{Other(),Validate(Config)}" },
+    { ...row(definitions, "tests/caller.cs", "Validator.Validate Validator.Validate", unit(0), 4), symbol: "Tests.CallsValidator()" },
+    { ...row(definitions, "src/unrelated.cs", "other type", unit(1), 5), symbol: "OtherValidator.Validate(Config)" },
+  ], true);
+  calls = fake.requests.length;
+  const exact = await search(cfg, [definitions], "Validator.Validate", 5, "hybrid", { bypassCache: true });
+  assert.deepEqual(new Set(exact.hits.map(h => h.file)), new Set(["src/one.cs", "src/two.cs", "src/merged.cs"]));
+  assert.equal(fake.requests.length, calls, "definition-only query does not need Ollama");
+  const exactFiltered = await search(cfg, [definitions], "Validator.Validate", 5, "hybrid", { fileGlob: "src/one.cs", bypassCache: true });
+  assert.deepEqual(exactFiltered.hits.map(h => h.file), ["src/one.cs"]);
+  await search(cfg, [definitions], "Validator.Unknown", 5, "hybrid", { bypassCache: true });
+  assert.equal(fake.requests.length, calls + 1, "missing definition falls through to hybrid");
+  await search(cfg, [definitions], "Validator.Validate", 5, "hybrid", { bypassCache: true, symbolFirst: false });
+  assert.equal(fake.requests.length, calls + 2, "diagnostic opt-out uses hybrid");
+
+  const definitionManifestPath = manifestPathFor(cfg, definitions.slug);
+  const definitionManifest = JSON.parse(fs.readFileSync(definitionManifestPath, "utf8"));
+  saveManifest(definitionManifestPath, { ...definitionManifest, embeddings: "none" });
+  calls = fake.requests.length;
+  const exactWithoutEmbeddings = await search(cfg, [definitions], "Validator.Validate", 5, "hybrid", { bypassCache: true });
+  assert.deepEqual(new Set(exactWithoutEmbeddings.hits.map(h => h.file)), new Set(["src/one.cs", "src/two.cs", "src/merged.cs"]));
+  assert.equal(fake.requests.length, calls, "definition lookup also works in embedding-free indexes");
+  const missingWithoutEmbeddings = await search(cfg, [definitions], "Validator.Unknown", 5, "hybrid", { bypassCache: true });
+  assert.equal(missingWithoutEmbeddings.workspaceResults[0].effectiveMode, "fts");
+  assert.equal(fake.requests.length, calls);
+
   const noFts = workspace("hybrid-no-fts");
   await prepare(noFts, [row(noFts, "vector-only.txt", "semantic content", unit(0), 1)], false);
   let result = await search(cfg, [noFts], "needle", 1, "hybrid", { bypassCache: true });

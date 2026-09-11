@@ -8,6 +8,7 @@
                            macOS:   ~/Library/Application Support/greplet
                            Linux:   $XDG_DATA_HOME/greplet (기본 ~/.local/share/greplet)
     OLLAMA_URL           기본 http://localhost:11434
+    OLLAMA_KEEP_ALIVE    Ollama 모델 메모리 유지 시간, 기본 30m
     GREPLET_WORKSPACES   workspaces.json 경로, 기본 이 폴더의 workspaces.json
     GREPLET_EXTRACTOR    Extractor 실행 파일 경로, 기본 ../Extractor/bin/Release/net8.0/Extractor(.exe)
                            (Windows: Extractor.exe, 그 외: Extractor)
@@ -39,6 +40,7 @@ export interface AppConfig {
   logsDir: string;
   ollamaUrl: string;
   ollamaModel: string;
+  ollamaKeepAlive?: string | number;
   workspacesPath: string;
   extractorPath: string;
   extractorProjectDir: string;
@@ -81,6 +83,7 @@ export function loadConfig(): AppConfig {
     logsDir: path.join(dataDir, "logs"),
     ollamaUrl: process.env.OLLAMA_URL ?? "http://localhost:11434",
     ollamaModel: "bge-m3",
+    ollamaKeepAlive: process.env.OLLAMA_KEEP_ALIVE?.trim() || "30m",
     workspacesPath: process.env.GREPLET_WORKSPACES ?? path.join(INDEXER_ROOT, "workspaces.json"),
     extractorPath: process.env.GREPLET_EXTRACTOR ?? defaultExtractorPath,
     extractorProjectDir,

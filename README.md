@@ -228,11 +228,13 @@ The CLI prints its labels in Korean. The layout above is what to expect.
 
 | mode | Behavior | Use for |
 |---|---|---|
-| `hybrid` (default) | vector + FTS → RRF fusion | Most content searches |
+| `hybrid` (default) | Bare `Type.Member`: matching definitions first; otherwise vector + FTS → RRF fusion | Definition lookup and content searches |
 | `vector` | Semantic only | Similar code written differently |
 | `fts` | BM25 only, no embedding call | Exact tokens. Works without Ollama |
 
-Requesting `hybrid` or `vector` on a workspace indexed without embeddings makes the server fall back to `fts` and say so in the response `warnings`.
+In `hybrid`, a query consisting only of a case-sensitive qualified identifier such as `ExampleType.ExampleMethod` returns matching symbol definitions without an embedding call. This includes overloads, split method chunks, and merged member chunks. File filters still apply. If no definition matches in a workspace, that workspace uses the normal hybrid search. Prose queries and explicit `fts` / `vector` modes retain their normal behavior; use prose when looking for usages rather than definitions.
+
+Requesting `hybrid` or `vector` on a workspace indexed without embeddings makes the server fall back to `fts` and say so in the response `warnings`, except when the hybrid definition lookup succeeds.
 
 ## Configuration
 
@@ -359,6 +361,11 @@ When roles overlap:
 - **Encoding**: UTF-8, falling back to CP949.
 
 Full specification in [docs/design.md](docs/design.md) (Korean).
+
+
+## Tuning history
+
+Measured bottlenecks, implementation changes, before/after results, and accepted or deferred experiments: [Tuning history](docs/tuning/README.md) (Korean). Reports use anonymous benchmark identifiers; aggregate results are included.
 
 ## Development and verification
 
