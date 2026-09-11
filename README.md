@@ -371,6 +371,8 @@ Full specification in [docs/design.md](docs/design.md) (Korean).
 
 Measured bottlenecks, implementation changes, before/after results, and accepted or deferred experiments: [Tuning history](docs/tuning/README.md) (Korean). Reports use anonymous benchmark identifiers; aggregate results are included.
 
+The [workspace routing research review](docs/tuning/2026-09-11-workspace-routing-research.md) compares ReSLLM, MKP-QA, and RAGRoute with the T12 experiment and records hypotheses for further validation (Korean).
+
 ## Development and verification
 
 ```bash
