@@ -3,7 +3,7 @@
 */
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
-import { rerankers } from "@lancedb/lancedb";
+import { createVectorWeightedReranker } from "./rerank.js";
 import type { AppConfig, WorkspaceConfig } from "./config.js";
 import { openOrCreateTable, tableExists, manifestPathFor } from "./db.js";
 import { embedQuery } from "./embed.js";
@@ -239,7 +239,7 @@ async function searchOneWorkspace(
         stage("vector", "enter");
         stage("fts", "enter");
         stage("rerank", "enter");
-        const rr = await rerankers.RRFReranker.create();
+        const rr = await createVectorWeightedReranker();
         const poolSize = Math.max(topN * 10, HYBRID_MIN_POOL);
         const rows = await q.fullTextSearch(query).rerank(rr).select(SELECT_COLS).limit(poolSize).toArray();
         return finish(applyGlob(rows.map((r: any) => toHit(ws.slug, r, Number(r._relevance_score ?? 0)))), "hybrid");

@@ -237,11 +237,11 @@ node greplet.mjs index docs --force                 # 전체 재인덱스 잡 �
 
 | mode | 동작 | 용도 |
 |---|---|---|
-| `hybrid` (기본) | 벡터 + FTS → RRF 융합 | 대부분의 내용 검색 |
+| `hybrid` (기본) | 정확한 `Type.Member`는 정의 우선, 그 외 벡터:FTS = 4:1 가중 RRF(k=60) | 정의 조회와 내용 검색 |
 | `vector` | 의미 검색만 | 표현이 다른 유사 코드 찾기 |
 | `fts` | BM25 만, 임베딩 호출 없음 | 정확 토큰. Ollama 없이도 동작 |
 
-임베딩 없이 인덱싱된 워크스페이스에 `hybrid`/`vector` 를 요청하면 서버가 `fts` 로 강등하고 응답의 `warnings` 에 알린다.
+hybrid의 정의 조회는 임베딩 없이 동작한다. 그 외 검색에서 임베딩 없이 인덱싱된 워크스페이스에 `hybrid`/`vector`를 요청하면 서버가 `fts`로 강등하고 응답의 `warnings`에 알린다. [가중 융합 비교](docs/tuning/2026-09-11-weighted-rrf.md)에 품질·지연의 전후 결과를 기록했다.
 
 ## 설정
 

@@ -1,0 +1,229 @@
+{
+  "date": "2026-09-11",
+  "baselineCommit": "4f72360",
+  "candidate": {
+    "vectorWeight": 4,
+    "ftsWeight": 1,
+    "k": 60,
+    "rankBase": 0,
+    "candidatePoolPerBranch": 50
+  },
+  "development": {
+    "questions": 40,
+    "before": [
+      {
+        "mode": "fts",
+        "n": 200,
+        "questions": 40,
+        "medianMs": 8.930999999998676,
+        "p95Ms": 10.536300000000665,
+        "fileHit5": 24,
+        "targetHit5": 16,
+        "targetMRR5": 0.2966666666666667,
+        "stableQuestions": 40,
+        "warnings": 0
+      },
+      {
+        "mode": "vector",
+        "n": 200,
+        "questions": 40,
+        "medianMs": 48.85109999999986,
+        "p95Ms": 55.901300000001356,
+        "fileHit5": 38,
+        "targetHit5": 30,
+        "targetMRR5": 0.5183333333333333,
+        "stableQuestions": 40,
+        "warnings": 0
+      },
+      {
+        "mode": "hybrid",
+        "n": 200,
+        "questions": 40,
+        "medianMs": 57.80149999999958,
+        "p95Ms": 70.06810000000041,
+        "fileHit5": 36,
+        "targetHit5": 28,
+        "targetMRR5": 0.6108333333333332,
+        "stableQuestions": 40,
+        "warnings": 0
+      }
+    ],
+    "after": [
+      {
+        "mode": "fts",
+        "n": 200,
+        "questions": 40,
+        "medianMs": 9.147299999998722,
+        "p95Ms": 10.518599999999424,
+        "fileHit5": 24,
+        "targetHit5": 16,
+        "targetMRR5": 0.2966666666666667,
+        "stableQuestions": 40,
+        "warnings": 0
+      },
+      {
+        "mode": "vector",
+        "n": 200,
+        "questions": 40,
+        "medianMs": 49.99539999999979,
+        "p95Ms": 59.38869999999952,
+        "fileHit5": 38,
+        "targetHit5": 30,
+        "targetMRR5": 0.5183333333333333,
+        "stableQuestions": 40,
+        "warnings": 0
+      },
+      {
+        "mode": "hybrid",
+        "n": 200,
+        "questions": 40,
+        "medianMs": 60.74299999999948,
+        "p95Ms": 71.30500000000006,
+        "fileHit5": 39,
+        "targetHit5": 31,
+        "targetMRR5": 0.6391666666666667,
+        "stableQuestions": 40,
+        "warnings": 0
+      }
+    ],
+    "comparison": {
+      "unchangedFtsVectorRuns": 400,
+      "gains": 3,
+      "losses": 0,
+      "rankWorsened": 1
+    },
+    "natural21": {
+      "before": 9,
+      "after": 12
+    }
+  },
+  "fresh": {
+    "questions": 8,
+    "before": [
+      {
+        "mode": "fts",
+        "n": 40,
+        "questions": 8,
+        "medianMs": 9.37130000000002,
+        "p95Ms": 10.547000000000025,
+        "fileHit5": 5,
+        "targetHit5": 2,
+        "targetMRR5": 0.15,
+        "stableQuestions": 8,
+        "warnings": 0
+      },
+      {
+        "mode": "vector",
+        "n": 40,
+        "questions": 8,
+        "medianMs": 49.552000000000135,
+        "p95Ms": 51.85329999999976,
+        "fileHit5": 8,
+        "targetHit5": 7,
+        "targetMRR5": 0.8125,
+        "stableQuestions": 8,
+        "warnings": 0
+      },
+      {
+        "mode": "hybrid",
+        "n": 40,
+        "questions": 8,
+        "medianMs": 59.03020000000015,
+        "p95Ms": 60.724800000000414,
+        "fileHit5": 8,
+        "targetHit5": 6,
+        "targetMRR5": 0.37916666666666665,
+        "stableQuestions": 8,
+        "warnings": 0
+      }
+    ],
+    "after": [
+      {
+        "mode": "fts",
+        "n": 40,
+        "questions": 8,
+        "medianMs": 9.586700000000292,
+        "p95Ms": 10.992299999999886,
+        "fileHit5": 5,
+        "targetHit5": 2,
+        "targetMRR5": 0.15,
+        "stableQuestions": 8,
+        "warnings": 0
+      },
+      {
+        "mode": "vector",
+        "n": 40,
+        "questions": 8,
+        "medianMs": 50.4024000000004,
+        "p95Ms": 59.72829999999999,
+        "fileHit5": 8,
+        "targetHit5": 7,
+        "targetMRR5": 0.8125,
+        "stableQuestions": 8,
+        "warnings": 0
+      },
+      {
+        "mode": "hybrid",
+        "n": 40,
+        "questions": 8,
+        "medianMs": 61.91930000000002,
+        "p95Ms": 69.14429999999993,
+        "fileHit5": 8,
+        "targetHit5": 8,
+        "targetMRR5": 0.6666666666666667,
+        "stableQuestions": 8,
+        "warnings": 0
+      }
+    ],
+    "comparison": {
+      "unchangedFtsVectorRuns": 80,
+      "gains": 2,
+      "losses": 0,
+      "rankWorsened": 1
+    },
+    "allTargetsPresent": true
+  },
+  "screening": {
+    "1": {
+      "weight": 1,
+      "hit5": 28,
+      "mrr5": 0.6108333333333332,
+      "gains": 0,
+      "losses": 0
+    },
+    "2": {
+      "weight": 2,
+      "hit5": 30,
+      "mrr5": 0.6295833333333333,
+      "gains": 2,
+      "losses": 0
+    },
+    "4": {
+      "weight": 4,
+      "hit5": 31,
+      "mrr5": 0.6391666666666667,
+      "gains": 3,
+      "losses": 0
+    }
+  },
+  "notes": [
+    "Screening used existing40 only. Weight4 frozen before fresh rankings.",
+    "One fresh symbol label corrected to existing merged chunk before any searches.",
+    "Timing is local warm sequential search; no HTTP/concurrent load.",
+    "Experimental reranker preserves native candidate union/schema and tie order."
+  ],
+  "verification": {
+    "source": {
+      "at": "2026-09-11T03:54:18.716Z",
+      "checks": 144,
+      "allCandidateResultsMatch": true
+    },
+    "deployment": {
+      "at": "2026-09-11T03:56:00.570Z",
+      "checks": 144,
+      "allCandidateResultsMatch": true,
+      "workspaces": 10,
+      "healthy": true
+    }
+  }
+}

@@ -15,6 +15,7 @@ const { loadConfig } = await import("../dist/config.js");
 const { openOrCreateTable, rebuildFtsIndex, manifestPathFor, zeroVector } = await import("../dist/db.js");
 const { saveManifest } = await import("../dist/scan.js");
 const { search } = await import("../dist/search.js");
+const { createVectorWeightedReranker } = await import("../dist/rerank.js");
 const { checkOllama } = await import("../dist/embed.js");
 const cfg = { ...loadConfig(), ollamaUrl: fake.url };
 
@@ -122,6 +123,26 @@ try {
   const missingWithoutEmbeddings = await search(cfg, [definitions], "Validator.Unknown", 5, "hybrid", { bypassCache: true });
   assert.equal(missingWithoutEmbeddings.workspaceResults[0].effectiveMode, "fts");
   assert.equal(fake.requests.length, calls);
+
+  // A low vector-ranked lexical overlap must not displace the strongest
+  // semantic-only candidates solely because it appears in both lists.
+  const fusion = workspace("weighted-fusion");
+  const fusionRows = Array.from({ length: 49 }, (_, i) =>
+    row(fusion, `semantic-${i}.txt`, "semantic content", unit(0), i + 1));
+  fusionRows.push(row(fusion, "lexical-overlap.txt", "needle needle", unit(1), 50));
+  await prepare(fusion, fusionRows, true);
+  const fusionTable = await openOrCreateTable(cfg, fusion);
+  const equalWeight = await createVectorWeightedReranker(1);
+  const equalRows = await fusionTable.query().nearestTo(unit(0)).distanceType("cosine")
+    .fullTextSearch("needle").rerank(equalWeight).select(["id", "file"]).limit(50).toArray();
+  assert.equal(equalRows[0].file, "lexical-overlap.txt");
+  const weighted = await search(cfg, [fusion], "needle", 5, "hybrid", { bypassCache: true });
+  assert.equal(weighted.workspaceResults[0].effectiveMode, "hybrid");
+  assert.deepEqual(weighted.warnings, []);
+  const weightedTop5 = weighted.hits.slice(0, 5);
+  assert.equal(weightedTop5.length, 5);
+  assert.equal(weightedTop5.every(h => h.file.startsWith("semantic-")), true);
+  assert.equal(weightedTop5.every(h => h.text === "semantic content" && h.startLine > 0), true);
 
   const noFts = workspace("hybrid-no-fts");
   await prepare(noFts, [row(noFts, "vector-only.txt", "semantic content", unit(0), 1)], false);

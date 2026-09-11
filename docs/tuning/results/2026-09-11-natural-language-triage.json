@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-11",
+  "baseline": "4f72360",
+  "newSearches": 0,
+  "source": "Saved exact-only run; round 1; target Hit@5. Diagnostic and previously evaluated holdout, not fresh validation.",
+  "cohorts": {
+    "diagnostic": {
+      "questions": 13,
+      "bothHit": 3,
+      "vectorOnlyHit": 3,
+      "hybridOnlyHit": 0,
+      "bothMiss": 7,
+      "ftsHit": 1
+    },
+    "holdout": {
+      "questions": 8,
+      "bothHit": 6,
+      "vectorOnlyHit": 1,
+      "hybridOnlyHit": 0,
+      "bothMiss": 1,
+      "ftsHit": 2
+    }
+  }
+}

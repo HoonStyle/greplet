@@ -1,0 +1,125 @@
+{
+  "measuredAt": "2026-09-11T03:40:25.493Z",
+  "baselineCommit": "4f72360",
+  "newSearches": 600,
+  "protocol": {
+    "rounds": 5,
+    "k": 5,
+    "bypassCache": true,
+    "modeOrder": "rotated each query and round",
+    "scope": "one specified workspace per query",
+    "quality": "known-target retrieval, not exhaustive relevance labels"
+  },
+  "goldSha256": "556fe71e05f95b59a837875b9a51df6ac18eab1b6234d0ae2c9e4cb68c7209ab",
+  "manifestsUnchanged": true,
+  "allTargetsPresent": true,
+  "cachedSearches": 0,
+  "warningSearches": 0,
+  "previous": [
+    {
+      "mode": "fts",
+      "n": 200,
+      "questions": 40,
+      "medianMs": 9.434300000000803,
+      "p95Ms": 10.99539999999979,
+      "fileHit5": 24,
+      "targetHit5": 16,
+      "targetMRR5": 0.2966666666666667,
+      "stableQuestions": 40,
+      "warnings": 0
+    },
+    {
+      "mode": "vector",
+      "n": 200,
+      "questions": 40,
+      "medianMs": 50.3104000000003,
+      "p95Ms": 57.351100000000315,
+      "fileHit5": 38,
+      "targetHit5": 30,
+      "targetMRR5": 0.5183333333333333,
+      "stableQuestions": 40,
+      "warnings": 0
+    },
+    {
+      "mode": "hybrid",
+      "n": 200,
+      "questions": 40,
+      "medianMs": 59.08340000000135,
+      "p95Ms": 69.92489999999998,
+      "fileHit5": 36,
+      "targetHit5": 28,
+      "targetMRR5": 0.6108333333333332,
+      "stableQuestions": 40,
+      "warnings": 0
+    }
+  ],
+  "current": [
+    {
+      "mode": "fts",
+      "n": 200,
+      "questions": 40,
+      "medianMs": 8.930999999998676,
+      "p95Ms": 10.536300000000665,
+      "fileHit5": 24,
+      "targetHit5": 16,
+      "targetMRR5": 0.2966666666666667,
+      "stableQuestions": 40,
+      "warnings": 0
+    },
+    {
+      "mode": "vector",
+      "n": 200,
+      "questions": 40,
+      "medianMs": 48.85109999999986,
+      "p95Ms": 55.901300000001356,
+      "fileHit5": 38,
+      "targetHit5": 30,
+      "targetMRR5": 0.5183333333333333,
+      "stableQuestions": 40,
+      "warnings": 0
+    },
+    {
+      "mode": "hybrid",
+      "n": 200,
+      "questions": 40,
+      "medianMs": 57.80149999999958,
+      "p95Ms": 70.06810000000041,
+      "fileHit5": 36,
+      "targetHit5": 28,
+      "targetMRR5": 0.6108333333333332,
+      "stableQuestions": 40,
+      "warnings": 0
+    }
+  ],
+  "natural": [
+    {
+      "mode": "fts",
+      "questions": 21,
+      "runs": 105,
+      "targetHit5": 3,
+      "medianMs": 9.066999999999098,
+      "p95Ms": 10.880099999998492
+    },
+    {
+      "mode": "vector",
+      "questions": 21,
+      "runs": 105,
+      "targetHit5": 13,
+      "medianMs": 48.85109999999986,
+      "p95Ms": 51.80450000000019
+    },
+    {
+      "mode": "hybrid",
+      "questions": 21,
+      "runs": 105,
+      "targetHit5": 9,
+      "medianMs": 57.93670000000202,
+      "p95Ms": 62.08340000000135
+    }
+  ],
+  "comparison": {
+    "identicalTop5": 600,
+    "changedTop5": 0,
+    "identicalRanks": 600
+  }
+}
