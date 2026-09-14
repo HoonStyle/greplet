@@ -4,6 +4,8 @@
 **/dist/
 **/node_modules/
 *.mcpb
+__pycache__/
+*.pyc
 
 # 머신 로컬 설정·비밀
 indexer/workspaces.json

@@ -1,0 +1,4 @@
+# Install the appropriate torch 2.8.0 wheel separately (T13 used CUDA 12.8).
+transformers==4.56.2
+tokenizers==0.22.2
+safetensors==0.8.0
