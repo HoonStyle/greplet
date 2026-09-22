@@ -403,6 +403,16 @@ async function testHttpLevel() {
     }
     ev2Controller.abort();
     console.log(`[activity]    after=${lastSeq} 재접속 시 리플레이 이벤트 ${replayed.length}건 모두 seq > ${lastSeq} 확인`);
+    // 이전 프로세스의 큰 cursor를 보내도 hello는 현재 서버 cursor를 반환한다.
+    const staleController = new AbortController();
+    const staleRes = await fetch(`${baseUrl}/api/events?after=999999999`, { signal: staleController.signal });
+    const staleFrames = await readSseFramesUntil(staleRes.body.getReader(), (items) => items.some((f) => f.event === "hello"), 5000);
+    const staleHello = JSON.parse(staleFrames.find((f) => f.event === "hello").data);
+    assert.equal(staleHello.streamId, helloData.streamId);
+    assert.equal(typeof staleHello.streamId, "string");
+    assert.ok(staleHello.streamId.length > 0);
+    assert.equal(staleHello.seq, lastSeq);
+    staleController.abort();
 
     // ---- GET /api/activity?limit=5 ----
     const actRes = await fetch(`${baseUrl}/api/activity?limit=5`);

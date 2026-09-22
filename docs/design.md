@@ -223,7 +223,7 @@ await t.delete("file IN ('a')"); await t.countRows();
 | `GET /api/workspaces` | | `[{ slug, label, kind, roots, files, chunks, lastRun, indexing, embeddings }]` |
 | `POST /api/search` | `{ query, workspaces: string[] \| "all", topN=6, mode="hybrid" }`; 선택 헤더 `X-Greplet-Client` (`^[a-z0-9:_-]{1,32}$`, 아니면 `unknown`) | `{ hits: [{ workspace, file, symbol, kind, startLine, endLine, score, text }], mode, warnings }` (topN 상한 20) |
 | `POST /api/index/:slug` | `{ force?: boolean }` | `202 { jobId }` · 이미 큐에 있으면 `200 { jobId, queued: true }` |
-| `GET /api/events` | SSE. `Last-Event-ID` 헤더 또는 `?after=<seq>` 뒤의 링(500) 이벤트를 재생한 뒤 `event: hello` (`stats`, 최근 `recent` 30건, `jobs` 5건, `seq`) | 프레임은 `id: seq`, `event: 이벤트 타입`, `data: JSON`; 25초마다 `: ping`. 리스너가 50개를 넘으면 `503` |
+| `GET /api/events` | SSE. `Last-Event-ID` 헤더 또는 `?after=<seq>` 뒤의 링(500) 이벤트를 재생한 뒤 `event: hello` (`stats`, 최근 `recent` 50건, `jobs` 5건, `streamId`, `seq`) | `streamId`는 서버 기동별 식별자, hello의 `seq`는 현재 서버 번호. 프레임은 `id: seq`, `event: 이벤트 타입`, `data: JSON`; 25초마다 `: ping`. 리스너가 50개를 넘으면 `503` |
 | `GET /api/activity?limit=` | | `{ stats, recent }` |
 | `GET /api/jobs` | | 최근 잡 20개. `JobRecord` 에 `stage` 와 `progress: { done, total }` 포함 |
 | `GET /api/jobs/:id/events` | SSE | 로그 라인 스트림(링버퍼 재생 후 실시간), 종료 시 `event: done` |
@@ -241,7 +241,7 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 |---|---|
 | `search.start` | `id`, `client`, `query`, `workspaces`, `mode`, `topN`, 선택 `fileGlob` |
 | `search.stage` | `id`, `workspace`, `stage`(`cache`·`embed`·`vector`·`fts`·`rerank`·`glob`·`sort`), `status`(`enter`·`fallback`·`skip`), 선택 `note` |
-| `search.done` | `id`, `client`, `hits`, `ms`, `cached`, `mode`, `warnings`, 선택 `error` |
+| `search.done` | `id`, `client`, `hits`, `ms`, `cached`, `mode`, `warnings`, `stats`(완료 반영 후 서버 집계), 선택 `error` |
 | `index.start` | `jobId`, `slug`, `force` |
 | `index.stage` | `jobId`, `slug`, `stage`(`check`·`scan`·`delete`·`extract`·`embed`·`store`·`manifest`·`fts`·`optimize`) |
 | `index.progress` | `jobId`, `slug`, `stage`(`embed`·`store`), `done`, `total` |
@@ -249,6 +249,8 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 | `index.failed` | `jobId`, `slug`, `ms`, `error` |
 
 `search.ts` 는 캐시·임베딩·벡터·FTS·RRF(`rerank`)·글롭(`glob`)·정렬 단계에서 이벤트를 발행하고, `indexJob.ts` 는 위 9단계를 순서대로 발행한다. `index.progress` 는 `max(16, total/100)` 단위와 마지막 완료 시점에만 발행한다. SSE 연결이 백프레셔 상태이면 `search.stage` 와 `index.progress` 를 드롭하고, 그 외 이벤트는 유지한다. 검색 질의는 발행 시 120자로 절단하며 `GREPLET_ACTIVITY_QUERY=hidden` 이면 `(hidden)` 으로 대체한다. 검색 결과 캐시 키에는 클라이언트 이름을 넣지 않는다.
+
+UI는 hello 수신 시 이전 이벤트 번호와 진행 중 표시를 현재 서버 스냅샷으로 교체한다. 서버 재시작으로 번호가 작아져도 이후 이벤트를 반영하며, 교체된 SSE 연결의 늦은 이벤트는 무시한다. 검색 완료의 `stats`를 적용해 평균 응답 시간(최근 200건 기준)을 서버와 일치시킨다. 같은 번호의 이벤트 재전송은 중복 집계하지 않는다. 재연결 시 최근 이력은 최대 50건이며, 누적 카운터의 재시작 복원 범위는 아래의 기존 200건 정책을 유지한다.
 
 #### 5.7.1 `X-Greplet-Snippet` 과 `approxTokens`
 
@@ -318,6 +320,7 @@ slug 는 `workspaces.json` 목록으로 화이트리스트 검증. 업로드 파
 4. `greplet.ps1 -Mode fts` 로 실제 존재하는 상수 리터럴 검색 → 그 상수를 담은 청크가 1위. `-All` 이 빈 워크스페이스가 있어도 오류 없이 동작.
 5. `mcp-server` `npm run smoke`, `greplet-mcpb` `npm run smoke`.
 6. `npm run test:activity` — 활동 이벤트 버스, 인덱스 진행 이벤트, SSE/API 계약 검증.
+   `npm run test:live-reconnect` — 서버 cursor 초기화, 완료 통계, UI 재연결·진행 표시 정리·중복 이벤트 방지 검증.
 7. `npm run test:partial-failure` — 구조화 실패 경로, 부분 성공 보존, 실패 잡과 persistent coverage, 증분 재시도, 0청크 성공을 검증한다.
 8. `npm run test:file-glob` — 고득점 비일치 후보 뒤의 파일도 찾는지, JS/DB 글롭 의미와 SQL escaping이 일치하는지 검증한다.
 9. `npm run test:source-validation` — warm 충돌 검사의 전체 열거 감소, 파일 생성/삭제 watcher 무효화, 감시 불가 시 안전한 재스캔을 검증한다.

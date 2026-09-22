@@ -3,6 +3,7 @@
   EventEmitter 싱글턴 + 이벤트 ring(500) + 검색 이력 ring(200) + 누적 통계.
 */
 import { EventEmitter } from "node:events";
+import { randomUUID } from "node:crypto";
 
 export type ClientId = string; // "mcp:claude" | "mcp:codex" | "mcpb" | "cli" | "ui" | "unknown"
 export type SearchStage = "cache" | "embed" | "vector" | "fts" | "rerank" | "glob" | "sort";
@@ -47,6 +48,7 @@ export interface SearchDoneEvent extends Base {
   approxTokens: number;
   error?: string;
   session?: string;
+  stats?: ActivityStats;
 }
 
 export interface IndexStartEvent extends Base {
@@ -140,6 +142,7 @@ const emitter = new EventEmitter();
 emitter.setMaxListeners(50);
 
 let seqCounter = 0;
+const streamId = randomUUID();
 const eventRing: ActivityEvent[] = [];
 const searchHistory: SearchRecord[] = [];
 const activeSearches = new Map<string, { startedAt: number; client: ClientId; query: string; workspaces: string[]; session?: string }>();
@@ -235,6 +238,7 @@ export function emitActivity(ev: DistributiveOmit<ActivityEvent, "seq" | "ts">):
     clientEntry.approxTokens += e.approxTokens;
     byClientCounts[e.client] = clientEntry;
     completionTimestamps.push(Date.now());
+    (full as SearchDoneEvent).stats = getStats();
   }
 
   try {
@@ -284,7 +288,7 @@ export function getStats(): ActivityStats {
     cacheHitRate: totalCompleted > 0 ? cachedCompleted / totalCompleted : 0,
     qps1m: completionTimestamps.length / 60,
     active: activeSearches.size,
-    byClient: { ...byClientCounts },
+    byClient: Object.fromEntries(Object.entries(byClientCounts).map(([client, usage]) => [client, { ...usage }])),
     errors: totalErrors,
     approxTokensTotal,
   };
@@ -292,4 +296,8 @@ export function getStats(): ActivityStats {
 
 export function listenerCount(): number {
   return emitter.listenerCount("event");
+}
+
+export function getActivityCursor(): { streamId: string; seq: number } {
+  return { streamId, seq: seqCounter };
 }

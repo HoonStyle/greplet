@@ -13,7 +13,7 @@ import { loadManifest, manifestCoverage } from "./scan.js";
 import { search, type SearchMode } from "./search.js";
 import { registerEvidenceRoutes } from "./evidence.js";
 import { JobManager } from "./indexJob.js";
-import { subscribeActivity, getRecentEvents, getRecentSearches, getStats, listenerCount, seedSearchHistory, type ActivityEvent } from "./activity.js";
+import { subscribeActivity, getRecentEvents, getRecentSearches, getStats, getActivityCursor, listenerCount, seedSearchHistory, type ActivityEvent } from "./activity.js";
 import { initActivityLog, restoreRecent, readUsage } from "./activityLog.js";
 import { invalidateSourceValidation } from "./sourceValidation.js";
 
@@ -269,14 +269,13 @@ app.get("/api/events", (req, res) => {
 
   const replayed = getRecentEvents(afterSeq);
   for (const ev of replayed) writeFrame(ev);
-  const lastSeq = replayed.length > 0 ? replayed[replayed.length - 1].seq : afterSeq;
 
   res.write(
     `event: hello\ndata: ${JSON.stringify({
       stats: getStats(),
-      recent: getRecentSearches(30),
+      recent: getRecentSearches(50),
       jobs: jobManager.getRecentJobs(5),
-      seq: lastSeq,
+      ...getActivityCursor(),
     })}\n\n`,
   );
 

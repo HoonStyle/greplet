@@ -44,6 +44,9 @@ jobs:
       - name: Indexer build
         run: npm run build
         working-directory: indexer
+      - name: Live metrics reconnect regression
+        run: npm run test:live-reconnect
+        working-directory: indexer
       - name: Indexer incremental test (fts-only path)
         run: npm run test:incremental
         working-directory: indexer

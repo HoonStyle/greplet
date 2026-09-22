@@ -92,6 +92,7 @@
   let feedRecords = [];
   let currentIndexJob = null;
   let lastSeq = 0;
+  let streamId = "";
   let eventSource = null;
   let reconnectTimer = 0;
   let reconnectTicker = 0;
@@ -686,8 +687,9 @@
     const timestampNow = now();
     const cutoff = timestampNow - 60000;
     const targetCount = Math.max(0, Math.round(number(stats && stats.qps1m) * 60));
-    const recentTimes = (Array.isArray(recent) ? recent : [])
-      .map((record) => Date.parse(record.ts))
+    const recentTimes = (Array.isArray(recent)
+      ? recent.map((record) => Date.parse(record.ts))
+      : statsState.qpsTimes.slice())
       .filter((timestamp) => Number.isFinite(timestamp) && timestamp >= cutoff && timestamp <= timestampNow)
       .sort((a, b) => b - a)
       .slice(0, targetCount);
@@ -928,6 +930,11 @@
     if (record.cached) statsState.cacheHits += 1;
     statsState.approxTokensTotal += record.approxTokens;
     statsState.qpsTimes.push(now());
+    if (event.stats) {
+      // 서버의 평균은 최근 200건 기준이다. 전체 누적 평균으로 다시 계산하지 않는다.
+      applyServerStats(event.stats);
+      search.estimateTracked = false;
+    }
     addBucketRecord(record.ts, record.ms);
     announcement = `검색 완료: ${record.client} · ${formatNumber(record.hits)}건 · ${formatNumber(record.ms)}ms`;
     scheduleRender("nodes", "lanes", "feed", "stats", "sparks", "announcement");
@@ -1027,17 +1034,26 @@
   }
 
   function handleHello(payload) {
+    const nextStreamId = String(payload.streamId || "");
+    if (streamId && nextStreamId && streamId !== nextStreamId) knownSessions.clear();
+    streamId = nextStreamId;
+    // 재연결 사이에 완료되거나 재시작으로 사라진 요청의 표시를 버린다.
+    activeSearches.clear();
+    lanes.clear();
+    laneOrder.length = 0;
+    nodeRefs.forEach((refs) => refs.clear());
+    edgeRefs.forEach((refs) => refs.clear());
+    doneNodes.clear();
     helloReceived = true;
     applyServerStats(payload.stats || {}, payload.recent || []);
-    activeSearches.forEach((search) => {
-      search.estimateTracked = !search.doneReceived;
-    });
     setFeed(payload.recent || []);
     feedRecords.forEach(noteSessionFromRecord);
     populateBuckets(payload.recent || []);
-    lastSeq = Math.max(lastSeq, number(payload.seq));
+    // hello는 현재 서버의 스냅샷이다. 이전 프로세스의 큰 번호를 유지하면
+    // 재시작한 서버의 새 이벤트를 계속 중복으로 오인한다.
+    lastSeq = number(payload.seq);
     const runningJob = (Array.isArray(payload.jobs) ? payload.jobs : []).find((job) => job.state === "running");
-    currentIndexJob = runningJob ? indexJobFromRecord(runningJob) : currentIndexJob && currentIndexJob.status === "running" ? currentIndexJob : null;
+    currentIndexJob = runningJob ? indexJobFromRecord(runningJob) : null;
     reconnectAttempt = 0;
     window.clearInterval(reconnectTicker);
     setConnection("connected", "연결됨");
@@ -1047,6 +1063,7 @@
   function processHello(message) {
     try {
       handleHello(JSON.parse(message.data));
+      fetchUsage(true);
     } catch (_) {
       setConnection("disconnected", "끊김");
     }
@@ -1075,8 +1092,12 @@
     [
       "search.start", "search.stage", "search.done", "index.start", "index.stage",
       "index.progress", "index.done", "index.failed",
-    ].forEach((type) => source.addEventListener(type, processSseEvent));
-    source.addEventListener("hello", processHello);
+    ].forEach((type) => source.addEventListener(type, (message) => {
+      if (eventSource === source) processSseEvent(message);
+    }));
+    source.addEventListener("hello", (message) => {
+      if (eventSource === source) processHello(message);
+    });
     source.onerror = () => {
       if (eventSource !== source) return;
       source.close();
