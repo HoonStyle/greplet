@@ -49,10 +49,12 @@ function buildMcpServer(): McpServer {
       title: "코드/문서 하이브리드 검색",
       description:
         "인덱스된 소스코드·PDF·문서 워크스페이스에서 관련 청크를 검색한다. " +
-        "자체 인덱서(Roslyn/PdfPig 청크 + Ollama bge-m3 + LanceDB, LLM 생성 없음)가 관련 청크만 반환. " +
+        "설정된 인덱서가 관련 후보를 반환하며 LLM 생성은 하지 않는다. 청킹·임베딩 구성은 실제 설정을 따른다. " +
         '"코드에서 ~찾아줘", "문서에 ~어떻게 정의됐어", "~구현이 어디 있어" 같은 내용 조회에 사용. ' +
         "읽기 전용. mode=fts 로 상수·메서드명 등 정확 토큰 검색이 가능하다. " +
-        "워크스페이스 목록은 greplet_workspaces 툴로 확인.",
+        "워크스페이스 목록은 greplet_workspaces 툴로 확인. " +
+        "인용·판단 전에는 요청한 저장소·버전의 원문 또는 greplet_search_evidence/greplet_get_evidence 로 근거를 확인한다. " +
+        "결과가 비어 있지 않아도 불충분할 수 있으며, 보완은 같은 대상·버전임을 확인할 수 있는 허용된 도구 범위에서만 한다.",
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       inputSchema: {
         query: z.string().min(1).describe("검색어 (자연어/키워드)"),
@@ -63,7 +65,7 @@ function buildMcpServer(): McpServer {
         all: z
           .boolean()
           .default(false)
-          .describe("true면 모든 워크스페이스 통합 검색, 점수순 병합. 출력이 길어지니 대상이 분명하면 workspace 를 지정할 것"),
+          .describe("true면 workspace보다 우선하여 모든 워크스페이스 통합 검색, 점수순 병합. 대상이 분명하면 all=false와 workspace를 지정할 것"),
         topN: z
           .number()
           .int()
@@ -118,15 +120,16 @@ function buildMcpServer(): McpServer {
     {
       title: "근거용 코드/문서 검색 (evidenceRef 포함)",
       description:
-        "인덱스된 워크스페이스에서 관련 청크를 검색하고, 각 히트에 대해 재조회·신선도 검증에 쓸 evidenceRef(workspace/chunkId/fileHash/startLine/endLine/contentHash)를 함께 반환한다. " +
-        "백엔드 JSON(schemaVersion, query, mode, targets[])을 그대로 반환. 읽기 전용. 청크 전문은 greplet_get_evidence 로 별도 조회.",
+        "인덱스된 워크스페이스에서 관련 후보와 재조회·동일성 확인에 쓸 evidenceRef(workspace/chunkId/fileHash/startLine/endLine/contentHash)를 반환한다. " +
+        "백엔드 JSON(schemaVersion, query, mode, targets[])을 그대로 반환. 읽기 전용. 청크 전문은 greplet_get_evidence 로 별도 조회. " +
+        "대상이 정해졌으면 workspaces 목록을 명시한다. 검색 결과만으로 요청 버전 일치나 주장의 의미 충족을 보장하지 않는다.",
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       inputSchema: {
         query: z.string().min(1).describe("검색어 (자연어/키워드)"),
         workspaces: z
           .union([z.array(z.string()), z.literal("all")])
           .default("all")
-          .describe('검색 대상 워크스페이스 slug 배열, 또는 "all"(기본, 전체 워크스페이스)'),
+          .describe('검색 대상 워크스페이스 slug 배열, 또는 "all"(기본, 전체 워크스페이스). 대상이 정해졌으면 배열로 명시'),
         topN: z.number().int().min(1).max(20).default(3).describe("워크스페이스당 결과 개수 (기본 3, 최대 20)"),
         mode: z
           .enum(["hybrid", "vector", "fts"])
@@ -151,10 +154,12 @@ function buildMcpServer(): McpServer {
   server.registerTool(
     "greplet_get_evidence",
     {
-      title: "근거 청크 전문 조회 (신선도 검증)",
+      title: "근거 청크 전문 조회 (참조·원본 동일성 확인)",
       description:
         "greplet_search_evidence 가 반환한 evidenceRef 로 청크 전문을 다시 조회하고, 원본 파일 해시를 재검증한다. " +
-        "참조가 인덱스에 없으면 404, 원본이 바뀌었거나(stale) 워크스페이스가 인덱싱 중이면 409를 백엔드 그대로 isError 로 반환한다. 읽기 전용.",
+        "현재 등록된 원본과 참조의 동일성을 확인하며, 임의 과거 버전 복구나 요청 버전 선택·의미 충족을 보장하지 않는다. " +
+        "404/409 등은 백엔드 error.code/message와 함께 isError 로 반환하므로 not_found, stale_evidence, indexing, source_unavailable, ambiguous_source 등의 원인을 구분한다. " +
+        "조회 실패를 서비스 기동·설정 변경·재인덱싱 권한으로 해석하지 않는다. 읽기 전용.",
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       inputSchema: {
         evidenceRef: z

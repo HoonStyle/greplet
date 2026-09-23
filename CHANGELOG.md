@@ -4,6 +4,23 @@
 
 ## [Unreleased]
 
+## [0.11.3] - 2026-09-23
+
+### Fixed
+- Codex skill의 docs 한정 예제에서 `--all`을 제거했다. 기존 CLI/API의 `all` 우선순위와 기본값은 유지한다.
+- CLI와 MCP/MCPB의 일반 요청 실패 안내가 서버 미가동을 단정하거나 무조건 기동을 지시하지 않도록 수정했다. 오류 분기·기동 로직은 변경하지 않았다.
+
+### Changed
+- Claude Code/Codex skill에서 검색 후보와 검증된 근거를 구분하고, 요청한 저장소·workspace·버전과 의미를 확인하도록 안내한다. 과거 버전 비교를 현재 HEAD로 대체하지 않는다.
+- 결과가 비어 있지 않아도 불충분하면 같은 대상·버전의 허용된 도구로 보완하고, 근거가 충족되면 중단하도록 안내한다. evidence 조회 경로와 확인 불가 처리, 조회와 기동·설정 변경·재인덱싱 권한의 구분을 명시했다.
+- MCP/MCPB 설명에서 해시 동일성·요청 버전·의미 충족을 구분하고, evidence 오류는 반환된 코드와 설명으로 해석하도록 정리했다. 일정한 검색 시간·토큰 절감 보장은 제거하고 구성은 예시로 표시했다.
+
+### Added
+- 실제 CLI/MCP 소스를 메모리 모의 환경에서 실행하는 `scripts/test-prompt-contract.mjs`를 추가하고 CI에 연결했다. 옵션 전달·기본값·404/409 보존·안내 문구 정합성을 소켓/DB 없이 확인한다.
+- 8개 합성 판단 시나리오와 응답 checker를 추가했다. 모델 판단 응답은 실제 도구 실행이나 수정 전후 성능 향상의 증명이 아니다. CI는 모델을 호출하지 않는다.
+
+검색 알고리즘·임베딩·API 기본값은 이번 릴리즈에서 변경하지 않았다. 별도 로컬 검색 연구 변경은 포함하지 않는다.
+
 ## [0.11.2] - 2026-09-11
 
 ### Changed
@@ -112,7 +129,8 @@
 
 Windows 에서 개발·검증된 초기 상태. Extractor(Roslyn/PdfPig), LanceDB 하이브리드 인덱서, PowerShell CLI, Claude Desktop `.mcpb`, 원격 MCP 서버, post-commit 훅, Claude Code 스킬 예제.
 
-[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/HoonStyle/greplet/compare/v0.11.3...HEAD
+[0.11.3]: https://github.com/HoonStyle/greplet/compare/v0.11.2...v0.11.3
 [0.10.0]: https://github.com/HoonStyle/greplet/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/HoonStyle/greplet/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/HoonStyle/greplet/compare/v0.7.0...v0.8.0

@@ -98,6 +98,10 @@ jobs:
         run: npm ci && npm run build
         working-directory: mcp-server
 
+      # Prompt/client contracts use memory-only I/O and installed TS/zod; no backend.
+      - name: Prompt and client contracts (no sockets)
+        run: node --experimental-vm-modules scripts/test-prompt-contract.mjs
+
       # stdio MCP bundle: install + syntax check + tools/list over stdio
       - name: greplet-mcpb install
         run: npm ci

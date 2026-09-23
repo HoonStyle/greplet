@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 // greplet.mjs - greplet 인덱서 CLI (Node, greplet.ps1 의 크로스플랫폼 동등물 + 관리 서브커맨드)
 //
-// 목적: 코드/문서 폴더를 통째로 grep/read 하지 않고,
-//       하이브리드 검색(벡터+FTS, LLM 생성 없음)으로 관련 청크만 ~2초에 추출.
+// 목적: 하이브리드 검색(벡터+FTS, LLM 생성 없음)으로 관련 후보와 위치를 좁힌다.
+//       지연·토큰 사용은 인덱스·워밍·조회 조건에 따라 달라진다.
 //
-// 백엔드: 자체 인덱서(Roslyn/PdfPig 청크 + Ollama bge-m3 + LanceDB), http://localhost:7802.
-//         미가동이면 bash indexer/start-indexer.sh (macOS/Linux) 또는
-//         pwsh indexer/start-indexer.ps1 (Windows) 로 기동할 것.
+// 백엔드 예시: Roslyn/PdfPig 청킹 + Ollama bge-m3 + LanceDB, http://localhost:7802.
+//              실제 설정을 따르며 조회 실패만으로 미가동이나 기동 권한을 추론하지 않는다.
 //
 // 사용 예:
 //   node greplet.mjs "재시도 백오프 로직"                    # 검색
@@ -165,7 +164,7 @@ function getDefaultWorkspace() {
 // ---------- HTTP ----------
 function serverDown(baseUrl, e) {
   process.stderr.write(
-    `인덱서 서버(${baseUrl}) 미가동 — bash indexer/start-indexer.sh (macOS/Linux) 또는 pwsh indexer/start-indexer.ps1 (Windows) 로 기동\n상세: ${
+    `인덱서 요청 실패(${baseUrl}) — 이 오류만으로 서버 미가동을 단정할 수 없습니다. 상세 원인을 확인하고, 미가동이 확인된 경우에도 기존 운영 지침·허용 범위 안에서만 기동하세요. 조회 실패는 설정 변경·재인덱싱 허가가 아닙니다.\n상세: ${
       e instanceof Error ? e.message : String(e)
     }\n`,
   );

@@ -81,7 +81,8 @@ export async function fetchWorkspaces(cfg: BackendConfig): Promise<WorkspaceInfo
 
 function backendDownMessage(cfg: BackendConfig, e: unknown): string {
   return (
-    `인덱서 서버(${cfg.baseUrl}) 미가동 또는 요청 실패 — indexer/start-indexer.sh(macOS/Linux) 또는 start-indexer.ps1(Windows) 로 기동할 것. ` +
+    `인덱서 요청 실패(${cfg.baseUrl}) — 이 오류만으로 서버 미가동을 단정할 수 없습니다. ` +
+    `상세 원인을 확인하고, 미가동이 확인된 경우에도 기존 운영 지침·허용 범위 안에서만 기동하세요. 조회 실패는 설정 변경·재인덱싱 허가가 아닙니다. ` +
     `상세: ${e instanceof Error ? e.message : String(e)}`
   );
 }
